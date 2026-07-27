@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="VSAgent.Extension/VSAgent.Extension.vbproj">
+    <Deploy />
+  </Project>
+</Solution>
