@@ -1,12 +1,10 @@
 ﻿Imports Microsoft.VisualStudio.Shell
-Imports System
 Imports System.Runtime.InteropServices
 Imports System.Threading
-Imports System.Threading.Tasks
 
 Namespace VSAgent.Extension
     <PackageRegistration(UseManagedResourcesOnly:=True, AllowsBackgroundLoading:=True)>
-    <Guid(VSAgent.ExtensionPackage.PackageGuidString)>
+    <Guid(VSAgentExtensionPackage.PackageGuidString)>
     Public NotInheritable Class VSAgentExtensionPackage
         Inherits AsyncPackage
 

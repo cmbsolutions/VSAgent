@@ -2,4 +2,7 @@
   <Project Path="VSAgent.Extension/VSAgent.Extension.vbproj">
     <Deploy />
   </Project>
+  <Project Path="VSAgent.Protocol/VSAgent.Protocol.vbproj" Id="f96a1828-9373-47dc-9d13-169238377c9a" />
+  <Project Path="VSAgent.Server/VSAgent.Server.vbproj" Id="3363a17b-a662-4225-8bc2-ad0a9962ddf0" />
+  <Project Path="VSAgent.Tools/VSAgent.Tools.vbproj" Id="76df7c1f-965f-4e5d-bc3d-d0ddb917b6c9" />
 </Solution>
