@@ -15,6 +15,12 @@
 
   <ItemGroup>
     <None Remove="AboutCommandPackage.vsct" />
+    <None Remove="Resources\vsagent.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="LICENSE.txt" />
+    <Content Include="vsagent.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectCapability Include="CreateVsixContainer" />
@@ -22,6 +28,12 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.8.739" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VSAgent.Abstractions\VSAgent.Abstractions.vbproj" />
+    <ProjectReference Include="..\VSAgent.Protocol\VSAgent.Protocol.vbproj" />
+    <ProjectReference Include="..\VSAgent.Server\VSAgent.Server.vbproj" />
+    <ProjectReference Include="..\VSAgent.Tools\VSAgent.Tools.vbproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

@@ -3,12 +3,12 @@
   <Metadata>
     <Identity Id="VSAgent.Extension.d809f506-b031-4022-98b0-191d555282cc" Version="1.0" Language="en-US" Publisher="CMBSolutions" />
     <DisplayName>VSAgent.Extension</DisplayName>
-    <Description>Empty VSIX Project.</Description>
-    <License>..\LICENSE</License>
-    <Icon>..\Resources\vsagent.ico</Icon>
+    <Description>Visual Studio extension to expose visual studio to a coding agent.</Description>
+    <License>LICENSE.txt</License>
+    <Icon>vsagent.ico</Icon>
     <Tags>Visual Studio, AI, codex, LLM, claude</Tags>
   </Metadata>
-  <Installation InstalledByMsi="true">
+  <Installation>
     <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.14, )">
       <ProductArchitecture>amd64</ProductArchitecture>
     </InstallationTarget>
