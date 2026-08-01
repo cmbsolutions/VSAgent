@@ -47,10 +47,10 @@
   <PropertyGroup>
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
-    <PropertyGroup>
-		<SignAssembly>true</SignAssembly>
-		<AssemblyOriginatorKeyFile>..\VSAgent.Extension\Key.snk</AssemblyOriginatorKeyFile>
-	</PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\VSAgent.Extension\Key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="IAgentServer.vb" />
     <Compile Include="ILog.vb" />
+    <Compile Include="ISolutionService.vb" />
     <Compile Include="ITool.vb" />
     <Compile Include="IToolRegistry.vb" />
     <Compile Include="IVSWorkspace.vb" />

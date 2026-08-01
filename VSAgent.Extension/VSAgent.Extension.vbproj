@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <None Remove="AboutCommandPackage.vsct" />
-    <None Remove="Resources\vsagent.ico" />
   </ItemGroup>
 
   <ItemGroup>

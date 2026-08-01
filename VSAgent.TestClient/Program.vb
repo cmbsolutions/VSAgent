@@ -28,7 +28,7 @@ Module Program
 
                     Dim request As New AgentRequest With {
                         .Id = Guid.NewGuid().ToString(),
-                        .Method = "ping",
+                        .Tool = "ping",
                         .Parameters = New Dictionary(Of String, Object) From {}
                     }
 
@@ -39,6 +39,22 @@ Module Program
                     Await writer.WriteLineAsync(json)
 
                     Dim response = Await reader.ReadLineAsync()
+
+                    Console.WriteLine($"Received: {response}")
+
+                    request = New AgentRequest With {
+                        .Id = Guid.NewGuid().ToString(),
+                        .Tool = "getSolutionInfo",
+                        .Parameters = New Dictionary(Of String, Object) From {}
+                    }
+
+                    json = JsonSerializer.Serialize(request)
+
+                    Console.WriteLine($"Sending: {json}")
+
+                    Await writer.WriteLineAsync(json)
+
+                    response = Await reader.ReadLineAsync()
 
                     Console.WriteLine($"Received: {response}")
                 End Using

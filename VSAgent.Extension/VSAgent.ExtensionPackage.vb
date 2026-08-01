@@ -17,7 +17,13 @@ Namespace VSAgent.Extension
             Await Me.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken)
             'Await MyBase.InitializeAsync(cancellationToken, progress)
 
-            _agentServer = New AgentPipeServer()
+            Dim solutionService As ISolutionService = New VisualStudioSolutionService(Me)
+
+            Dim _registry = New ToolRegistry()
+            _registry.Register(New PingTool())
+            _registry.Register(New GetSolutionInfoTool(solutionService))
+
+            _agentServer = New AgentPipeServer(_registry)
             _agentServer.Start()
         End Function
 

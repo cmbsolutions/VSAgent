@@ -15,16 +15,16 @@ Public Class AgentPipeServer
     Private _registry As ToolRegistry
     Private disposedValue As Boolean
 
+    Public Sub New(toolRegistry As ToolRegistry)
+        _registry = toolRegistry
+    End Sub
+
     Public Sub Start()
         Debug.WriteLine("VSAgent: Starting server")
         If _serverTask IsNot Nothing Then
             Throw New InvalidOperationException(
                 "The VSAgent server has already been started.")
         End If
-
-        Debug.WriteLine("VSAgent: register tools")
-        _registry = New ToolRegistry()
-        _registry.Register(New PingTool())
 
         Debug.WriteLine("VSAgent: Run server")
         _serverTask = RunServerAsync(_cancellationTokenSource.Token)
@@ -97,9 +97,9 @@ Public Class AgentPipeServer
                         Exit While
                     End If
 
-                    Dim response = HandleRequest(json)
+                    Dim response = Await HandleRequestAsync(json).ConfigureAwait(False)
 
-                    Dim responseJson = JsonSerializer.Serialize(response.Result)
+                    Dim responseJson = JsonSerializer.Serialize(response)
 
                     Await writer.WriteLineAsync(responseJson)
                 End While
@@ -107,7 +107,7 @@ Public Class AgentPipeServer
         End Using
     End Function
 
-    Private Async Function HandleRequest(json As String) As Task(Of AgentResponse)
+    Private Async Function HandleRequestAsync(json As String) As Task(Of AgentResponse)
 
         Try
             Dim request = JsonSerializer.Deserialize(Of AgentRequest)(json)
@@ -118,12 +118,12 @@ Public Class AgentPipeServer
                     "The request could not be deserialized.")
             End If
 
-            Dim tool = _registry.GetTool(request.Method)
+            Dim tool = _registry.GetTool(request.Tool)
 
             If tool Is Nothing Then
                 Return AgentResponse.Failed(
                         request.Id,
-                        $"Unknown method: {request.Method}")
+                        $"Unknown method: {request.Tool}")
             End If
 
             Return Await tool.ExecuteAsync(request)
