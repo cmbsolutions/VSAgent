@@ -12,14 +12,21 @@ Public Class AgentPipeServer
 
     Private ReadOnly _cancellationTokenSource As New CancellationTokenSource()
     Private _serverTask As Task
+    Private _registry As ToolRegistry
     Private disposedValue As Boolean
 
     Public Sub Start()
+        Debug.WriteLine("VSAgent: Starting server")
         If _serverTask IsNot Nothing Then
             Throw New InvalidOperationException(
                 "The VSAgent server has already been started.")
         End If
 
+        Debug.WriteLine("VSAgent: register tools")
+        _registry = New ToolRegistry()
+        _registry.Register(New PingTool())
+
+        Debug.WriteLine("VSAgent: Run server")
         _serverTask = RunServerAsync(_cancellationTokenSource.Token)
     End Sub
 
@@ -61,6 +68,7 @@ Public Class AgentPipeServer
             Catch ex As Exception
                 Debug.WriteLine($"VSAgent: Error processing client: {ex}")
             End Try
+
         End Using
 
     End Function
@@ -91,7 +99,7 @@ Public Class AgentPipeServer
 
                     Dim response = HandleRequest(json)
 
-                    Dim responseJson = JsonSerializer.Serialize(response)
+                    Dim responseJson = JsonSerializer.Serialize(response.Result)
 
                     Await writer.WriteLineAsync(responseJson)
                 End While
@@ -99,7 +107,7 @@ Public Class AgentPipeServer
         End Using
     End Function
 
-    Private Shared Function HandleRequest(json As String) As AgentResponse
+    Private Async Function HandleRequest(json As String) As Task(Of AgentResponse)
 
         Try
             Dim request = JsonSerializer.Deserialize(Of AgentRequest)(json)
@@ -110,17 +118,15 @@ Public Class AgentPipeServer
                     "The request could not be deserialized.")
             End If
 
-            Select Case request.Method?.ToLowerInvariant()
+            Dim tool = _registry.GetTool(request.Method)
 
-                Case "ping"
-                    Return AgentResponse.Ok(request.Id, "pong")
-
-                Case Else
-                    Return AgentResponse.Failed(
+            If tool Is Nothing Then
+                Return AgentResponse.Failed(
                         request.Id,
                         $"Unknown method: {request.Method}")
+            End If
 
-            End Select
+            Return Await tool.ExecuteAsync(request)
 
         Catch ex As JsonException
             Return AgentResponse.Failed(

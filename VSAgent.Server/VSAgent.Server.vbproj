@@ -12,8 +12,8 @@
     <MyType>Windows</MyType>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <Deterministic>true</Deterministic>
-	<SignAssembly>true</SignAssembly>
-	<AssemblyOriginatorKeyFile>..\VSAgent.Extension\Key.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\VSAgent.Extension\Key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -116,6 +116,10 @@
     <ProjectReference Include="..\VSAgent.Protocol\VSAgent.Protocol.vbproj">
       <Project>{4962abf8-84ff-423b-a8a6-c0ea77e0e0dd}</Project>
       <Name>VSAgent.Protocol</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\VSAgent.Tools\VSAgent.Tools.vbproj">
+      <Project>{76df7c1f-965f-4e5d-bc3d-d0ddb917b6c9}</Project>
+      <Name>VSAgent.Tools</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
