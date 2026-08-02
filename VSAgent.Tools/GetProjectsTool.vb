@@ -1,7 +1,7 @@
 ﻿Imports VSAgent.Protocol.Messages
 
 Namespace Tools
-    Public Class GetSolutionInfoTool
+    Public Class GetProjectsTool
         Implements ITool
 
         Private ReadOnly _solutionService As ISolutionService
@@ -12,15 +12,15 @@ Namespace Tools
 
         Public ReadOnly Property Name As String Implements ITool.Name
             Get
-                Return "getSolutionInfo"
+                Return "getProjects"
             End Get
         End Property
 
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
+            Dim projects = Await _solutionService.GetProjectsAsync()
 
-            Dim solutionInfo = Await _solutionService.GetSolutionInfoAsync()
-
-            Return AgentResponse.Ok(request.Id, solutionInfo)
+            Return AgentResponse.Ok(request.Id, projects)
         End Function
     End Class
 End Namespace
+

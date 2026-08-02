@@ -1,16 +1,6 @@
-﻿Imports System
-Imports System.ComponentModel.Design
-Imports System.Diagnostics
-Imports System.Globalization
-Imports System.Runtime.InteropServices
+﻿Imports System.Runtime.InteropServices
 Imports System.Threading
-Imports System.Threading.Tasks
-Imports Microsoft.VisualBasic
-Imports Microsoft.VisualStudio
-Imports Microsoft.VisualStudio.OLE.Interop
 Imports Microsoft.VisualStudio.Shell
-Imports Microsoft.VisualStudio.Shell.Interop
-Imports Microsoft.Win32
 Imports Task = System.Threading.Tasks.Task
 
 

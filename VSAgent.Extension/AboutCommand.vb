@@ -1,8 +1,5 @@
-﻿Imports System
-Imports System.ComponentModel.Design
+﻿Imports System.ComponentModel.Design
 Imports System.Globalization
-Imports System.Threading
-Imports System.Threading.Tasks
 Imports Microsoft.VisualStudio.Shell
 Imports Microsoft.VisualStudio.Shell.Interop
 Imports Task = System.Threading.Tasks.Task
