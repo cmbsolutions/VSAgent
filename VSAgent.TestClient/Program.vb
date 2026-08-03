@@ -79,6 +79,24 @@ Module Program
                     response = Await reader.ReadLineAsync()
 
                     Console.WriteLine($"Received: {response}")
+
+                    Console.WriteLine("Testing getRoslynProjects tool, expecting roslyn project info in return...")
+
+                    request = New AgentRequest With {
+                        .Id = Guid.NewGuid().ToString(),
+                        .Tool = "getRoslynProjects",
+                        .Parameters = New Dictionary(Of String, Object) From {}
+                    }
+
+                    json = JsonSerializer.Serialize(request)
+
+                    Console.WriteLine($"Sending: {json}")
+
+                    Await writer.WriteLineAsync(json)
+
+                    response = Await reader.ReadLineAsync()
+
+                    Console.WriteLine($"Received: {response}")
                 End Using
             End Using
         End Using

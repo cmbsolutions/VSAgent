@@ -1,6 +1,5 @@
 ﻿Imports System.IO
 Imports Microsoft.VisualStudio
-Imports Microsoft.VisualStudio.Debugger.Interop
 Imports Microsoft.VisualStudio.Shell
 Imports Microsoft.VisualStudio.Shell.Interop
 Imports VSAgent.Protocol.DTO

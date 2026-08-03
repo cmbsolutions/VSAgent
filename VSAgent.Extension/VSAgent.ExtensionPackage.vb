@@ -18,11 +18,14 @@ Namespace VSAgent.Extension
             'Await MyBase.InitializeAsync(cancellationToken, progress)
 
             Dim solutionService As ISolutionService = New VisualStudioSolutionService(Me)
+            Dim roslynWorkspaceService As IRoslynWorkspaceService = New VisualStudioRoslynWorkspaceService(Me)
 
             Dim _registry = New ToolRegistry()
             _registry.Register(New Tools.PingTool())
             _registry.Register(New Tools.GetSolutionInfoTool(solutionService))
             _registry.Register(New Tools.GetProjectsTool(solutionService))
+            _registry.Register(New Tools.GetRoslynProjectsTool(roslynWorkspaceService))
+
 
             _agentServer = New AgentPipeServer(_registry)
             _agentServer.Start()

@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="IAgentServer.vb" />
     <Compile Include="ILog.vb" />
+    <Compile Include="IRoslynWorkspaceService.vb" />
     <Compile Include="ISolutionService.vb" />
     <Compile Include="ITool.vb" />
     <Compile Include="IToolRegistry.vb" />
