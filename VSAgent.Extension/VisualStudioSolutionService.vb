@@ -1,5 +1,6 @@
 ﻿Imports System.IO
 Imports Microsoft.VisualStudio
+Imports Microsoft.VisualStudio.Debugger.Interop
 Imports Microsoft.VisualStudio.Shell
 Imports Microsoft.VisualStudio.Shell.Interop
 Imports VSAgent.Protocol.DTO
@@ -8,6 +9,8 @@ Public Class VisualStudioSolutionService
     Implements ISolutionService
 
     Private ReadOnly _package As AsyncPackage
+
+    Private Shared ReadOnly MiscellaneousFilesProjectGuid As New Guid("A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3")
 
     Public Sub New(package As AsyncPackage)
         _package = package
@@ -48,7 +51,7 @@ Public Class VisualStudioSolutionService
                 Nothing),
             .FilePath = solutionFile,
             .DirectoryPath = solutionDirectory,
-            .isOpen = isOpen
+            .IsOpen = isOpen
         }
 
     End Function
@@ -93,18 +96,30 @@ Public Class VisualStudioSolutionService
 
         ThreadHelper.ThrowIfNotOnUIThread()
 
+        Dim projectGuid As Guid
+
+        If ErrorHandler.Failed(hierarchy.GetGuidProperty(VSConstants.VSITEMID_ROOT, CInt(__VSHPROPID.VSHPROPID_ProjectIDGuid), projectGuid)) Then
+            Return Nothing
+        End If
+
+        If projectGuid = MiscellaneousFilesProjectGuid Then
+            Return Nothing
+        End If
+
         Dim name As String = GetHierarchyProperty(hierarchy, __VSHPROPID.VSHPROPID_Name)
         Dim projectFilePath As String = GetHierarchyProperty(hierarchy, __VSHPROPID.VSHPROPID_ProjectDir)
 
         Dim targetFramework As String = GetHierarchyProperty(hierarchy, __VSHPROPID4.VSHPROPID_TargetFrameworkMoniker)
 
-        Dim projectGuid As Guid
-        hierarchy.GetGuidProperty(VSConstants.VSITEMID_ROOT, CInt(__VSHPROPID.VSHPROPID_ProjectIDGuid), projectGuid)
-
         Dim projectTypeGuid As Guid
         hierarchy.GetGuidProperty(VSConstants.VSITEMID_ROOT, CInt(__VSHPROPID.VSHPROPID_TypeGuid), projectTypeGuid)
 
         Dim filepath As String = GetProjectFilePath(hierarchy)
+
+        If String.IsNullOrWhiteSpace(projectFilePath) OrElse String.Equals(projectFilePath, "UNDEFINED", StringComparison.OrdinalIgnoreCase) Then
+            Return Nothing
+        End If
+
         Dim language As String = "Unknown"
 
         Select Case IO.Path.GetExtension(filepath).ToLowerInvariant()
