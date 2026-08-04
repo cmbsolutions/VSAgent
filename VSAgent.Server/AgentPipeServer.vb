@@ -2,6 +2,7 @@
 Imports System.IO.Pipes
 Imports System.Text
 Imports System.Text.Json
+Imports System.Text.Json.Serialization
 Imports System.Threading
 Imports VSAgent.Protocol.Messages
 
@@ -74,37 +75,62 @@ Public Class AgentPipeServer
     End Function
 
     Private Async Function ProcessClientAsync(pipe As NamedPipeServerStream, cancellationToken As CancellationToken) As Task
-        Using reader = New StreamReader(
-            pipe,
-            New UTF8Encoding(False),
-            detectEncodingFromByteOrderMarks:=False,
-            bufferSize:=4096,
-            leaveOpen:=True)
+        Dim reader As StreamReader = Nothing
+        Dim writer As StreamWriter = Nothing
 
-            Using writer = New StreamWriter(
-                pipe,
-                New UTF8Encoding(False),
-                bufferSize:=4096,
-                leaveOpen:=True)
+        Try
+            reader = New StreamReader(pipe, New UTF8Encoding(False), detectEncodingFromByteOrderMarks:=False, bufferSize:=4096, leaveOpen:=True)
 
-                writer.AutoFlush = True
+            writer = New StreamWriter(pipe, New UTF8Encoding(False), bufferSize:=4096, leaveOpen:=True) With {
+                .AutoFlush = True
+            }
 
-                While pipe.IsConnected AndAlso Not cancellationToken.IsCancellationRequested
+            While pipe.IsConnected AndAlso Not cancellationToken.IsCancellationRequested
 
-                    Dim json = Await reader.ReadLineAsync()
+                Dim json As String
 
-                    If json Is Nothing Then
-                        Exit While
-                    End If
+                Try
+                    json = Await reader.ReadLineAsync().ConfigureAwait(False)
 
-                    Dim response = Await HandleRequestAsync(json).ConfigureAwait(False)
+                Catch ex As IOException
+                    Exit While
+                End Try
 
-                    Dim responseJson = JsonSerializer.Serialize(response)
+                If json Is Nothing Then
+                    Exit While
+                End If
 
-                    Await writer.WriteLineAsync(responseJson)
-                End While
-            End Using
-        End Using
+                Dim response = Await HandleRequestAsync(json).ConfigureAwait(False)
+
+                Dim responseJson = JsonSerializer.Serialize(response)
+
+                Try
+                    Await writer.WriteLineAsync(responseJson).ConfigureAwait(False)
+
+                Catch ex As IOException
+                    Exit While
+                End Try
+
+            End While
+
+        Finally
+            If writer IsNot Nothing Then
+                Try
+                    writer.Dispose()
+                Catch ex As IOException
+                    ' Normal when the client closes immediately after receiving
+                    ' the final response.
+                End Try
+            End If
+
+            If reader IsNot Nothing Then
+                Try
+                    reader.Dispose()
+                Catch ex As IOException
+                    ' Client already disconnected.
+                End Try
+            End If
+        End Try
     End Function
 
     Private Async Function HandleRequestAsync(json As String) As Task(Of AgentResponse)

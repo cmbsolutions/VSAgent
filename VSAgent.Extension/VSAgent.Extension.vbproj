@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
@@ -25,9 +25,9 @@
     <ProjectCapability Include="CreateVsixContainer" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.14.0" />
-    <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="4.14.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.14.0" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="4.14.0" IncludeAssets="compile" PrivateAssets="all" />
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.8.739" />
   </ItemGroup>
@@ -46,7 +46,7 @@
   <ItemGroup>
     <VSCTCompile Include="AboutCommandPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
-      <Generator>VsctGenerator</Generator>
+      <Generator></Generator>
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
