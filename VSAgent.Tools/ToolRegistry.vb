@@ -1,4 +1,6 @@
-﻿Public Class ToolRegistry
+﻿Imports VSAgent.Protocol
+
+Public Class ToolRegistry
     Private ReadOnly _tools As Dictionary(Of String, ITool)
 
     Public Sub New()
@@ -14,5 +16,16 @@
 
         _tools.TryGetValue(name, tool)
         Return tool
+    End Function
+
+    Public Function GetAvailableTools() As IReadOnlyList(Of DTO.ToolDescriptor)
+        Return _tools.Values _
+            .Select(Function(tool) New DTO.ToolDescriptor With {
+                .Name = tool.Name,
+                .Description = tool.Description,
+                .Parameters = tool.ParametersSchema
+            }) _
+            .OrderBy(Function(tool) tool.Name) _
+            .ToList()
     End Function
 End Class

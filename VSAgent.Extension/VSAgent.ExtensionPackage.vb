@@ -15,17 +15,19 @@ Namespace VSAgent.Extension
 
         Protected Overrides Async Function InitializeAsync(ByVal cancellationToken As CancellationToken, ByVal progress As IProgress(Of ServiceProgressData)) As Task
             Await Me.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken)
-            'Await MyBase.InitializeAsync(cancellationToken, progress)
 
-            Dim solutionService As ISolutionService = New VisualStudioSolutionService(Me)
-            Dim roslynWorkspaceService As IRoslynWorkspaceService = New VisualStudioRoslynWorkspaceService(Me)
+
+            Dim threadingService As IVisualStudioThreadingService = New VisualStudioThreadingService()
+
+            Dim solutionService As ISolutionService = New VisualStudioSolutionService(Me, threadingService)
+            Dim roslynWorkspaceService As IRoslynWorkspaceService = New VisualStudioRoslynWorkspaceService(Me, threadingService)
 
             Dim _registry = New ToolRegistry()
             _registry.Register(New Tools.PingTool())
             _registry.Register(New Tools.GetSolutionInfoTool(solutionService))
             _registry.Register(New Tools.GetProjectsTool(solutionService))
             _registry.Register(New Tools.GetRoslynProjectsTool(roslynWorkspaceService))
-
+            _registry.Register(New Tools.GetAvailableToolsTool(_registry))
 
             _agentServer = New AgentPipeServer(_registry)
             _agentServer.Start()

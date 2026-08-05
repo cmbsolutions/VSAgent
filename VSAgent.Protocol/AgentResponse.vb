@@ -1,6 +1,7 @@
 ﻿Namespace Messages
     Public Class AgentResponse
         Public Property Id As String
+        Public Property Version As Integer
         Public Property Success As Boolean
         Public Property Result As Object
         Public Property ErrorMessage As String

@@ -2,24 +2,25 @@
 Imports VSAgent.Protocol.Tools
 
 Namespace Tools
-    Public Class GetProjectsTool
+    Public Class GetAvailableToolsTool
         Implements ITool
 
-        Private ReadOnly _solutionService As ISolutionService
+        Private ReadOnly _registry As ToolRegistry
 
-        Public Sub New(solutionService As ISolutionService)
-            _solutionService = solutionService
+        Public Sub New(registry As ToolRegistry)
+            _registry = registry
         End Sub
+
 
         Public ReadOnly Property Name As String Implements ITool.Name
             Get
-                Return "getProjects"
+                Return "getAvailableTools"
             End Get
         End Property
 
         Public ReadOnly Property Description As String Implements ITool.Description
             Get
-                Return "Gets a list of all projects in the current solution."
+                Return "Returns all tools exposed by the VSAgent server."
             End Get
         End Property
 
@@ -33,11 +34,10 @@ Namespace Tools
             End Get
         End Property
 
-        Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
-            Dim projects = Await _solutionService.GetProjectsAsync()
+        Public Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
+            Dim tools = _registry.GetAvailableTools()
 
-            Return AgentResponse.Ok(request.Id, projects)
+            Return Task.FromResult(AgentResponse.Ok(request.Id, tools))
         End Function
     End Class
 End Namespace
-

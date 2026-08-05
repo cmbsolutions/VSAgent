@@ -72,6 +72,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GetAvailableToolsTool.vb" />
     <Compile Include="GetProjectsTool.vb" />
     <Compile Include="GetRoslynProjectsTool.vb" />
     <Compile Include="GetSolutionInfoTool.vb" />

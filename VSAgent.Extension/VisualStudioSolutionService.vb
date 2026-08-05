@@ -8,46 +8,37 @@ Public Class VisualStudioSolutionService
     Implements ISolutionService
 
     Private ReadOnly _package As AsyncPackage
+    Private ReadOnly _threadingService As IVisualStudioThreadingService
 
     Private Shared ReadOnly MiscellaneousFilesProjectGuid As New Guid("A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3")
 
-    Public Sub New(package As AsyncPackage)
+    Public Sub New(package As AsyncPackage, threadingService As IVisualStudioThreadingService)
         _package = package
+        _threadingService = threadingService
     End Sub
 
-    Public Async Function GetSolutionInfoAsync() As Task(Of SolutionInfo) _
-        Implements ISolutionService.GetSolutionInfoAsync
+    Public Async Function GetSolutionInfoAsync() As Task(Of SolutionInfo) Implements ISolutionService.GetSolutionInfoAsync
 
-        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+        Await _threadingService.SwitchToMainThreadAsync()
 
-        Dim solution =
-            TryCast(
-                Await _package.GetServiceAsync(GetType(SVsSolution)),
-                IVsSolution)
+        Dim solution = TryCast(Await _package.GetServiceAsync(GetType(SVsSolution)), IVsSolution)
 
         If solution Is Nothing Then
-            Throw New InvalidOperationException(
-                "The Visual Studio solution service is unavailable.")
+            Throw New InvalidOperationException("The Visual Studio solution service is unavailable.")
         End If
 
         Dim solutionDirectory As String = Nothing
         Dim solutionFile As String = Nothing
         Dim userOptionsFile As String = Nothing
 
-        Dim result = solution.GetSolutionInfo(
-            solutionDirectory,
-            solutionFile,
-            userOptionsFile)
+        Dim result = solution.GetSolutionInfo(solutionDirectory, solutionFile, userOptionsFile)
 
         ErrorHandler.ThrowOnFailure(result)
 
         Dim isOpen = Not String.IsNullOrWhiteSpace(solutionFile)
 
         Return New SolutionInfo With {
-            .Name = If(
-                isOpen,
-                Path.GetFileNameWithoutExtension(solutionFile),
-                Nothing),
+            .Name = If(isOpen, Path.GetFileNameWithoutExtension(solutionFile), Nothing),
             .FilePath = solutionFile,
             .DirectoryPath = solutionDirectory,
             .IsOpen = isOpen
@@ -56,7 +47,7 @@ Public Class VisualStudioSolutionService
     End Function
 
     Public Async Function GetProjectsAsync() As Task(Of IReadOnlyList(Of ProjectInfo)) Implements ISolutionService.GetProjectsAsync
-        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+        Await _threadingService.SwitchToMainThreadAsync()
 
         Dim solution = TryCast(Await _package.GetServiceAsync(GetType(SVsSolution)), IVsSolution)
 
@@ -91,9 +82,9 @@ Public Class VisualStudioSolutionService
 
     End Function
 
-    Private Shared Function GetProjectInfo(hierarchy As IVsHierarchy) As ProjectInfo
+    Private Function GetProjectInfo(hierarchy As IVsHierarchy) As ProjectInfo
 
-        ThreadHelper.ThrowIfNotOnUIThread()
+        _threadingService.ThrowIfNotOnMainThread()
 
         Dim projectGuid As Guid
 
@@ -143,9 +134,9 @@ Public Class VisualStudioSolutionService
         }
     End Function
 
-    Private Shared Function GetHierarchyProperty(hierarchy As IVsHierarchy, propertyId As __VSHPROPID) As String
+    Private Function GetHierarchyProperty(hierarchy As IVsHierarchy, propertyId As __VSHPROPID) As String
 
-        ThreadHelper.ThrowIfNotOnUIThread()
+        _threadingService.ThrowIfNotOnMainThread()
 
         Dim value As Object = Nothing
 
@@ -158,9 +149,9 @@ Public Class VisualStudioSolutionService
         Return value.ToString()
     End Function
 
-    Private Shared Function GetProjectFilePath(hierarchy As IVsHierarchy) As String
+    Private Function GetProjectFilePath(hierarchy As IVsHierarchy) As String
 
-        ThreadHelper.ThrowIfNotOnUIThread()
+        _threadingService.ThrowIfNotOnMainThread()
 
         Dim project = TryCast(hierarchy, IVsProject)
 

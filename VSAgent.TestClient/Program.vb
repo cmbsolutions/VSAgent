@@ -26,11 +26,11 @@ Module Program
                 Using writer = New StreamWriter(pipe, New UTF8Encoding(False), bufferSize:=4096, leaveOpen:=True)
                     writer.AutoFlush = True
 
-                    Console.WriteLine("Testing ping tool, expecting pong in return...")
+                    Console.WriteLine("Get available tools...")
 
                     Dim request As New AgentRequest With {
                         .Id = Guid.NewGuid().ToString(),
-                        .Tool = "ping",
+                        .Tool = "getAvailableTools",
                         .Parameters = New Dictionary(Of String, Object) From {}
                     }
 
@@ -41,6 +41,25 @@ Module Program
                     Await writer.WriteLineAsync(json)
 
                     Dim response = Await reader.ReadLineAsync()
+
+                    Console.WriteLine($"Received: {response}")
+
+
+                    Console.WriteLine("Testing ping tool, expecting pong in return...")
+
+                    request = New AgentRequest With {
+                        .Id = Guid.NewGuid().ToString(),
+                        .Tool = "ping",
+                        .Parameters = New Dictionary(Of String, Object) From {}
+                    }
+
+                    json = JsonSerializer.Serialize(request)
+
+                    Console.WriteLine($"Sending: {json}")
+
+                    Await writer.WriteLineAsync(json)
+
+                    response = Await reader.ReadLineAsync()
 
                     Console.WriteLine($"Received: {response}")
 
