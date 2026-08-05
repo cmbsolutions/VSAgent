@@ -7,6 +7,10 @@ Public Class VisualStudioThreadingService
         ThreadHelper.ThrowIfNotOnUIThread()
     End Sub
 
+    Public Sub ThrowIfNotOnUIThread() Implements IVisualStudioThreadingService.ThrowIfNotOnUIThread
+        ThreadHelper.ThrowIfNotOnUIThread()
+    End Sub
+
     Public Async Function SwitchToMainThreadAsync() As Task Implements IVisualStudioThreadingService.SwitchToMainThreadAsync
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
     End Function

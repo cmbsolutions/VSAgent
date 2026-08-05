@@ -2,6 +2,9 @@
 Imports VSAgent.Protocol.Tools
 
 Namespace Tools
+    ''' <summary>
+    ''' DEPRECATED: This tool is deprecated and will be removed in a future version. Use GetRoslynProjectsTool instead.
+    ''' </summary>
     Public Class GetProjectsTool
         Implements ITool
 
@@ -19,7 +22,7 @@ Namespace Tools
 
         Public ReadOnly Property Description As String Implements ITool.Description
             Get
-                Return "Gets a list of all projects in the current solution."
+                Return "Gets a list of all projects in the current solution SDK Style. DEPRECATED, use GetRoslynProjectsTool instead."
             End Get
         End Property
 
@@ -33,10 +36,16 @@ Namespace Tools
             End Get
         End Property
 
+        Public ReadOnly Property Version As Integer Implements ITool.Version
+            Get
+                Return -1
+            End Get
+        End Property
+
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
             Dim projects = Await _solutionService.GetProjectsAsync()
 
-            Return AgentResponse.Ok(request.Id, projects)
+            Return AgentResponse.Ok(request.Id, Version, projects)
         End Function
     End Class
 End Namespace

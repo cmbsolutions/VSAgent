@@ -2,7 +2,6 @@
 Imports System.IO.Pipes
 Imports System.Text
 Imports System.Text.Json
-Imports System.Text.Json.Serialization
 Imports System.Threading
 Imports VSAgent.Protocol.Messages
 
@@ -23,8 +22,7 @@ Public Class AgentPipeServer
     Public Sub Start()
         Debug.WriteLine("VSAgent: Starting server")
         If _serverTask IsNot Nothing Then
-            Throw New InvalidOperationException(
-                "The VSAgent server has already been started.")
+            Throw New InvalidOperationException("The VSAgent server has already been started.")
         End If
 
         Debug.WriteLine("VSAgent: Run server")
@@ -58,14 +56,12 @@ Public Class AgentPipeServer
 
             Debug.WriteLine("VSAgent: Waiting for client")
 
-            Await pipe.WaitForConnectionAsync(cancellationToken).
-                ConfigureAwait(False)
+            Await pipe.WaitForConnectionAsync(cancellationToken).ConfigureAwait(False)
 
             Debug.WriteLine("VSAgent: Client connected")
 
             Try
-                Await ProcessClientAsync(pipe, cancellationToken).
-                    ConfigureAwait(False)
+                Await ProcessClientAsync(pipe, cancellationToken).ConfigureAwait(False)
             Catch ex As Exception
                 Debug.WriteLine($"VSAgent: Error processing client: {ex}")
             End Try
@@ -139,30 +135,22 @@ Public Class AgentPipeServer
             Dim request = JsonSerializer.Deserialize(Of AgentRequest)(json)
 
             If request Is Nothing Then
-                Return AgentResponse.Failed(
-                    Nothing,
-                    "The request could not be deserialized.")
+                Return AgentResponse.Failed(Nothing, 0, "The request could not be deserialized.")
             End If
 
             Dim tool = _registry.GetTool(request.Tool)
 
             If tool Is Nothing Then
-                Return AgentResponse.Failed(
-                        request.Id,
-                        $"Unknown method: {request.Tool}")
+                Return AgentResponse.Failed(request.Id, 0, $"Unknown method: {request.Tool}")
             End If
 
             Return Await tool.ExecuteAsync(request)
 
         Catch ex As JsonException
-            Return AgentResponse.Failed(
-                Nothing,
-                $"Invalid JSON: {ex.Message}")
+            Return AgentResponse.Failed(Nothing, 0, $"Invalid JSON: {ex.Message}")
 
         Catch ex As Exception
-            Return AgentResponse.Failed(
-                Nothing,
-                ex.Message)
+            Return AgentResponse.Failed(Nothing, 0, ex.Message)
         End Try
 
     End Function

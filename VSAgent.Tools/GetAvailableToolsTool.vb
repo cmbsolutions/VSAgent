@@ -34,10 +34,16 @@ Namespace Tools
             End Get
         End Property
 
+        Public ReadOnly Property Version As Integer Implements ITool.Version
+            Get
+                Return 1
+            End Get
+        End Property
+
         Public Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
             Dim tools = _registry.GetAvailableTools()
 
-            Return Task.FromResult(AgentResponse.Ok(request.Id, tools))
+            Return Task.FromResult(AgentResponse.Ok(request.Id, Version, tools))
         End Function
     End Class
 End Namespace

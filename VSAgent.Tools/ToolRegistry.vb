@@ -22,9 +22,11 @@ Public Class ToolRegistry
         Return _tools.Values _
             .Select(Function(tool) New DTO.ToolDescriptor With {
                 .Name = tool.Name,
+                .Version = tool.Version,
                 .Description = tool.Description,
                 .Parameters = tool.ParametersSchema
             }) _
+            .Where(Function(tool) tool.Version >= 0) _
             .OrderBy(Function(tool) tool.Name) _
             .ToList()
     End Function

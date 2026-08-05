@@ -6,17 +6,19 @@
         Public Property Result As Object
         Public Property ErrorMessage As String
 
-        Public Shared Function Ok(id As String, result As Object) As AgentResponse
+        Public Shared Function Ok(id As String, version As Integer, result As Object) As AgentResponse
             Return New AgentResponse With {
                 .Id = id,
+                .Version = version,
                 .Success = True,
                 .Result = result
             }
         End Function
 
-        Public Shared Function Failed(id As String, message As String) As AgentResponse
+        Public Shared Function Failed(id As String, version As Integer, message As String) As AgentResponse
             Return New AgentResponse With {
                 .Id = id,
+                .Version = version,
                 .Success = False,
                 .ErrorMessage = message
             }

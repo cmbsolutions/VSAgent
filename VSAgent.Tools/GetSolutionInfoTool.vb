@@ -33,11 +33,17 @@ Namespace Tools
             End Get
         End Property
 
+        Public ReadOnly Property Version As Integer Implements ITool.Version
+            Get
+                Return 1
+            End Get
+        End Property
+
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
 
             Dim solutionInfo = Await _solutionService.GetSolutionInfoAsync()
 
-            Return AgentResponse.Ok(request.Id, solutionInfo)
+            Return AgentResponse.Ok(request.Id, Version, solutionInfo)
         End Function
     End Class
 End Namespace

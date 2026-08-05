@@ -84,7 +84,7 @@ Public Class VisualStudioSolutionService
 
     Private Function GetProjectInfo(hierarchy As IVsHierarchy) As ProjectInfo
 
-        _threadingService.ThrowIfNotOnMainThread()
+        _threadingService.ThrowIfNotOnUIThread()
 
         Dim projectGuid As Guid
 
@@ -136,7 +136,7 @@ Public Class VisualStudioSolutionService
 
     Private Function GetHierarchyProperty(hierarchy As IVsHierarchy, propertyId As __VSHPROPID) As String
 
-        _threadingService.ThrowIfNotOnMainThread()
+        _threadingService.ThrowIfNotOnUIThread()
 
         Dim value As Object = Nothing
 
@@ -151,7 +151,7 @@ Public Class VisualStudioSolutionService
 
     Private Function GetProjectFilePath(hierarchy As IVsHierarchy) As String
 
-        _threadingService.ThrowIfNotOnMainThread()
+        _threadingService.ThrowIfNotOnUIThread()
 
         Dim project = TryCast(hierarchy, IVsProject)
 

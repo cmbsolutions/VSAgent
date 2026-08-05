@@ -40,15 +40,21 @@ Namespace Tools
             End Get
         End Property
 
+        Public ReadOnly Property Version As Integer Implements ITool.Version
+            Get
+                Return 1
+            End Get
+        End Property
+
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
 
             Try
                 Dim projects = Await _workspaceService.GetProjectsAsync().ConfigureAwait(False)
 
-                Return AgentResponse.Ok(request.Id, projects)
+                Return AgentResponse.Ok(request.Id, Version, projects)
 
             Catch ex As Exception
-                Return AgentResponse.Failed(request.Id, ex.Message)
+                Return AgentResponse.Failed(request.Id, Version, ex.Message)
             End Try
 
         End Function

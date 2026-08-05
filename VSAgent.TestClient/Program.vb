@@ -2,6 +2,7 @@ Imports System.IO
 Imports System.IO.Pipes
 Imports System.Text
 Imports System.Text.Json
+Imports VSAgent.Protocol.DTO
 Imports VSAgent.Protocol.Messages
 
 Module Program
@@ -44,78 +45,29 @@ Module Program
 
                     Console.WriteLine($"Received: {response}")
 
+                    Dim toolResponse = JsonSerializer.Deserialize(Of AgentResponse)(response)
+                    Dim toolDescriptors As List(Of ToolDescriptor) = JsonSerializer.Deserialize(Of List(Of ToolDescriptor))(toolResponse.Result)
 
-                    Console.WriteLine("Testing ping tool, expecting pong in return...")
+                    For Each toolDescriptor In toolDescriptors
+                        Console.WriteLine($"Testing tool: {toolDescriptor.Name}, Version: {toolDescriptor.Version}...")
 
-                    request = New AgentRequest With {
-                        .Id = Guid.NewGuid().ToString(),
-                        .Tool = "ping",
-                        .Parameters = New Dictionary(Of String, Object) From {}
-                    }
+                        request = New AgentRequest With {
+                            .Id = Guid.NewGuid().ToString(),
+                            .Tool = toolDescriptor.Name,
+                            .Parameters = New Dictionary(Of String, Object) From {}
+                        }
 
-                    json = JsonSerializer.Serialize(request)
+                        json = JsonSerializer.Serialize(request)
 
-                    Console.WriteLine($"Sending: {json}")
+                        Console.WriteLine($"Sending: {json}")
 
-                    Await writer.WriteLineAsync(json)
+                        Await writer.WriteLineAsync(json)
 
-                    response = Await reader.ReadLineAsync()
+                        response = Await reader.ReadLineAsync()
 
-                    Console.WriteLine($"Received: {response}")
-
-                    Console.WriteLine("Testing getSolutionInfo tool, expecting solution info in return...")
-
-                    request = New AgentRequest With {
-                        .Id = Guid.NewGuid().ToString(),
-                        .Tool = "getSolutionInfo",
-                        .Parameters = New Dictionary(Of String, Object) From {}
-                    }
-
-                    json = JsonSerializer.Serialize(request)
-
-                    Console.WriteLine($"Sending: {json}")
-
-                    Await writer.WriteLineAsync(json)
-
-                    response = Await reader.ReadLineAsync()
-
-                    Console.WriteLine($"Received: {response}")
-
-                    Console.WriteLine("Testing getProjects tool, expecting project info in return...")
-
-                    request = New AgentRequest With {
-                        .Id = Guid.NewGuid().ToString(),
-                        .Tool = "getProjects",
-                        .Parameters = New Dictionary(Of String, Object) From {}
-                    }
-
-                    json = JsonSerializer.Serialize(request)
-
-                    Console.WriteLine($"Sending: {json}")
-
-                    Await writer.WriteLineAsync(json)
-
-                    response = Await reader.ReadLineAsync()
-
-                    Console.WriteLine($"Received: {response}")
-
-                    Console.WriteLine("Testing getRoslynProjects tool, expecting roslyn project info in return...")
-
-                    request = New AgentRequest With {
-                        .Id = Guid.NewGuid().ToString(),
-                        .Tool = "getRoslynProjects",
-                        .Parameters = New Dictionary(Of String, Object) From {}
-                    }
-
-                    json = JsonSerializer.Serialize(request)
-
-                    Console.WriteLine($"Sending: {json}")
-
-                    Await writer.WriteLineAsync(json)
-
-                    response = Await reader.ReadLineAsync()
-
-                    Console.WriteLine($"Received: {response}")
+                        Console.WriteLine($"Received: {response}")
+                        Console.WriteLine()
+                    Next
                 End Using
             End Using
         End Using
