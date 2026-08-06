@@ -17,10 +17,8 @@ Namespace VSAgent.Extension
             Await Me.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken)
 
 
-            Dim threadingService As IVisualStudioThreadingService = New VisualStudioThreadingService()
-
-            Dim solutionService As ISolutionService = New VisualStudioSolutionService(Me, threadingService)
-            Dim roslynWorkspaceService As IRoslynWorkspaceService = New VisualStudioRoslynWorkspaceService(Me, threadingService)
+            Dim solutionService As ISolutionService = New VisualStudioSolutionService(Me)
+            Dim roslynWorkspaceService As IRoslynWorkspaceService = New VisualStudioRoslynWorkspaceService(Me)
 
             Dim _registry = New ToolRegistry()
             _registry.Register(New Tools.PingTool())

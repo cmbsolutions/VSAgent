@@ -2,9 +2,7 @@
 Imports VSAgent.Protocol.Tools
 
 Namespace Tools
-    ''' <summary>
-    ''' DEPRECATED: This tool is deprecated and will be removed in a future version. Use GetRoslynProjectsTool instead.
-    ''' </summary>
+
     Public Class GetProjectsTool
         Implements ITool
 
@@ -22,7 +20,7 @@ Namespace Tools
 
         Public ReadOnly Property Description As String Implements ITool.Description
             Get
-                Return "Gets a list of all projects in the current solution SDK Style. DEPRECATED, use GetRoslynProjectsTool instead."
+                Return "Gets a list of all projects in the current solution SDK Style."
             End Get
         End Property
 
@@ -38,7 +36,7 @@ Namespace Tools
 
         Public ReadOnly Property Version As Integer Implements ITool.Version
             Get
-                Return -1
+                Return 1
             End Get
         End Property
 

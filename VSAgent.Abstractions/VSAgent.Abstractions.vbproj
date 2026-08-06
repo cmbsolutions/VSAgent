@@ -78,7 +78,6 @@
     <Compile Include="ISolutionService.vb" />
     <Compile Include="ITool.vb" />
     <Compile Include="IToolRegistry.vb" />
-    <Compile Include="IVisualStudioThreadingService.vb" />
     <Compile Include="IVSWorkspace.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">

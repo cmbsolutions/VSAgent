@@ -8,18 +8,16 @@ Public Class VisualStudioSolutionService
     Implements ISolutionService
 
     Private ReadOnly _package As AsyncPackage
-    Private ReadOnly _threadingService As IVisualStudioThreadingService
 
     Private Shared ReadOnly MiscellaneousFilesProjectGuid As New Guid("A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3")
 
-    Public Sub New(package As AsyncPackage, threadingService As IVisualStudioThreadingService)
+    Public Sub New(package As AsyncPackage)
         _package = package
-        _threadingService = threadingService
     End Sub
 
     Public Async Function GetSolutionInfoAsync() As Task(Of SolutionInfo) Implements ISolutionService.GetSolutionInfoAsync
 
-        Await _threadingService.SwitchToMainThreadAsync()
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
         Dim solution = TryCast(Await _package.GetServiceAsync(GetType(SVsSolution)), IVsSolution)
 
@@ -47,7 +45,7 @@ Public Class VisualStudioSolutionService
     End Function
 
     Public Async Function GetProjectsAsync() As Task(Of IReadOnlyList(Of ProjectInfo)) Implements ISolutionService.GetProjectsAsync
-        Await _threadingService.SwitchToMainThreadAsync()
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
         Dim solution = TryCast(Await _package.GetServiceAsync(GetType(SVsSolution)), IVsSolution)
 
@@ -82,9 +80,9 @@ Public Class VisualStudioSolutionService
 
     End Function
 
-    Private Function GetProjectInfo(hierarchy As IVsHierarchy) As ProjectInfo
+    Private Shared Function GetProjectInfo(hierarchy As IVsHierarchy) As ProjectInfo
 
-        _threadingService.ThrowIfNotOnUIThread()
+        ThreadHelper.ThrowIfNotOnUIThread()
 
         Dim projectGuid As Guid
 
@@ -134,9 +132,10 @@ Public Class VisualStudioSolutionService
         }
     End Function
 
-    Private Function GetHierarchyProperty(hierarchy As IVsHierarchy, propertyId As __VSHPROPID) As String
+    Private Shared Function GetHierarchyProperty(hierarchy As IVsHierarchy, propertyId As __VSHPROPID) As String
 
-        _threadingService.ThrowIfNotOnUIThread()
+        ThreadHelper.ThrowIfNotOnUIThread()
+
 
         Dim value As Object = Nothing
 
@@ -149,9 +148,10 @@ Public Class VisualStudioSolutionService
         Return value.ToString()
     End Function
 
-    Private Function GetProjectFilePath(hierarchy As IVsHierarchy) As String
+    Private Shared Function GetProjectFilePath(hierarchy As IVsHierarchy) As String
 
-        _threadingService.ThrowIfNotOnUIThread()
+        ThreadHelper.ThrowIfNotOnUIThread()
+
 
         Dim project = TryCast(hierarchy, IVsProject)
 

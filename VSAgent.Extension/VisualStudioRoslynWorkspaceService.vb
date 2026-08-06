@@ -8,16 +8,14 @@ Public Class VisualStudioRoslynWorkspaceService
     Implements IRoslynWorkspaceService
 
     Private ReadOnly _package As AsyncPackage
-    Private ReadOnly _threadingService As IVisualStudioThreadingService
 
-    Public Sub New(package As AsyncPackage, threadingService As IVisualStudioThreadingService)
+    Public Sub New(package As AsyncPackage)
 
         If package Is Nothing Then
             Throw New ArgumentNullException(NameOf(package))
         End If
 
         _package = package
-        _threadingService = threadingService
     End Sub
 
     Public Async Function GetProjectsAsync() As Task(Of IReadOnlyList(Of RoslynProjectInfo)) Implements IRoslynWorkspaceService.GetProjectsAsync
@@ -50,7 +48,7 @@ Public Class VisualStudioRoslynWorkspaceService
     Private Async Function GetWorkspaceAsync() As Task(Of VisualStudioWorkspace)
 
         ' We need the UI thread from visual studio to get the workspace service, so we switch to it here. When we have it we can switch back to the background thread to do the rest of the work.
-        Await _threadingService.SwitchToMainThreadAsync()
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
         Dim componentModel = TryCast(Await _package.GetServiceAsync(GetType(SComponentModel)), IComponentModel)
 
