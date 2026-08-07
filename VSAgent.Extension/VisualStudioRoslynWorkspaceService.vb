@@ -65,5 +65,4 @@ Public Class VisualStudioRoslynWorkspaceService
         Return workspace
 
     End Function
-
 End Class

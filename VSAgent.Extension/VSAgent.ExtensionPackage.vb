@@ -19,12 +19,16 @@ Namespace VSAgent.Extension
 
             Dim solutionService As ISolutionService = New VisualStudioSolutionService(Me)
             Dim roslynWorkspaceService As IRoslynWorkspaceService = New VisualStudioRoslynWorkspaceService(Me)
+            Dim documentService As IDocumentService = New VisualStudioDocumentService(Me)
 
             Dim _registry = New ToolRegistry()
             _registry.Register(New Tools.PingTool())
             _registry.Register(New Tools.GetSolutionInfoTool(solutionService))
             _registry.Register(New Tools.GetProjectsTool(solutionService))
             _registry.Register(New Tools.GetRoslynProjectsTool(roslynWorkspaceService))
+            _registry.Register(New Tools.GetActiveDocumentTool(documentService))
+
+            ' Thios one always last!!!!
             _registry.Register(New Tools.GetAvailableToolsTool(_registry))
 
             _agentServer = New AgentPipeServer(_registry)
