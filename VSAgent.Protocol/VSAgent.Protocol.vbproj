@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>VSAgent.Protocol</RootNamespace>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <OptionStrict>On</OptionStrict>
+    <UseApplicationFramework>False</UseApplicationFramework>
+	<SignAssembly>true</SignAssembly>
+	<AssemblyOriginatorKeyFile>..\VSAgent.Extension\Key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+</Project>
