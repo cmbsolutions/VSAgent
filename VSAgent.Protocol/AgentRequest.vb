@@ -1,4 +1,6 @@
-﻿Namespace Messages
+﻿Imports VSAgent.Protocol.Tools
+
+Namespace Messages
     Public Class AgentRequest
         Public Property Id As String
         Public Property Tool As String

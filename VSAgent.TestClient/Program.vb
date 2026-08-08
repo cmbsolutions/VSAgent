@@ -51,10 +51,21 @@ Module Program
                     For Each toolDescriptor In toolDescriptors
                         Console.WriteLine($"Testing tool: {toolDescriptor.Name}, Version: {toolDescriptor.Version}...")
 
+                        Dim params As New Dictionary(Of String, Object)()
+
+                        For Each param In toolDescriptor.Parameters.Properties
+                            Select Case param.Key
+                                Case "filePath"
+                                    params.Add(param.Key, "E:\My Documents\localRepos\sentiatools\sentiman.net\SentiMan.NET\mainGUI.vb")
+                                Case "documentId"
+                                    params.Add(param.Key, "some-document-id")
+                            End Select
+                        Next
+
                         request = New AgentRequest With {
                             .Id = Guid.NewGuid().ToString(),
                             .Tool = toolDescriptor.Name,
-                            .Parameters = New Dictionary(Of String, Object) From {}
+                            .Parameters = params
                         }
 
                         json = JsonSerializer.Serialize(request)

@@ -1,7 +1,7 @@
-﻿Imports System.Threading
-Imports EnvDTE
+﻿Imports EnvDTE
 Imports EnvDTE80
 Imports Microsoft.VisualStudio.ComponentModelHost
+Imports Microsoft.VisualStudio.Debugger.Interop
 Imports Microsoft.VisualStudio.LanguageServices
 Imports Microsoft.VisualStudio.Shell
 Imports VSAgent.Protocol.DTO
@@ -34,6 +34,7 @@ Public Class VisualStudioDocumentService
         If document Is Nothing Then
             Return Nothing
         End If
+
 
         Dim result As New ActiveDocumentInfo With {
             .Name = document.Name,
@@ -73,7 +74,7 @@ Public Class VisualStudioDocumentService
             result.ProjectName = document.ProjectItem.ContainingProject.Name
         End If
 
-        result.Language = GetLanguageFromFilePath(result.FilePath)
+        result.Language = document.Language
 
         Return result
     End Function
@@ -105,6 +106,63 @@ Public Class VisualStudioDocumentService
             Case Else
                 Return "Unknown"
         End Select
+
+    End Function
+
+    Public Async Function ReadDocumentAsync(Optional filePath As String = Nothing, Optional documentId As String = Nothing) As Task(Of RoslynDocument) Implements IDocumentService.ReadDocumentAsync
+
+        Dim workspace = Await GetWorkspaceAsync()
+
+        Dim document As Microsoft.CodeAnalysis.Document = Nothing
+
+        If documentId IsNot Nothing Then
+            document = workspace.CurrentSolution.Projects.
+                SelectMany(Function(p) p.Documents).
+                FirstOrDefault(Function(d) String.Equals(d.Id.Id.ToString, documentId, StringComparison.OrdinalIgnoreCase))
+        End If
+
+        If document Is Nothing AndAlso filePath IsNot Nothing Then
+            document = workspace.CurrentSolution.Projects.
+                SelectMany(Function(p) p.Documents).
+                FirstOrDefault(Function(d) String.Equals(d.FilePath, filePath, StringComparison.OrdinalIgnoreCase))
+        End If
+
+        If document Is Nothing Then
+            Return Nothing
+        End If
+
+        Dim docText = Await document.GetTextAsync().ConfigureAwait(False)
+
+        Return New RoslynDocument With {
+            .DocumentID = document.Id.Id.ToString,
+            .FilePath = document.FilePath,
+            .Language = GetLanguageFromFilePath(document.FilePath),
+            .Name = document.Name,
+            .ProjectName = document.Project.Name,
+            .Text = docText.ToString,
+            .Version = "1"
+        }
+    End Function
+
+
+    Private Async Function GetWorkspaceAsync() As Task(Of VisualStudioWorkspace)
+
+        ' We need the UI thread from visual studio to get the workspace service, so we switch to it here. When we have it we can switch back to the background thread to do the rest of the work.
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+
+        Dim componentModel = TryCast(Await _package.GetServiceAsync(GetType(SComponentModel)), IComponentModel)
+
+        If componentModel Is Nothing Then
+            Throw New InvalidOperationException("The Visual Studio component model is unavailable.")
+        End If
+
+        Dim workspace = componentModel.GetService(Of VisualStudioWorkspace)()
+
+        If workspace Is Nothing Then
+            Throw New InvalidOperationException("The Visual Studio Roslyn workspace is unavailable.")
+        End If
+
+        Return workspace
 
     End Function
 End Class

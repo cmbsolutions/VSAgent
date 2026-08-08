@@ -94,6 +94,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="PingTool.vb" />
+    <Compile Include="ReadDocumentTool.vb" />
     <Compile Include="ToolRegistry.vb" />
   </ItemGroup>
   <ItemGroup>
