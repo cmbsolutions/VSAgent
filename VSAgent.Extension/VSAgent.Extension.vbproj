@@ -30,6 +30,7 @@
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="4.14.0" IncludeAssets="compile" PrivateAssets="all" />
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.8.739" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VSAgent.Abstractions\VSAgent.Abstractions.vbproj" />

@@ -1,10 +1,10 @@
 Imports System.IO
 Imports System.IO.Pipes
 Imports System.Text
-Imports System.Text.Json
 Imports VSAgent.Protocol.DTO
 Imports VSAgent.Protocol.Messages
-
+Imports Newtonsoft.Json
+Imports Newtonsoft.Json.Linq
 Module Program
 
     Sub Main(args As String())
@@ -32,10 +32,10 @@ Module Program
                     Dim request As New AgentRequest With {
                         .Id = Guid.NewGuid().ToString(),
                         .Tool = "getAvailableTools",
-                        .Parameters = New Dictionary(Of String, Object) From {}
+                        .Parameters = New JObject()
                     }
 
-                    Dim json = JsonSerializer.Serialize(request)
+                    Dim json = JsonConvert.SerializeObject(request)
 
                     Console.WriteLine($"Sending: {json}")
 
@@ -45,13 +45,17 @@ Module Program
 
                     Console.WriteLine($"Received: {response}")
 
-                    Dim toolResponse = JsonSerializer.Deserialize(Of AgentResponse)(response)
-                    Dim toolDescriptors As List(Of ToolDescriptor) = JsonSerializer.Deserialize(Of List(Of ToolDescriptor))(toolResponse.Result)
+                    Dim toolResponse = JsonConvert.DeserializeObject(Of AgentResponse)(response)
+                    Console.WriteLine(toolResponse)
+
+                    Dim result As JArray = DirectCast(toolResponse.Result, JArray)
+
+                    Dim toolDescriptors As List(Of ToolDescriptor) = result.ToObject(Of List(Of ToolDescriptor))
 
                     For Each toolDescriptor In toolDescriptors
                         Console.WriteLine($"Testing tool: {toolDescriptor.Name}, Version: {toolDescriptor.Version}...")
 
-                        Dim params As New Dictionary(Of String, Object)()
+                        Dim params As New JObject
 
                         For Each param In toolDescriptor.Parameters.Properties
                             Select Case param.Key
@@ -59,6 +63,8 @@ Module Program
                                     params.Add(param.Key, "E:\My Documents\localRepos\sentiatools\sentiman.net\SentiMan.NET\mainGUI.vb")
                                 Case "documentId"
                                     params.Add(param.Key, "some-document-id")
+                                Case "SymbolName"
+                                    params.Add(param.Key, "XAccount")
                             End Select
                         Next
 
@@ -68,7 +74,7 @@ Module Program
                             .Parameters = params
                         }
 
-                        json = JsonSerializer.Serialize(request)
+                        json = JsonConvert.SerializeObject(request)
 
                         Console.WriteLine($"Sending: {json}")
 
