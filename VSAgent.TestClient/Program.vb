@@ -45,46 +45,66 @@ Module Program
 
                     Console.WriteLine($"Received: {response}")
 
-                    Dim toolResponse = JsonConvert.DeserializeObject(Of AgentResponse)(response)
-                    Console.WriteLine(toolResponse)
+                    Console.WriteLine("Get active document...")
 
+                    request = New AgentRequest With {
+                        .Id = Guid.NewGuid().ToString(),
+                        .Tool = "getActiveDocument",
+                        .Parameters = New JObject()
+                    }
+
+                    json = JsonConvert.SerializeObject(request)
+
+                    Console.WriteLine($"Sending: {json}")
+
+                    Await writer.WriteLineAsync(json)
+
+                    response = Await reader.ReadLineAsync()
+
+                    Console.WriteLine($"Received: {response}")
+
+                    Dim toolResponse = JsonConvert.DeserializeObject(Of AgentResponse)(response)
                     Dim result As JArray = DirectCast(toolResponse.Result, JArray)
 
-                    Dim toolDescriptors As List(Of ToolDescriptor) = result.ToObject(Of List(Of ToolDescriptor))
+                    'Dim toolDescriptors As List(Of ToolDescriptor) = result.ToObject(Of List(Of ToolDescriptor))
 
-                    For Each toolDescriptor In toolDescriptors
-                        Console.WriteLine($"Testing tool: {toolDescriptor.Name}, Version: {toolDescriptor.Version}...")
+                    'For Each toolDescriptor In toolDescriptors
+                    '    Console.WriteLine($"Testing tool: {toolDescriptor.Name}, Version: {toolDescriptor.Version}...")
 
-                        Dim params As New JObject
+                    '    Dim params As New JObject
 
-                        For Each param In toolDescriptor.Parameters.Properties
-                            Select Case param.Key
-                                Case "filePath"
-                                    params.Add(param.Key, "E:\My Documents\localRepos\sentiatools\sentiman.net\SentiMan.NET\mainGUI.vb")
-                                Case "documentId"
-                                    params.Add(param.Key, "some-document-id")
-                                Case "SymbolName"
-                                    params.Add(param.Key, "XAccount")
-                            End Select
-                        Next
+                    '    For Each param In toolDescriptor.Parameters.Properties
+                    '        Select Case param.Key
+                    '            Case "filePath"
+                    '                params.Add(param.Key, "E:\My Documents\localRepos\sentiatools\sentiman.net\SentiMan.NET\mainGUI.vb")
+                    '            Case "documentId"
+                    '                params.Add(param.Key, "58d5461c-5596-4b23-8151-319cc22f1751")
+                    '            Case "line"
+                    '                params.Add(param.Key, 5)
+                    '            Case "column"
+                    '                params.Add(param.Key, 14)
+                    '            Case "SymbolName"
+                    '                params.Add(param.Key, "XAccount")
+                    '        End Select
+                    '    Next
 
-                        request = New AgentRequest With {
-                            .Id = Guid.NewGuid().ToString(),
-                            .Tool = toolDescriptor.Name,
-                            .Parameters = params
-                        }
+                    '    request = New AgentRequest With {
+                    '        .Id = Guid.NewGuid().ToString(),
+                    '        .Tool = toolDescriptor.Name,
+                    '        .Parameters = params
+                    '    }
 
-                        json = JsonConvert.SerializeObject(request)
+                    '    json = JsonConvert.SerializeObject(request)
 
-                        Console.WriteLine($"Sending: {json}")
+                    '    Console.WriteLine($"Sending: {json}")
 
-                        Await writer.WriteLineAsync(json)
+                    '    Await writer.WriteLineAsync(json)
 
-                        response = Await reader.ReadLineAsync()
+                    '    response = Await reader.ReadLineAsync()
 
-                        Console.WriteLine($"Received: {response}")
-                        Console.WriteLine()
-                    Next
+                    '    Console.WriteLine($"Received: {response}")
+                    '    Console.WriteLine()
+                    'Next
                 End Using
             End Using
         End Using
