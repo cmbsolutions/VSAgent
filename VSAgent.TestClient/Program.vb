@@ -64,7 +64,56 @@ Module Program
                     Console.WriteLine($"Received: {response}")
 
                     Dim toolResponse = JsonConvert.DeserializeObject(Of AgentResponse)(response)
-                    Dim result As JArray = DirectCast(toolResponse.Result, JArray)
+                    Dim activeDocument As ActiveDocumentInfo = toolResponse.GetResult(Of ActiveDocumentInfo)
+
+                    Console.WriteLine("Get symbol...")
+
+                    Dim params As New JObject From {
+                        {"SymbolName", activeDocument.SelectionText}
+                    }
+
+                    request = New AgentRequest With {
+                        .Id = Guid.NewGuid().ToString(),
+                        .Tool = "findSymbol",
+                        .Parameters = params
+                    }
+
+                    json = JsonConvert.SerializeObject(request)
+
+                    Console.WriteLine($"Sending: {json}")
+
+                    Await writer.WriteLineAsync(json)
+
+                    response = Await reader.ReadLineAsync()
+
+                    Console.WriteLine($"Received: {response}")
+
+                    toolResponse = JsonConvert.DeserializeObject(Of AgentResponse)(response)
+
+                    Dim foundSymbols = toolResponse.GetResult(Of IReadOnlyList(Of RoslynSymbolInfo))()
+
+                    params = New JObject From {
+                        {"DocumentId", foundSymbols.First.DocumentId},
+                        {"Line", foundSymbols.First.Line},
+                        {"Column", foundSymbols.First.Column}
+                    }
+
+                    request = New AgentRequest With {
+                        .Id = Guid.NewGuid().ToString(),
+                        .Tool = "findReferences",
+                        .Parameters = params
+                    }
+
+                    json = JsonConvert.SerializeObject(request)
+
+                    Console.WriteLine($"Sending: {json}")
+
+                    Await writer.WriteLineAsync(json)
+                    response = Await reader.ReadLineAsync()
+
+                    Console.WriteLine($"Received: {response}")
+
+                    'Dim result As JArray = DirectCast(toolResponse.Result, JArray)
 
                     'Dim toolDescriptors As List(Of ToolDescriptor) = result.ToObject(Of List(Of ToolDescriptor))
 

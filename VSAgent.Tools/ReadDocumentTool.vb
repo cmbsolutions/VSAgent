@@ -43,7 +43,7 @@ Namespace Tools
                             .Description = "The full file path of the document to read."
                         }}
                     },
-                    .Required = New List(Of String) From {"At least one of 'documentId' or 'filePath' is required"}
+                    .Required = New List(Of String) From {"documentId", "filePath"}
                 }
             End Get
         End Property
