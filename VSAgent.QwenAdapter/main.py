@@ -1,3 +1,5 @@
+# Do not use this, use `useollamaopenai.py`
+
 import json
 from qwen_agent.agents import Assistant
 
