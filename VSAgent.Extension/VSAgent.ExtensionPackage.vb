@@ -21,6 +21,8 @@ Namespace VSAgent.Extension
             Dim roslynWorkspaceService As IRoslynWorkspaceService = New VisualStudioRoslynWorkspaceService(Me)
             Dim documentService As IDocumentService = New VisualStudioDocumentService(Me)
             Dim findSymbolsService As ISymbolService = New VisualStudioFindSymbolsService(Me, cancellationToken)
+            Dim roslynDiagnosticsService As IRoslynDiagnosticsService = New VisualStudioDiagnosticsService(Me, cancellationToken)
+
 
             Dim _registry = New ToolRegistry()
             _registry.Register(New Tools.PingTool())
@@ -31,8 +33,9 @@ Namespace VSAgent.Extension
             _registry.Register(New Tools.ReadDocumentTool(documentService))
             _registry.Register(New Tools.FindSymbolsTool(findSymbolsService))
             _registry.Register(New Tools.FindReferencesTool(findSymbolsService))
+            _registry.Register(New Tools.GetRoslynDiagnosticsTool(roslynDiagnosticsService))
 
-            ' Thios one always last!!!!
+            ' This one always last!!!!
             _registry.Register(New Tools.GetAvailableToolsTool(_registry))
 
             _agentServer = New AgentPipeServer(_registry)

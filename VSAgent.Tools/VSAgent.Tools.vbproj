@@ -77,6 +77,7 @@
     <Compile Include="GetActiveDocumentTool.vb" />
     <Compile Include="GetAvailableToolsTool.vb" />
     <Compile Include="GetProjectsTool.vb" />
+    <Compile Include="GetRoslynDiagnosticsTool.vb" />
     <Compile Include="GetRoslynProjectsTool.vb" />
     <Compile Include="GetSolutionInfoTool.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
