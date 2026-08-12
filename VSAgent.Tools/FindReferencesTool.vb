@@ -3,29 +3,29 @@ Imports VSAgent.Protocol.Parameters
 Imports VSAgent.Protocol.Tools
 
 Namespace Tools
-    Public Class ReadDocumentTool
+    Public Class FindReferencesTool
         Implements ITool
 
-        Private ReadOnly _documentService As IDocumentService
+        Private ReadOnly _symbolService As ISymbolService
 
-        Public Sub New(documentService As IDocumentService)
+        Public Sub New(symbolService As ISymbolService)
 
-            If documentService Is Nothing Then
-                Throw New ArgumentNullException(NameOf(documentService))
+            If symbolService Is Nothing Then
+                Throw New ArgumentNullException(NameOf(symbolService))
             End If
 
-            _documentService = documentService
+            _symbolService = symbolService
         End Sub
 
         Public ReadOnly Property Name As String Implements ITool.Name
             Get
-                Return "readDocument"
+                Return "findReferences"
             End Get
         End Property
 
         Public ReadOnly Property Description As String Implements ITool.Description
             Get
-                Return "Reads the content of a document and returns it as a string."
+                Return "Finds all source references to a symbol identified by its document and source position."
             End Get
         End Property
 
@@ -36,14 +36,22 @@ Namespace Tools
                     .Properties = New Dictionary(Of String, ToolPropertySchema) From {
                         {"documentId", New ToolPropertySchema With {
                             .Type = "string",
-                            .Description = "The ID of the document to read."
+                            .Description = "Roslyn document ID containing the symbol."
                         }},
-                        {"filePath", New ToolPropertySchema With {
-                            .Type = "string",
-                            .Description = "The full file path of the document to read."
+                        {"line", New ToolPropertySchema With {
+                            .Type = "integer",
+                            .Description = "1-based line containing the symbol."
+                        }},
+                        {"column", New ToolPropertySchema With {
+                            .Type = "integer",
+                            .Description = "1-based column inside the symbol."
                         }}
                     },
-                    .Required = New List(Of String) From {"documentId", "filePath"}
+                    .Required = New List(Of String) From {
+                        "documentId",
+                        "line",
+                        "column"
+                    }
                 }
             End Get
         End Property
@@ -56,11 +64,11 @@ Namespace Tools
 
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
             Try
-                Dim parameters = request.GetParameters(Of ReadDocumentParameters)()
+                Dim parameters = request.GetParameters(Of FindReferenceParameters)()
 
-                Dim document = Await _documentService.ReadDocumentAsync(parameters.FilePath, parameters.DocumentId).ConfigureAwait(False)
+                Dim symbol = Await _symbolService.FindReferencesAsync(parameters.DocumentId, parameters.Line, parameters.Column).ConfigureAwait(False)
 
-                Return AgentResponse.Ok(request.Id, Version, document)
+                Return AgentResponse.Ok(request.Id, Version, symbol)
 
             Catch ex As Exception
                 Return AgentResponse.Failed(request.Id, Version, ex.Message)

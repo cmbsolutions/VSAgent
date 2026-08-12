@@ -3,29 +3,29 @@ Imports VSAgent.Protocol.Parameters
 Imports VSAgent.Protocol.Tools
 
 Namespace Tools
-    Public Class ReadDocumentTool
+    Public Class FindSymbolsTool
         Implements ITool
 
-        Private ReadOnly _documentService As IDocumentService
+        Private ReadOnly _symbolService As ISymbolService
 
-        Public Sub New(documentService As IDocumentService)
+        Public Sub New(symbolService As ISymbolService)
 
-            If documentService Is Nothing Then
-                Throw New ArgumentNullException(NameOf(documentService))
+            If symbolService Is Nothing Then
+                Throw New ArgumentNullException(NameOf(symbolService))
             End If
 
-            _documentService = documentService
+            _symbolService = symbolService
         End Sub
 
         Public ReadOnly Property Name As String Implements ITool.Name
             Get
-                Return "readDocument"
+                Return "findSymbol"
             End Get
         End Property
 
         Public ReadOnly Property Description As String Implements ITool.Description
             Get
-                Return "Reads the content of a document and returns it as a string."
+                Return "Search by symbol name and returns matching classes, methods, properties, fields, etc."
             End Get
         End Property
 
@@ -34,16 +34,12 @@ Namespace Tools
                 Return New ToolParameterSchema With {
                     .Type = "object",
                     .Properties = New Dictionary(Of String, ToolPropertySchema) From {
-                        {"documentId", New ToolPropertySchema With {
+                        {"SymbolName", New ToolPropertySchema With {
                             .Type = "string",
-                            .Description = "The ID of the document to read."
-                        }},
-                        {"filePath", New ToolPropertySchema With {
-                            .Type = "string",
-                            .Description = "The full file path of the document to read."
+                            .Description = "The name of the symbol to search for."
                         }}
                     },
-                    .Required = New List(Of String) From {"documentId", "filePath"}
+                    .Required = New List(Of String) From {"SymbolName"}
                 }
             End Get
         End Property
@@ -56,11 +52,11 @@ Namespace Tools
 
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
             Try
-                Dim parameters = request.GetParameters(Of ReadDocumentParameters)()
+                Dim parameters = request.GetParameters(Of FindSymbolParameters)()
 
-                Dim document = Await _documentService.ReadDocumentAsync(parameters.FilePath, parameters.DocumentId).ConfigureAwait(False)
+                Dim symbol = Await _symbolService.FindSymbolsAsync(parameters.SymbolName).ConfigureAwait(False)
 
-                Return AgentResponse.Ok(request.Id, Version, document)
+                Return AgentResponse.Ok(request.Id, Version, symbol)
 
             Catch ex As Exception
                 Return AgentResponse.Failed(request.Id, Version, ex.Message)

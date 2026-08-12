@@ -1,9 +1,9 @@
 ﻿Imports System.IO
 Imports System.IO.Pipes
 Imports System.Text
-Imports System.Text.Json
 Imports System.Threading
 Imports VSAgent.Protocol.Messages
+Imports Newtonsoft.Json
 
 Public Class AgentPipeServer
     Implements IDisposable
@@ -98,7 +98,7 @@ Public Class AgentPipeServer
 
                 Dim response = Await HandleRequestAsync(json).ConfigureAwait(False)
 
-                Dim responseJson = JsonSerializer.Serialize(response)
+                Dim responseJson = JsonConvert.SerializeObject(response)
 
                 Try
                     Await writer.WriteLineAsync(responseJson).ConfigureAwait(False)
@@ -132,7 +132,7 @@ Public Class AgentPipeServer
     Private Async Function HandleRequestAsync(json As String) As Task(Of AgentResponse)
 
         Try
-            Dim request = JsonSerializer.Deserialize(Of AgentRequest)(json)
+            Dim request = JsonConvert.DeserializeObject(Of AgentRequest)(json)
 
             If request Is Nothing Then
                 Return AgentResponse.Failed(Nothing, 0, "The request could not be deserialized.")

@@ -1,4 +1,6 @@
-﻿Namespace Messages
+﻿Imports Newtonsoft.Json.Linq
+
+Namespace Messages
     Public Class AgentResponse
         Public Property Id As String
         Public Property Version As Integer
@@ -22,6 +24,21 @@
                 .Success = False,
                 .ErrorMessage = message
             }
+        End Function
+
+        Public Function GetResult(Of T)() As T
+
+            If Result Is Nothing Then
+                Return Nothing
+            End If
+
+            Dim token = TryCast(Result, JToken)
+
+            If token IsNot Nothing Then
+                Return token.ToObject(Of T)()
+            End If
+
+            Return JObject.FromObject(Result).ToObject(Of T)()
         End Function
     End Class
 End Namespace

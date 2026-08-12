@@ -72,6 +72,8 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FindReferencesTool.vb" />
+    <Compile Include="FindSymbolsTool.vb" />
     <Compile Include="GetActiveDocumentTool.vb" />
     <Compile Include="GetAvailableToolsTool.vb" />
     <Compile Include="GetProjectsTool.vb" />
@@ -125,6 +127,11 @@
       <Project>{4962abf8-84ff-423b-a8a6-c0ea77e0e0dd}</Project>
       <Name>VSAgent.Protocol</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.4</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

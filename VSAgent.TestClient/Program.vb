@@ -1,10 +1,10 @@
 Imports System.IO
 Imports System.IO.Pipes
 Imports System.Text
-Imports System.Text.Json
 Imports VSAgent.Protocol.DTO
 Imports VSAgent.Protocol.Messages
-
+Imports Newtonsoft.Json
+Imports Newtonsoft.Json.Linq
 Module Program
 
     Sub Main(args As String())
@@ -32,10 +32,10 @@ Module Program
                     Dim request As New AgentRequest With {
                         .Id = Guid.NewGuid().ToString(),
                         .Tool = "getAvailableTools",
-                        .Parameters = New Dictionary(Of String, Object) From {}
+                        .Parameters = New JObject()
                     }
 
-                    Dim json = JsonSerializer.Serialize(request)
+                    Dim json = JsonConvert.SerializeObject(request)
 
                     Console.WriteLine($"Sending: {json}")
 
@@ -45,40 +45,115 @@ Module Program
 
                     Console.WriteLine($"Received: {response}")
 
-                    Dim toolResponse = JsonSerializer.Deserialize(Of AgentResponse)(response)
-                    Dim toolDescriptors As List(Of ToolDescriptor) = JsonSerializer.Deserialize(Of List(Of ToolDescriptor))(toolResponse.Result)
+                    Console.WriteLine("Get active document...")
 
-                    For Each toolDescriptor In toolDescriptors
-                        Console.WriteLine($"Testing tool: {toolDescriptor.Name}, Version: {toolDescriptor.Version}...")
+                    request = New AgentRequest With {
+                        .Id = Guid.NewGuid().ToString(),
+                        .Tool = "getActiveDocument",
+                        .Parameters = New JObject()
+                    }
 
-                        Dim params As New Dictionary(Of String, Object)()
+                    json = JsonConvert.SerializeObject(request)
 
-                        For Each param In toolDescriptor.Parameters.Properties
-                            Select Case param.Key
-                                Case "filePath"
-                                    params.Add(param.Key, "E:\My Documents\localRepos\sentiatools\sentiman.net\SentiMan.NET\mainGUI.vb")
-                                Case "documentId"
-                                    params.Add(param.Key, "some-document-id")
-                            End Select
-                        Next
+                    Console.WriteLine($"Sending: {json}")
 
-                        request = New AgentRequest With {
-                            .Id = Guid.NewGuid().ToString(),
-                            .Tool = toolDescriptor.Name,
-                            .Parameters = params
-                        }
+                    Await writer.WriteLineAsync(json)
 
-                        json = JsonSerializer.Serialize(request)
+                    response = Await reader.ReadLineAsync()
 
-                        Console.WriteLine($"Sending: {json}")
+                    Console.WriteLine($"Received: {response}")
 
-                        Await writer.WriteLineAsync(json)
+                    Dim toolResponse = JsonConvert.DeserializeObject(Of AgentResponse)(response)
+                    Dim activeDocument As ActiveDocumentInfo = toolResponse.GetResult(Of ActiveDocumentInfo)
 
-                        response = Await reader.ReadLineAsync()
+                    Console.WriteLine("Get symbol...")
 
-                        Console.WriteLine($"Received: {response}")
-                        Console.WriteLine()
-                    Next
+                    Dim params As New JObject From {
+                        {"SymbolName", activeDocument.SelectionText}
+                    }
+
+                    request = New AgentRequest With {
+                        .Id = Guid.NewGuid().ToString(),
+                        .Tool = "findSymbol",
+                        .Parameters = params
+                    }
+
+                    json = JsonConvert.SerializeObject(request)
+
+                    Console.WriteLine($"Sending: {json}")
+
+                    Await writer.WriteLineAsync(json)
+
+                    response = Await reader.ReadLineAsync()
+
+                    Console.WriteLine($"Received: {response}")
+
+                    toolResponse = JsonConvert.DeserializeObject(Of AgentResponse)(response)
+
+                    Dim foundSymbols = toolResponse.GetResult(Of IReadOnlyList(Of RoslynSymbolInfo))()
+
+                    params = New JObject From {
+                        {"DocumentId", foundSymbols.First.DocumentId},
+                        {"Line", foundSymbols.First.Line},
+                        {"Column", foundSymbols.First.Column}
+                    }
+
+                    request = New AgentRequest With {
+                        .Id = Guid.NewGuid().ToString(),
+                        .Tool = "findReferences",
+                        .Parameters = params
+                    }
+
+                    json = JsonConvert.SerializeObject(request)
+
+                    Console.WriteLine($"Sending: {json}")
+
+                    Await writer.WriteLineAsync(json)
+                    response = Await reader.ReadLineAsync()
+
+                    Console.WriteLine($"Received: {response}")
+
+                    'Dim result As JArray = DirectCast(toolResponse.Result, JArray)
+
+                    'Dim toolDescriptors As List(Of ToolDescriptor) = result.ToObject(Of List(Of ToolDescriptor))
+
+                    'For Each toolDescriptor In toolDescriptors
+                    '    Console.WriteLine($"Testing tool: {toolDescriptor.Name}, Version: {toolDescriptor.Version}...")
+
+                    '    Dim params As New JObject
+
+                    '    For Each param In toolDescriptor.Parameters.Properties
+                    '        Select Case param.Key
+                    '            Case "filePath"
+                    '                params.Add(param.Key, "E:\My Documents\localRepos\sentiatools\sentiman.net\SentiMan.NET\mainGUI.vb")
+                    '            Case "documentId"
+                    '                params.Add(param.Key, "58d5461c-5596-4b23-8151-319cc22f1751")
+                    '            Case "line"
+                    '                params.Add(param.Key, 5)
+                    '            Case "column"
+                    '                params.Add(param.Key, 14)
+                    '            Case "SymbolName"
+                    '                params.Add(param.Key, "XAccount")
+                    '        End Select
+                    '    Next
+
+                    '    request = New AgentRequest With {
+                    '        .Id = Guid.NewGuid().ToString(),
+                    '        .Tool = toolDescriptor.Name,
+                    '        .Parameters = params
+                    '    }
+
+                    '    json = JsonConvert.SerializeObject(request)
+
+                    '    Console.WriteLine($"Sending: {json}")
+
+                    '    Await writer.WriteLineAsync(json)
+
+                    '    response = Await reader.ReadLineAsync()
+
+                    '    Console.WriteLine($"Received: {response}")
+                    '    Console.WriteLine()
+                    'Next
                 End Using
             End Using
         End Using
