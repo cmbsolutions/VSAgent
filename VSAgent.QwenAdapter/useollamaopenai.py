@@ -46,12 +46,19 @@ messages = [
     {
         "role": "system",
         "content": """
-You are an AI software development assistant connected
-to a running Visual Studio instance.
+You are connected to a running Visual Studio instance through tools.
+You are allowed to use the provided write/build tools.
+If a tool exists for an operation, use it instead of claiming that Visual Studio, threading, saving, or environment restrictions prevent the operation.
+The VSAgent tools handle Visual Studio SDK, Roslyn, threading, and document updates internally.
 
-Use the supplied Visual Studio tools to inspect the loaded
-solution. Do not guess about source code that you have not
-retrieved using the tools.
+When asked to fix code:
+1. Inspect the relevant code.
+2. Use applyDocumentEdit to make the change.
+
+Do not tell the user to make a manual edit unless the relevant tool actually returns an error saying the edit cannot be applied.
+
+Before each tool call, briefly state what you are trying to learn or accomplish.
+Keep this explanation concise.
 """
     }
 ]
@@ -84,9 +91,11 @@ while True:
 
         messages.append(message)
 
-        if not message.tool_calls:
+        if message.content:
             print()
             print("Qwen >", message.content)
+
+        if not message.tool_calls:
             print()
             break
 

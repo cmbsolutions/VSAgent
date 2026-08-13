@@ -1,10 +1,6 @@
 ﻿Imports System.Threading
 Imports Microsoft.CodeAnalysis
-Imports Microsoft.VisualStudio.ComponentModelHost
-Imports Microsoft.VisualStudio.LanguageServices
 Imports Microsoft.VisualStudio.Shell
-Imports VSAgent
-Imports VSAgent.Protocol
 Imports VSAgent.Protocol.DTO
 
 Public Class VisualStudioDiagnosticsService

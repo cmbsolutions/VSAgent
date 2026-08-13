@@ -1,10 +1,10 @@
 Imports System.IO
 Imports System.IO.Pipes
 Imports System.Text
-Imports VSAgent.Protocol.DTO
-Imports VSAgent.Protocol.Messages
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
+Imports VSAgent.Protocol.DTO
+Imports VSAgent.Protocol.Messages
 Module Program
 
     Sub Main(args As String())

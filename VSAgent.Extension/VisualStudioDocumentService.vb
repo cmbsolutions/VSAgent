@@ -1,7 +1,5 @@
 ﻿Imports EnvDTE
 Imports EnvDTE80
-Imports Microsoft.VisualStudio.ComponentModelHost
-Imports Microsoft.VisualStudio.LanguageServices
 Imports Microsoft.VisualStudio.Shell
 Imports VSAgent.Protocol.DTO
 
