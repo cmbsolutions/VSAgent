@@ -54,11 +54,12 @@ The VSAgent tools handle Visual Studio SDK, Roslyn, threading, and document upda
 When asked to fix code:
 1. Inspect the relevant code.
 2. Use applyDocumentEdit to make the change.
+3. Try to build the solution.
+4. Repeat these steps until the build is successfully completed.
 
-Do not tell the user to make a manual edit unless the relevant tool actually returns an error saying the edit cannot be applied.
+When a tool returns an error, report this back to the user! 
 
-Before each tool call, briefly state what you are trying to learn or accomplish.
-Keep this explanation concise.
+Very important, before each tool call, briefly state what you are trying to learn or accomplish. Keep this explanation concise. This must never be forgotten!
 """
     }
 ]

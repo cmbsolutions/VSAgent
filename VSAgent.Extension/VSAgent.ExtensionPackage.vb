@@ -16,14 +16,16 @@ Namespace VSAgent.Extension
         Protected Overrides Async Function InitializeAsync(ByVal cancellationToken As CancellationToken, ByVal progress As IProgress(Of ServiceProgressData)) As Task
             Await Me.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken)
 
-
+            ' All available services
             Dim solutionService As ISolutionService = New VisualStudioSolutionService(Me)
             Dim roslynWorkspaceService As IRoslynWorkspaceService = New VisualStudioRoslynWorkspaceService(Me)
             Dim documentService As IDocumentService = New VisualStudioDocumentService(Me)
             Dim findSymbolsService As ISymbolService = New VisualStudioFindSymbolsService(Me, cancellationToken)
             Dim roslynDiagnosticsService As IRoslynDiagnosticsService = New VisualStudioDiagnosticsService(Me, cancellationToken)
             Dim documentEditService As IDocumentEditService = New VisualStudioDocumentEditService(Me, cancellationToken)
+            Dim buildService As IBuildService = New VisualStudioBuildService(Me, cancellationToken)
 
+            ' All available tools
             Dim _registry = New ToolRegistry()
             _registry.Register(New Tools.PingTool())
             _registry.Register(New Tools.GetSolutionInfoTool(solutionService))
@@ -35,6 +37,7 @@ Namespace VSAgent.Extension
             _registry.Register(New Tools.FindReferencesTool(findSymbolsService))
             _registry.Register(New Tools.GetRoslynDiagnosticsTool(roslynDiagnosticsService))
             _registry.Register(New Tools.ApplyDocumentEditTool(documentEditService))
+            _registry.Register(New Tools.BuildSolutionTool(buildService))
 
             ' This one always last!!!!
             _registry.Register(New Tools.GetAvailableToolsTool(_registry))
