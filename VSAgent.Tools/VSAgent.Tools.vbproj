@@ -73,6 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplyDocumentEditTool.vb" />
+    <Compile Include="BuildProjectTool.vb" />
     <Compile Include="BuildSolutionTool.vb" />
     <Compile Include="FindReferencesTool.vb" />
     <Compile Include="FindSymbolsTool.vb" />

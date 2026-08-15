@@ -5,6 +5,7 @@
         Public Property Message As String
 
         Public Property ProjectName As String
+        Public Property ProjectId As String
         Public Property DocumentId As String
         Public Property FilePath As String
 

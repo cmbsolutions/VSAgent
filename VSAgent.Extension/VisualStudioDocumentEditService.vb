@@ -1,4 +1,5 @@
-﻿Imports System.Threading
+﻿Imports System.Text.RegularExpressions
+Imports System.Threading
 Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.VisualStudio.Shell
@@ -30,21 +31,14 @@ Public Class VisualStudioDocumentEditService
 
         Dim fullText = sourceText.ToString
 
-        Dim firstIndex = fullText.IndexOf(oldText, StringComparison.Ordinal)
+        Dim match = FindTextMatch(fullText, oldText)
 
-        If firstIndex < 0 Then
-            Throw New InvalidOperationException("The expected text was not found in the document.")
-        End If
+        Dim span = New TextSpan(match.Index, match.Length)
 
-        Dim secondIndex = fullText.IndexOf(oldText, firstIndex + oldText.Length, StringComparison.Ordinal)
+        Dim documentNewLine = GetDocumentNewLine(fullText)
+        Dim replacementText = NormalizeNewLines(newText, documentNewLine)
 
-        If secondIndex >= 0 Then
-            Throw New InvalidOperationException("The expected text occurs more than once. A more specific oldText value is required.")
-        End If
-
-        Dim span As New TextSpan(firstIndex, oldText.Length)
-
-        Dim newSourceText = sourceText.WithChanges(New TextChange(span, If(newText, String.Empty)))
+        Dim newSourceText = sourceText.WithChanges(New TextChange(span, replacementText))
 
         Dim newSolution = solution.WithDocumentText(document.Id, newSourceText)
 
@@ -63,8 +57,8 @@ Public Class VisualStudioDocumentEditService
             .Success = True,
             .DocumentId = document.Id.Id.ToString(),
             .FilePath = document.FilePath,
-            .OldText = oldText,
-            .NewText = newText
+            .OldText = match.Value,
+            .NewText = replacementText
         }
 
     End Function
@@ -100,5 +94,62 @@ Public Class VisualStudioDocumentEditService
         End If
 
         Return Nothing
+    End Function
+
+    Private Shared Function FindTextMatch(source As String, expectedText As String) As Match
+        If String.IsNullOrEmpty(expectedText) Then
+            Throw New ArgumentException("Expected text cannot be empty.", NameOf(expectedText))
+        End If
+
+        ' Normalize only the search text so we can split it consistently.
+        Dim normalized = expectedText.Replace(vbCrLf, vbLf).Replace(vbCr, vbLf)
+
+        Dim lines = normalized.Split(New String() {vbLf}, StringSplitOptions.None)
+
+        ' Escape every line so source code characters are interpreted literally.
+        Dim escapedLines = lines.Select(Function(line) Regex.Escape(line))
+
+        ' Newlines may be CRLF, LF or CR in the actual document.
+        Dim pattern = String.Join("(?:\r\n|\n|\r)", escapedLines)
+
+        Dim matches = Regex.Matches(source, pattern, RegexOptions.CultureInvariant)
+
+        If matches.Count = 0 Then
+            Throw New InvalidOperationException("The expected text was not found in the document.")
+        End If
+
+        If matches.Count > 1 Then
+            Throw New InvalidOperationException($"The expected text occurs {matches.Count} times. Provide a larger, unique source block.")
+        End If
+
+        Return matches(0)
+    End Function
+
+    Private Shared Function GetDocumentNewLine(text As String) As String
+        If text.Contains(vbCrLf) Then
+            Return vbCrLf
+        End If
+
+        If text.Contains(vbLf) Then
+            Return vbLf
+        End If
+
+        If text.Contains(vbCr) Then
+            Return vbCr
+        End If
+
+        ' New/single-line document: Windows default.
+        Return vbCrLf
+    End Function
+
+    Private Shared Function NormalizeNewLines(text As String, newLine As String) As String
+
+        If text Is Nothing Then
+            Return String.Empty
+        End If
+
+        Return text.Replace(vbCrLf, vbLf) _
+            .Replace(vbCr, vbLf) _
+            .Replace(vbLf, newLine)
     End Function
 End Class

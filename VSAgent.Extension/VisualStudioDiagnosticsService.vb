@@ -39,7 +39,8 @@ Public Class VisualStudioDiagnosticsService
                     .Id = diagnostic.Id,
                     .Severity = diagnostic.Severity.ToString(),
                     .Message = diagnostic.GetMessage(),
-                    .ProjectName = project.Name
+                    .ProjectName = project.Name,
+                    .ProjectId = project.Id.Id.ToString()
                 }
 
                 If diagnostic.Location IsNot Nothing AndAlso diagnostic.Location.IsInSource Then
