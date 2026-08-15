@@ -1,11 +1,16 @@
 Imports System.IO
 Imports System.IO.Pipes
 Imports System.Text
-Imports VSAgent.Protocol.DTO
-Imports VSAgent.Protocol.Messages
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
+Imports VSAgent.Protocol.DTO
+Imports VSAgent.Protocol.Messages
 Module Program
+    ''' <summary>
+    ''' DEPRECATED
+    ''' This client is deprecated, use a local LLM and the python script
+    ''' </summary>
+    ''' <param name="args"></param>
 
     Sub Main(args As String())
         MainAsync().GetAwaiter().GetResult()

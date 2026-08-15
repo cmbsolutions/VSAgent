@@ -2,8 +2,8 @@
 Imports System.IO.Pipes
 Imports System.Text
 Imports System.Threading
-Imports VSAgent.Protocol.Messages
 Imports Newtonsoft.Json
+Imports VSAgent.Protocol.Messages
 
 Public Class AgentPipeServer
     Implements IDisposable

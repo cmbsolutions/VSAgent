@@ -73,8 +73,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IAgentServer.vb" />
+    <Compile Include="IBuildService.vb" />
+    <Compile Include="IDocumentEditService.vb" />
     <Compile Include="IDocumentService.vb" />
     <Compile Include="ILog.vb" />
+    <Compile Include="IRoslynDiagnosticsService.vb" />
     <Compile Include="IRoslynWorkspaceService.vb" />
     <Compile Include="ISolutionService.vb" />
     <Compile Include="ISymbolService.vb" />

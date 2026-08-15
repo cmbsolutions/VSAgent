@@ -1,7 +1,4 @@
-﻿Imports Newtonsoft.Json
-Imports VSAgent.Protocol.Messages
-
-Namespace Messages
+﻿Namespace Messages
     Public Module AgentRequestExtensions
 
         <Runtime.CompilerServices.Extension>

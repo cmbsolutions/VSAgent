@@ -1,8 +1,5 @@
 ﻿Imports EnvDTE
 Imports EnvDTE80
-Imports Microsoft.VisualStudio.ComponentModelHost
-Imports Microsoft.VisualStudio.Debugger.Interop
-Imports Microsoft.VisualStudio.LanguageServices
 Imports Microsoft.VisualStudio.Shell
 Imports VSAgent.Protocol.DTO
 
@@ -111,7 +108,7 @@ Public Class VisualStudioDocumentService
 
     Public Async Function ReadDocumentAsync(Optional filePath As String = Nothing, Optional documentId As String = Nothing) As Task(Of RoslynDocument) Implements IDocumentService.ReadDocumentAsync
 
-        Dim workspace = Await GetWorkspaceAsync()
+        Dim workspace = Await RoslynWorkspaceProvider.GetWorkspaceAsync(_package)
 
         Dim document As Microsoft.CodeAnalysis.Document = Nothing
 
@@ -142,27 +139,5 @@ Public Class VisualStudioDocumentService
             .Text = docText.ToString,
             .Version = "1"
         }
-    End Function
-
-
-    Private Async Function GetWorkspaceAsync() As Task(Of VisualStudioWorkspace)
-
-        ' We need the UI thread from visual studio to get the workspace service, so we switch to it here. When we have it we can switch back to the background thread to do the rest of the work.
-        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
-
-        Dim componentModel = TryCast(Await _package.GetServiceAsync(GetType(SComponentModel)), IComponentModel)
-
-        If componentModel Is Nothing Then
-            Throw New InvalidOperationException("The Visual Studio component model is unavailable.")
-        End If
-
-        Dim workspace = componentModel.GetService(Of VisualStudioWorkspace)()
-
-        If workspace Is Nothing Then
-            Throw New InvalidOperationException("The Visual Studio Roslyn workspace is unavailable.")
-        End If
-
-        Return workspace
-
     End Function
 End Class

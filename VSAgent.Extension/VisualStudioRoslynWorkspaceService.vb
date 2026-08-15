@@ -1,6 +1,4 @@
 ﻿Imports Microsoft.CodeAnalysis
-Imports Microsoft.VisualStudio.ComponentModelHost
-Imports Microsoft.VisualStudio.LanguageServices
 Imports Microsoft.VisualStudio.Shell
 Imports VSAgent.Protocol.DTO
 
@@ -20,7 +18,7 @@ Public Class VisualStudioRoslynWorkspaceService
 
     Public Async Function GetProjectsAsync() As Task(Of IReadOnlyList(Of RoslynProjectInfo)) Implements IRoslynWorkspaceService.GetProjectsAsync
 
-        Dim workspace = Await GetWorkspaceAsync()
+        Dim workspace = Await RoslynWorkspaceProvider.GetWorkspaceAsync(_package)
 
         Dim result As New List(Of RoslynProjectInfo)
 
@@ -45,24 +43,4 @@ Public Class VisualStudioRoslynWorkspaceService
 
     End Function
 
-    Private Async Function GetWorkspaceAsync() As Task(Of VisualStudioWorkspace)
-
-        ' We need the UI thread from visual studio to get the workspace service, so we switch to it here. When we have it we can switch back to the background thread to do the rest of the work.
-        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
-
-        Dim componentModel = TryCast(Await _package.GetServiceAsync(GetType(SComponentModel)), IComponentModel)
-
-        If componentModel Is Nothing Then
-            Throw New InvalidOperationException("The Visual Studio component model is unavailable.")
-        End If
-
-        Dim workspace = componentModel.GetService(Of VisualStudioWorkspace)()
-
-        If workspace Is Nothing Then
-            Throw New InvalidOperationException("The Visual Studio Roslyn workspace is unavailable.")
-        End If
-
-        Return workspace
-
-    End Function
 End Class
