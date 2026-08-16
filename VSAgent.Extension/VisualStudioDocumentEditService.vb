@@ -1,4 +1,5 @@
-﻿Imports System.Text.RegularExpressions
+﻿Imports System.Text
+Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports Microsoft.CodeAnalysis
 Imports Microsoft.CodeAnalysis.Text
@@ -60,11 +61,11 @@ Public Class VisualStudioDocumentEditService
             .OldText = match.Value,
             .NewText = replacementText
         }
-
     End Function
 
     Private Shared Function FindDocument(solution As Solution, documentId As String, filePath As String) As Document
 
+        ' First try to get the document by documentId
         If Not String.IsNullOrWhiteSpace(documentId) Then
             Dim byId = solution.Projects _
                     .SelectMany(Function(p) p.Documents) _
@@ -81,6 +82,7 @@ Public Class VisualStudioDocumentEditService
             End If
         End If
 
+        ' Find by filepath as fallback
         If Not String.IsNullOrWhiteSpace(filePath) Then
             Return solution.Projects _
                 .SelectMany(Function(p) p.Documents) _
@@ -151,5 +153,61 @@ Public Class VisualStudioDocumentEditService
         Return text.Replace(vbCrLf, vbLf) _
             .Replace(vbCr, vbLf) _
             .Replace(vbLf, newLine)
+    End Function
+
+    Public Async Function AddDocumentAsync(projectId As String, name As String, text As String, folders As IReadOnlyList(Of String)) As Task(Of AddDocumentResult) Implements IDocumentEditService.AddDocumentAsync
+        Dim workspace = Await RoslynWorkspaceProvider.GetWorkspaceAsync(_package)
+
+        Dim solution = workspace.CurrentSolution
+
+        Dim project = solution.Projects.FirstOrDefault(
+            Function(p)
+                Return String.Equals(p.Id.Id.ToString(), projectId, StringComparison.OrdinalIgnoreCase)
+            End Function)
+
+        If project Is Nothing Then
+            Throw New InvalidOperationException("The requested project could not be found.")
+        End If
+
+        If String.IsNullOrWhiteSpace(name) Then
+            Throw New ArgumentException("Document name is required.", NameOf(name))
+        End If
+
+        Dim existing = project.Documents.FirstOrDefault(
+            Function(d)
+                Return String.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)
+            End Function)
+
+        If existing IsNot Nothing Then
+            Throw New InvalidOperationException($"A document named '{name}' already exists in project '{project.Name}'.")
+        End If
+
+        Dim folderList = If(folders, Array.Empty(Of String)())
+
+        Dim documentNewLine = GetDocumentNewLine(text)
+        Dim newText = NormalizeNewLines(text, documentNewLine)
+
+        Dim document = project.AddDocument(name, SourceText.From(If(newText, String.Empty), Encoding.UTF8), folders:=folderList)
+
+        Dim newSolution = document.Project.Solution
+
+        ' Important: TryApplyChanges must run on the UI thread.
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(_cancellationToken)
+
+        If Not workspace.TryApplyChanges(newSolution) Then
+            Throw New InvalidOperationException("Visual Studio rejected the document creation.")
+        End If
+
+        ' Resolve again from the updated workspace.
+        Dim updatedDocument = workspace.CurrentSolution.GetDocument(document.Id)
+
+        Return New AddDocumentResult With {
+            .Success = True,
+            .DocumentId = document.Id.Id.ToString(),
+            .ProjectId = project.Id.Id.ToString(),
+            .ProjectName = project.Name,
+            .Name = name,
+            .FilePath = updatedDocument?.FilePath
+        }
     End Function
 End Class

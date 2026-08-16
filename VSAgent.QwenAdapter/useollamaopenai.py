@@ -19,21 +19,17 @@ def build_openai_tools():
     tools = []
 
     for descriptor in descriptors:
-        if descriptor["Name"].lower() == "getavailabletools":
+        if descriptor["name"].lower() == "getavailabletools":
             continue
 
-        schema = descriptor.get("Parameters") or {}
+        schema = descriptor.get("parameters") or {}
 
         tools.append({
             "type": "function",
             "function": {
-                "name": descriptor["Name"],
-                "description": descriptor["Description"],
-                "parameters": {
-                    "type": "object",
-                    "properties": schema.get("Properties", {}),
-                    "required": schema.get("Required", [])
-                }
+                "name": descriptor["name"],
+                "description": descriptor["description"],
+                "parameters": descriptor["parameters"]
             }
         })
 
@@ -41,6 +37,9 @@ def build_openai_tools():
 
 
 tools = build_openai_tools()
+
+print()
+print(tools)
 
 messages = [
     {
@@ -53,11 +52,11 @@ The VSAgent tools handle Visual Studio SDK, Roslyn, threading, and document upda
 
 When asked to fix code:
 1. Inspect the relevant code.
-2. Use applyDocumentEdit to make the change.
+2. Use addDocument or applyDocumentEdit to make the changes.
 3. Try to build the solution.
 4. Repeat these steps until the build is successfully completed.
 
-When a tool returns an error, report this back to the user! 
+When a tool returns the same error multiple times, stop and report the error back to the user! 
 
 Very important, before each tool call, briefly state what you are trying to learn or accomplish. Keep this explanation concise. This must never be forgotten!
 """

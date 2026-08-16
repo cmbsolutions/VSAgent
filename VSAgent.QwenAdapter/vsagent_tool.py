@@ -49,7 +49,11 @@ class VSAgentTool(BaseTool):
                 "required": []
             }
 
-        properties = schema.get("Properties", {})
+        properties = {}
+
+        for name, prop in schema.get("Properties", {}).items():
+            properties[name] = self.convert_property(prop)
+
         required = schema.get("Required", [])
 
         if required is None:
@@ -60,3 +64,18 @@ class VSAgentTool(BaseTool):
             "properties": properties,
             "required": required
         }
+
+    def convert_property(self, prop):
+        result = {
+            "type": prop.get("Type", "string")
+        }
+
+        description = prop.get("Description")
+        if description:
+            result["description"] = description
+
+        items = prop.get("Items")
+        if items:
+            result["items"] = self.convert_property(items)
+
+        return result
