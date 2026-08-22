@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="VSAgent.Abstractions/VSAgent.Abstractions.vbproj" Id="2e7bf4f5-605d-48fc-b2a5-7c29dcb9154f" />
+  <Project Path="VSAgent.AgentHost/VSAgent.AgentHost.vbproj" Id="6de37c16-9ed4-4326-91eb-40185d2f3079" />
   <Project Path="VSAgent.Extension/VSAgent.Extension.vbproj">
     <Deploy />
   </Project>
