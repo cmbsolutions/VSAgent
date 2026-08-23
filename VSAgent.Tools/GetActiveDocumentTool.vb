@@ -44,6 +44,12 @@ Namespace Tools
             End Get
         End Property
 
+        Public ReadOnly Property ActionDescription As String Implements ITool.ActionDescription
+            Get
+                Return "Getting the active document."
+            End Get
+        End Property
+
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
             Try
                 Dim ActiveDocument = Await _documentService.GetActiveDocumentAsync().ConfigureAwait(False)

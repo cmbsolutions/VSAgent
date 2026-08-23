@@ -7,8 +7,8 @@ Imports Newtonsoft.Json.Linq
 
 Module Program
     ' These could come from a config.json file
-    Private Const model = "qwen3.8"
-    Private Const base_url = "http://localhost:11434/v1/"
+    Private Const model = "qwen3.6:35b"
+    Private Const base_url = "http://localhost:11434/"
     Private Const APIKey = "ollama"
 
     Sub Main(args As String())
@@ -16,158 +16,88 @@ Module Program
     End Sub
 
     Private Async Function MainAsync() As Task
-        Using vsClient As New VSAgentPipeClient()
+        Dim isThinking As Boolean = False
+        Dim isContent As Boolean = False
 
-            Await vsClient.ConnectAsync()
+        Using vsAgent As New VSAgentPipeClient()
 
-            Dim descriptors = Await vsClient.GetAvailableToolsAsync()
+            Console.WriteLine("Connecting to Visual Studio...")
 
-            Dim tools = AgentHelpers.BuildOpenAITools(descriptors)
+            Await vsAgent.ConnectAsync()
 
-            Dim messages As New JArray From {
-                New JObject From {
-                    {"role", "system"},
-                    {
-                        "content",
-                        "You are connected to Visual Studio through tools. Use the available tools when needed."
-                    }
-                },
-                New JObject From {
-                    {"role", "user"},
-                    {
-                        "content",
-                        "Check whether the VSAgent server is available. Use the ping tool."
-                    }
-                }
-            }
+            Dim descriptors = Await vsAgent.GetAvailableToolsAsync()
+
+            Console.WriteLine($"VSAgent AgentHost connected.")
+
+            Console.WriteLine($"{descriptors.Count} Visual Studio tools available.")
 
             Dim ollama As New OllamaClient(base_url, model)
 
-            Dim response = Await ollama.SendAsync(messages, tools)
+            AddHandler ollama.ThinkingReceived,
+                Sub(text)
+                    If Not isThinking Then
+                        Console.WriteLine()
+                        Console.ForegroundColor = ConsoleColor.DarkGray
+                        Console.WriteLine("Thinking > ")
+                        Console.ForegroundColor = ConsoleColor.White
+                        isThinking = True
+                    End If
 
-            Console.WriteLine(response.ToString(Formatting.Indented))
-
-        End Using
-    End Function
-
-    Private Async Function MainToolloopAsync() As Task
-        Using vsClient As New VSAgentPipeClient()
-            Using ollama As New OllamaClient(base_url, model)
-                Await vsClient.ConnectAsync()
-
-                Dim descriptors = Await vsClient.GetAvailableToolsAsync()
-
-                Dim tools = AgentHelpers.BuildOpenAITools(descriptors)
-
-                ' Toon de tools in de console
-                Console.WriteLine("Available tools >")
-                Console.WriteLine(JsonConvert.SerializeObject(tools, Formatting.Indented))
-
-                ' Maak de berichtenlijst aan
-                Dim messages As New JArray From {
-                    New JObject From {
-                        {"role", "system"},
-                        {
-                            "content",
-                            "You are connected to a running Visual Studio instance through tools." & vbCrLf &
-                                       "You are allowed to use the provided write/build tools." & vbCrLf &
-                                       "If a tool exists for an operation, use it instead of claiming that Visual Studio, threading, saving, or environment restrictions prevent the operation." & vbCrLf &
-                                       "The VSAgent tools handle Visual Studio SDK, Roslyn, threading, and document updates internally." & vbCrLf & vbCrLf &
-                                       "When asked to fix code:" & vbCrLf &
-                                       "1. Inspect the relevant code." & vbCrLf &
-                                       "2. Use addDocument or applyDocumentEdit to make the changes." & vbCrLf &
-                                       "3. Try to build the solution." & vbCrLf &
-                                       "4. Repeat these steps until the build is successfully completed." & vbCrLf &
-                                       "5. When a tool returns the same error multiple times, stop and report the error back to the user!" & vbCrLf &
-                                       "6. Very important, before each tool call, briefly state what you are trying to learn or accomplish. Keep this explanation concise. This must never be forgotten!"
-                        }
-                    }}
-
-                ' Start de hoofd-loop
-                While True
+                    isContent = False
                     Console.ForegroundColor = ConsoleColor.DarkGray
-                    Console.WriteLine("Type /exit or /quit to stop.")
-                    Console.ForegroundColor = ConsoleColor.Yellow
-                    Console.Write("You > ")
+                    Console.Write(text)
                     Console.ForegroundColor = ConsoleColor.White
+                End Sub
 
-                    Dim userInput As String = Console.ReadLine().Trim()
-
-                    If userInput.Equals("/exit", StringComparison.CurrentCultureIgnoreCase) OrElse userInput.Equals("/quit", StringComparison.CurrentCultureIgnoreCase) Then
-                        Exit While
+            AddHandler ollama.ContentReceived,
+                Sub(text)
+                    If Not isContent Then
+                        Console.WriteLine()
+                        Console.ForegroundColor = ConsoleColor.Cyan
+                        Console.WriteLine("Assistant > ")
+                        Console.ForegroundColor = ConsoleColor.White
+                        isContent = True
                     End If
 
-                    If String.IsNullOrEmpty(userInput) Then
-                        Continue While
-                    End If
+                    isThinking = False
+                    Console.ForegroundColor = ConsoleColor.Cyan
+                    Console.Write(text)
+                    Console.ForegroundColor = ConsoleColor.White
+                End Sub
 
-                    ' Voeg gebruikersbericht toe
-                    Dim userMessage As New JObject From {
-                        {"role", "user"},
-                        {"content", userInput}
-                    }
+            Dim agent As New AgentRunner(vsAgent, ollama, descriptors)
 
-                    messages.Add(userMessage)
+            Console.WriteLine()
+            Console.ForegroundColor = ConsoleColor.DarkGray
+            Console.WriteLine("Type /exit or /quit to stop.")
+            Console.ForegroundColor = ConsoleColor.White
 
-                    ' Loop voor de AI-reacties en toolafhandeling
-                    While True
-                        Dim response = Await ollama.SendAsync(messages, tools)
+            Do
+                Console.Write("You > ")
 
-                        Dim choice As JToken = response("choices")(0)
-                        Dim messageNode As JToken = choice("message")
+                Dim prompt = Console.ReadLine()
 
-                        ' Voeg het bericht van de AI toe aan de geschiedenis
-                        Dim aiMessageDict As Dictionary(Of String, Object) = messageNode.ToObject(Of Dictionary(Of String, Object))()
-                        messages.Add(aiMessageDict)
+                If String.IsNullOrWhiteSpace(prompt) Then
+                    Continue Do
+                End If
 
-                        ' Toon tekstuele content als die er is
-                        Dim aiContent As String = If(messageNode("content") IsNot Nothing, messageNode("content").ToString(), "")
-                        If Not String.IsNullOrEmpty(aiContent) Then
-                            Console.WriteLine()
-                            Console.WriteLine("Qwen > " & aiContent)
-                        End If
+                If prompt.Equals("/exit", StringComparison.OrdinalIgnoreCase) OrElse
+                    prompt.Equals("/quit", StringComparison.OrdinalIgnoreCase) Then
+                    Exit Do
+                End If
 
-                        ' Controleer op tool calls
-                        Dim toolCalls As JArray = CType(messageNode("tool_calls"), JArray)
-                        If toolCalls Is Nothing OrElse toolCalls.Count = 0 Then
-                            Console.WriteLine()
-                            Exit While
-                        End If
+                Try
+                    Await agent.RunAsync(prompt)
 
-                        ' Voer elke tool call uit
-                        For Each toolCall As JToken In toolCalls
-                            Dim toolName As String = toolCall("function")("name").ToString()
-                            Dim argumentsRaw As String = If(toolCall("function")("arguments") IsNot Nothing, toolCall("function")("arguments").ToString(), "{}")
+                Catch ex As Exception
+                    Console.WriteLine()
+                    Console.ForegroundColor = ConsoleColor.Red
+                    Console.WriteLine($"Agent error: {ex}")
+                    Console.ForegroundColor = ConsoleColor.White
+                End Try
 
-                            Dim arguments As Dictionary(Of String, Object) = JsonConvert.DeserializeObject(Of Dictionary(Of String, Object))(argumentsRaw)
-
-                            Console.WriteLine("Tool > " & toolName)
-                            Console.WriteLine("Args > " & JsonConvert.SerializeObject(arguments, Formatting.None))
-
-                            Dim toolResult As String = ""
-
-                            Try
-                                ' Roep de tool aan via de pipe client
-                                Dim result As Object = Await vsClient.CallToolAsync(toolName, Nothing) 'arguments)
-                                Console.WriteLine("Tool result received")
-                                toolResult = JsonConvert.SerializeObject(result, Formatting.None)
-
-                            Catch ex As Exception
-                                Dim errorDict As New Dictionary(Of String, String)()
-                                errorDict("error") = ex.Message
-                                toolResult = JsonConvert.SerializeObject(errorDict)
-                            End Try
-
-                            ' Stuur het resultaat van de tool terug naar de chatgeschiedenis
-                            Dim toolResponse As New Dictionary(Of String, Object)()
-                            toolResponse("role") = "tool"
-                            toolResponse("tool_call_id") = toolCall("id").ToString()
-                            toolResponse("content") = toolResult
-                            messages.Add(toolResponse)
-                        Next
-                    End While
-                End While
-            End Using
+                Console.WriteLine()
+            Loop
         End Using
     End Function
 End Module
