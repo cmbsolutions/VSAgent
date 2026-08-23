@@ -72,6 +72,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddDocumentTool.vb" />
     <Compile Include="ApplyDocumentEditTool.vb" />
     <Compile Include="BuildProjectTool.vb" />
     <Compile Include="BuildSolutionTool.vb" />

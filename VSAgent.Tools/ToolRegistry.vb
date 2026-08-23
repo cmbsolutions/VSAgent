@@ -24,6 +24,7 @@ Public Class ToolRegistry
                 .Name = tool.Name,
                 .Version = tool.Version,
                 .Description = tool.Description,
+                .ActionDescription = tool.ActionDescription,
                 .Parameters = tool.ParametersSchema
             }) _
             .Where(Function(tool) tool.Version >= 0) _

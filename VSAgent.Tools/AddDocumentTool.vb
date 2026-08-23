@@ -3,24 +3,24 @@ Imports VSAgent.Protocol.Parameters
 Imports VSAgent.Protocol.Tools
 
 Namespace Tools
-    Public Class ApplyDocumentEditTool
+    Public Class AddDocumentTool
         Implements ITool
 
-        Private ReadOnly _editService As IDocumentEditService
+        Private ReadOnly _documentEditService As IDocumentEditService
 
-        Public Sub New(editService As IDocumentEditService)
-            _editService = editService
+        Public Sub New(documentEditService As IDocumentEditService)
+            _documentEditService = documentEditService
         End Sub
 
         Public ReadOnly Property Name As String Implements ITool.Name
             Get
-                Return "applyDocumentEdit"
+                Return "addDocument"
             End Get
         End Property
 
         Public ReadOnly Property Description As String Implements ITool.Description
             Get
-                Return "Applies a source-code edit directly to a document in the currently loaded Visual Studio solution. The tool handles Roslyn and Visual Studio threading requirements internally. Use this tool when you need to modify source code; do not ask the user to make the edit manually."
+                Return "Creates a new source document in a Visual Studio project. Use this when code should be moved into a new class, module, interface, or helper file instead of placing everything in an existing document."
             End Get
         End Property
 
@@ -29,27 +29,30 @@ Namespace Tools
                 Return New ToolParameterSchema With {
                     .Type = "object",
                     .Properties = New Dictionary(Of String, ToolPropertySchema) From {
-                        {"documentId", New ToolPropertySchema With {
+                        {"projectid", New ToolPropertySchema With {
                             .Type = "string",
-                            .Description = "Roslyn document ID."
+                            .Description = "Roslyn project ID where the document will be created."
                         }},
-                        {"filePath", New ToolPropertySchema With {
+                        {"name", New ToolPropertySchema With {
                             .Type = "string",
-                            .Description = "Document path used as fallback."
+                            .Description = "File name including extension. For example CustomerService.vb, CustomerHelper.cs"
                         }},
-                        {"oldText", New ToolPropertySchema With {
+                        {"text", New ToolPropertySchema With {
                             .Type = "string",
-                            .Description = "Exact existing source text to replace. It must occur exactly once."
+                            .Description = "Initial source text for the new document."
                         }},
-                        {"newText", New ToolPropertySchema With {
-                            .Type = "string",
-                            .Description = "Replacement source text."
+                        {"folders", New ToolPropertySchema With {
+                            .Type = "array",
+                            .Description = "Optional project folder hierarchy.",
+                            .Items = New ToolPropertySchema With {
+                                .Type = "string"
+                            }
                         }}
                     },
                     .Required = New List(Of String) From {
-                        "documentId",
-                        "oldText",
-                        "newText"
+                        "projectid",
+                        "name",
+                        "text"
                     }
                 }
             End Get
@@ -63,19 +66,15 @@ Namespace Tools
 
         Public ReadOnly Property ActionDescription As String Implements ITool.ActionDescription
             Get
-                Return "Applying source-code change."
+                Return "Adding a new document to the project"
             End Get
         End Property
 
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
             Try
-                Dim parameters = request.GetParameters(Of ApplyDocumentEditParameters)()
+                Dim parameters = request.GetParameters(Of AddDocumentParameters)()
 
-                Dim result = Await _editService.ApplyDocumentEditAsync(
-                    parameters.DocumentId,
-                    parameters.FilePath,
-                    parameters.OldText,
-                    parameters.NewText)
+                Dim result = Await _documentEditService.AddDocumentAsync(parameters.ProjectId, parameters.Name, parameters.Text, parameters.Folders)
 
                 Return AgentResponse.Ok(request.Id, Version, result)
 

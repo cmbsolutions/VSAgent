@@ -2,6 +2,7 @@
 Public Interface ITool
     ReadOnly Property Name As String
     ReadOnly Property Description As String
+    ReadOnly Property ActionDescription As String
     ReadOnly Property ParametersSchema As ToolParameterSchema
     ReadOnly Property Version As Integer
 

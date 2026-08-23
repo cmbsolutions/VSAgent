@@ -33,6 +33,12 @@ Namespace Tools
             End Get
         End Property
 
+        Public ReadOnly Property ActionDescription As String Implements ITool.ActionDescription
+            Get
+                Return "Playing ping-pong with the server."
+            End Get
+        End Property
+
         Public Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
             Return Task.FromResult(AgentResponse.Ok(request.Id, Version, "pong"))
         End Function
