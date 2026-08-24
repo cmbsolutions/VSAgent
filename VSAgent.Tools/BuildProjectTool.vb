@@ -45,6 +45,12 @@ Namespace Tools
             End Get
         End Property
 
+        Public ReadOnly Property ActionDescription As String Implements ITool.ActionDescription
+            Get
+                Return "Building the project."
+            End Get
+        End Property
+
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
             Try
                 Dim parameters = request.GetParameters(Of BuildProjectParameters)()

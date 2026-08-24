@@ -1,10 +1,10 @@
 <Solution>
   <Project Path="VSAgent.Abstractions/VSAgent.Abstractions.vbproj" Id="2e7bf4f5-605d-48fc-b2a5-7c29dcb9154f" />
+  <Project Path="VSAgent.AgentHost/VSAgent.AgentHost.vbproj" Id="6de37c16-9ed4-4326-91eb-40185d2f3079" />
   <Project Path="VSAgent.Extension/VSAgent.Extension.vbproj">
     <Deploy />
   </Project>
   <Project Path="VSAgent.Protocol/VSAgent.Protocol.vbproj" Id="4962abf8-84ff-423b-a8a6-c0ea77e0e0dd" />
   <Project Path="VSAgent.Server/VSAgent.Server.vbproj" Id="3363a17b-a662-4225-8bc2-ad0a9962ddf0" />
-  <Project Path="VSAgent.TestClient/VSAgent.TestClient.vbproj" Id="aeed5cdd-b53b-41d4-8cd2-d0710452a109" />
   <Project Path="VSAgent.Tools/VSAgent.Tools.vbproj" Id="76df7c1f-965f-4e5d-bc3d-d0ddb917b6c9" />
 </Solution>

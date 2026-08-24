@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>VSAgent</RootNamespace>
+    <TargetFramework>net10.0</TargetFramework>
+    <ApplicationIcon>vsagent.ico</ApplicationIcon>
+    <OptionStrict>On</OptionStrict>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="vsagent.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VSAgent.Protocol\VSAgent.Protocol.vbproj" />
+  </ItemGroup>
+
+</Project>

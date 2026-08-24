@@ -40,6 +40,12 @@ Namespace Tools
             End Get
         End Property
 
+        Public ReadOnly Property ActionDescription As String Implements ITool.ActionDescription
+            Get
+                Return "Getting all available tools."
+            End Get
+        End Property
+
         Public Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
             Dim tools = _registry.GetAvailableTools()
 

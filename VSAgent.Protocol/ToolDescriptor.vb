@@ -9,6 +9,8 @@ Namespace DTO
         Public Property Version As Integer
         <JsonProperty("description")>
         Public Property Description As String
+        <JsonProperty("actiondescription")>
+        Public Property ActionDescription As String
         <JsonProperty("parameters")>
         Public Property Parameters As ToolParameterSchema
     End Class
