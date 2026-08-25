@@ -98,13 +98,13 @@ Public Class VisualStudioDocumentEditService
         Return Nothing
     End Function
 
-    Private Shared Function FindTextMatch(source As String, expectedText As String) As Match
-        If String.IsNullOrEmpty(expectedText) Then
-            Throw New ArgumentException("Expected text cannot be empty.", NameOf(expectedText))
+    Private Shared Function FindTextMatch(source As String, oldText As String) As Match
+        If String.IsNullOrEmpty(oldText) Then
+            Throw New ArgumentException("Expected text cannot be empty.", NameOf(oldText))
         End If
 
         ' Normalize only the search text so we can split it consistently.
-        Dim normalized = expectedText.Replace(vbCrLf, vbLf).Replace(vbCr, vbLf)
+        Dim normalized = NormalizeNewLines(oldText)
 
         Dim lines = normalized.Split(New String() {vbLf}, StringSplitOptions.None)
 
@@ -153,6 +153,19 @@ Public Class VisualStudioDocumentEditService
         Return text.Replace(vbCrLf, vbLf) _
             .Replace(vbCr, vbLf) _
             .Replace(vbLf, newLine)
+    End Function
+
+    Private Shared Function NormalizeNewLines(text As String) As String
+
+        If text Is Nothing Then
+            Return String.Empty
+        End If
+
+        ' First normalize \r\n, \r, \n to vbLf
+        text = text.Replace("\r\n", vbLf).Replace("\r", vbLf).Replace("\n", vbLf)
+
+        ' then in case of the agent sending actualy vbCrLf or vbCr
+        Return text.Replace(vbCrLf, vbLf).Replace(vbCr, vbLf)
     End Function
 
     Public Async Function AddDocumentAsync(projectId As String, name As String, text As String, folders As IReadOnlyList(Of String)) As Task(Of AddDocumentResult) Implements IDocumentEditService.AddDocumentAsync

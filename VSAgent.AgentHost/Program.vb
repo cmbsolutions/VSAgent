@@ -11,13 +11,16 @@ Module Program
     Private Const base_url = "http://localhost:11434/"
     Private Const APIKey = "ollama"
 
+    Private isThinking As Boolean = False
+    Private isContent As Boolean = False
+    Private isTool As Boolean = False
+
     Sub Main(args As String())
         MainAsync().GetAwaiter().GetResult()
     End Sub
 
     Private Async Function MainAsync() As Task
-        Dim isThinking As Boolean = False
-        Dim isContent As Boolean = False
+
 
         Using vsAgent As New VSAgentPipeClient()
 
@@ -33,39 +36,14 @@ Module Program
 
             Dim ollama As New OllamaClient(base_url, model)
 
-            AddHandler ollama.ThinkingReceived,
-                Sub(text)
-                    If Not isThinking Then
-                        Console.WriteLine()
-                        Console.ForegroundColor = ConsoleColor.DarkGray
-                        Console.WriteLine("Thinking > ")
-                        Console.ForegroundColor = ConsoleColor.White
-                        isThinking = True
-                    End If
-
-                    isContent = False
-                    Console.ForegroundColor = ConsoleColor.DarkGray
-                    Console.Write(text)
-                    Console.ForegroundColor = ConsoleColor.White
-                End Sub
-
-            AddHandler ollama.ContentReceived,
-                Sub(text)
-                    If Not isContent Then
-                        Console.WriteLine()
-                        Console.ForegroundColor = ConsoleColor.Cyan
-                        Console.WriteLine("Assistant > ")
-                        Console.ForegroundColor = ConsoleColor.White
-                        isContent = True
-                    End If
-
-                    isThinking = False
-                    Console.ForegroundColor = ConsoleColor.Cyan
-                    Console.Write(text)
-                    Console.ForegroundColor = ConsoleColor.White
-                End Sub
+            AddHandler ollama.ThinkingReceived, AddressOf OllamaThinkingReceivedEventHandler
+            AddHandler ollama.ContentReceived, AddressOf OllamaContentReceivedEventHandler
 
             Dim agent As New AgentRunner(vsAgent, ollama, descriptors)
+
+            AddHandler agent.ToolStarted, AddressOf AgentToolStartedEventHandler
+            AddHandler agent.ToolCompleted, AddressOf AgentToolCompletedEventHandler
+            AddHandler agent.ToolFailed, AddressOf AgentToolFailedEventHandler
 
             Console.WriteLine()
             Console.ForegroundColor = ConsoleColor.DarkGray
@@ -100,4 +78,63 @@ Module Program
             Loop
         End Using
     End Function
+
+    Private Sub OllamaThinkingReceivedEventHandler(text As String)
+        If Not isThinking Then
+            Console.WriteLine()
+            Console.ForegroundColor = ConsoleColor.DarkGray
+            Console.Write("Thinking > ")
+            Console.ForegroundColor = ConsoleColor.White
+            isThinking = True
+        End If
+
+        isContent = False
+        isTool = False
+        Console.ForegroundColor = ConsoleColor.DarkGray
+        Console.Write(text)
+        Console.ForegroundColor = ConsoleColor.White
+    End Sub
+
+    Private Sub OllamaContentReceivedEventHandler(text As String)
+        If Not isContent Then
+            Console.WriteLine()
+            Console.ForegroundColor = ConsoleColor.Cyan
+            Console.Write("Assistant > ")
+            Console.ForegroundColor = ConsoleColor.White
+            isContent = True
+        End If
+
+        isThinking = False
+        isTool = False
+        Console.ForegroundColor = ConsoleColor.Cyan
+        Console.Write(text)
+        Console.ForegroundColor = ConsoleColor.White
+    End Sub
+
+    Private Sub AgentToolStartedEventHandler(toolName As String, toolAction As String)
+        If Not isTool Then
+            Console.WriteLine()
+            Console.ForegroundColor = ConsoleColor.Yellow
+            Console.Write($"Tool > {toolName} started... ")
+            Console.ForegroundColor = ConsoleColor.White
+            isTool = True
+        End If
+
+        isThinking = False
+        isContent = False
+    End Sub
+
+    Private Sub AgentToolCompletedEventHandler(toolName As String)
+        Console.ForegroundColor = ConsoleColor.Yellow
+        Console.Write(" and completed!")
+        Console.ForegroundColor = ConsoleColor.White
+        isTool = False
+    End Sub
+
+    Private Sub AgentToolFailedEventHandler(toolName As String, message As String)
+        Console.ForegroundColor = ConsoleColor.Red
+        Console.Write($" and failed! {message}")
+        Console.ForegroundColor = ConsoleColor.White
+        isTool = False
+    End Sub
 End Module

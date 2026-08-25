@@ -14,8 +14,6 @@ Public Class AgentRunner
 
     Private ReadOnly _toolActionDescriptions As Dictionary(Of String, String)
 
-    Public Event Thinking(text As String)
-    Public Event Content(text As String)
     Public Event ToolStarted(toolName As String, actionDescription As String)
     Public Event ToolCompleted(toolName As String)
     Public Event ToolFailed(toolName As String, errorMessage As String)
@@ -123,49 +121,16 @@ Do not ask the user to make code changes manually when a suitable tool exists.
 
     Private Async Function ExecuteToolCallAsync(toolCall As OllamaToolCall) As Task
 
-        Dim toolCallId = toolCall.Id
-
-        'Dim functionObject = toolCall.
-
-        'If functionObject Is Nothing Then
-        '    Throw New InvalidOperationException("Tool call contains no function.")
-        'End If
-
-        'Dim toolName = functionObject.Value(Of String)("name")
-
-        'Dim rawArguments = functionObject.Value(Of String)("arguments")
-
-        'Dim arguments As JObject
-
-        'If String.IsNullOrWhiteSpace(rawArguments) Then
-        '    arguments = New JObject()
-        'Else
-        '    Try
-        '        arguments = JObject.Parse(rawArguments)
-        '    Catch ex As JsonReaderException
-        '        Throw New InvalidOperationException($"Tool '{toolName}' returned invalid JSON arguments: {rawArguments}", ex)
-        '    End Try
-        'End If
-
-        'Dim description As String = Nothing
-
-        'Console.WriteLine()
-        'Console.ForegroundColor = ConsoleColor.Cyan
-        'If _toolActionDescriptions.TryGetValue(toolName, description) Then
-        '    Console.WriteLine($"Qwen > {description}")
-        'Else
-        '    Console.WriteLine($"Qwen > Executing {toolName}.")
-        'End If
-
-        'Console.ForegroundColor = ConsoleColor.Yellow
-        'Console.WriteLine($"Tool > {toolName}")
-        'Console.ForegroundColor = ConsoleColor.Red
-        'Console.WriteLine($"Args > {arguments.ToString(Formatting.None)}")
-        'Console.ForegroundColor = ConsoleColor.White
-
         Dim toolResult As String
+        Dim description As String = Nothing
 
         Try
+            If _toolActionDescriptions.TryGetValue(toolCall.Name, description) Then
+                RaiseEvent ToolStarted(toolCall.Name, description)
+            Else
+                RaiseEvent ToolStarted(toolCall.Name, "")
+            End If
+
             Dim response = Await _vsAgent.CallToolAsync(toolCall.Name, toolCall.Arguments)
 
             If response.Success Then
@@ -174,8 +139,7 @@ Do not ask the user to make code changes manually when a suitable tool exists.
 
                 toolResult = resultToken.ToString(Formatting.None)
 
-                Console.WriteLine("Tool result received")
-
+                RaiseEvent ToolCompleted(toolCall.Name)
             Else
 
                 toolResult =
@@ -184,9 +148,7 @@ Do not ask the user to make code changes manually when a suitable tool exists.
                         {"error", response.ErrorMessage}
                     }.ToString(Formatting.None)
 
-                Console.ForegroundColor = ConsoleColor.Red
-                Console.WriteLine($"Tool error > {response.ErrorMessage}")
-                Console.ForegroundColor = ConsoleColor.White
+                RaiseEvent ToolFailed(toolCall.Name, response.ErrorMessage)
             End If
 
         Catch ex As Exception
@@ -197,16 +159,15 @@ Do not ask the user to make code changes manually when a suitable tool exists.
                     {"error", ex.Message}
                 }.ToString(Formatting.None)
 
-            Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine($"Tool exception > {ex.Message}")
-            Console.ForegroundColor = ConsoleColor.White
+            RaiseEvent ToolFailed(toolCall.Name, ex.Message)
         End Try
 
         ' Feed the result back to Qwen.
         _messages.Add(
             New JObject From {
                 {"role", "tool"},
-                {"tool_call_id", toolCallId},
+                {"tool_call_id", toolCall.Id},
+                {"tool_name", toolCall.Name},
                 {"content", toolResult}
             })
 
