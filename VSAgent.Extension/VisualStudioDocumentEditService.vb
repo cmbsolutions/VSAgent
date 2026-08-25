@@ -150,6 +150,8 @@ Public Class VisualStudioDocumentEditService
             Return String.Empty
         End If
 
+        text = NormalizeNewLines(text)
+
         Return text.Replace(vbCrLf, vbLf) _
             .Replace(vbCr, vbLf) _
             .Replace(vbLf, newLine)

@@ -23,6 +23,7 @@ Public Class OllamaClient
     Public Event ThinkingReceived(text As String)
     Public Event ContentReceived(text As String)
 
+    Private _sessionStats As New OllamaSessionStatistics
 
     Public Sub New(baseUrl As String, model As String)
         _model = model
@@ -154,6 +155,8 @@ Public Class OllamaClient
 
             ' When done is received
             If chunk.Value(Of Boolean?)("done").GetValueOrDefault(False) Then
+                _sessionStats.AddStatistic(chunk)
+
                 Exit While
             End If
         End While
