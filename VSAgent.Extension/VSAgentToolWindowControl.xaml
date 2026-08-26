@@ -9,10 +9,45 @@
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300"
              Name="MyToolWindow">
-    <Grid>
-        <StackPanel Orientation="Vertical">
-            <TextBlock Margin="10" HorizontalAlignment="Center" Foreground="WhiteSmoke">VSAgentToolWindow</TextBlock>
-            <Button Content="_Click Me!" Click="button1_Click" Width="120" Height="80" Name="button1"/>
-        </StackPanel>
+    <Grid Margin="8">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBox x:Name="txtOutput"
+                 Grid.Row="0"
+                 IsReadOnly="True"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 AcceptsReturn="True" />
+
+        <Grid Grid.Row="1"
+              Margin="0,8,0,0">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="txtPrompt"
+                     Grid.Column="0"
+                     Margin="0,0,8,0" />
+
+            <Button x:Name="btnSend"
+                    Grid.Column="1"
+                    Content="Send"
+                    Padding="14,5"
+                    Margin="0,0,8,0" />
+
+            <Button x:Name="btnStop"
+                    Grid.Column="2"
+                    Content="Stop"
+                    Padding="14,5" />
+
+        </Grid>
+
     </Grid>
 </UserControl>

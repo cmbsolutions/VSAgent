@@ -12,6 +12,8 @@ Public Class VisualStudioDocumentEditService
     Private ReadOnly _package As AsyncPackage
     Private ReadOnly _cancellationToken As CancellationToken
 
+    Private AddedDocumentIds As New List(Of String)
+
     Public Sub New(package As AsyncPackage, cancellationToken As CancellationToken)
         _package = package
         _cancellationToken = cancellationToken
@@ -216,6 +218,8 @@ Public Class VisualStudioDocumentEditService
         ' Resolve again from the updated workspace.
         Dim updatedDocument = workspace.CurrentSolution.GetDocument(document.Id)
 
+        AddedDocumentIds.Add(document.Id.Id.ToString())
+
         Return New AddDocumentResult With {
             .Success = True,
             .DocumentId = document.Id.Id.ToString(),
@@ -223,6 +227,51 @@ Public Class VisualStudioDocumentEditService
             .ProjectName = project.Name,
             .Name = name,
             .FilePath = updatedDocument?.FilePath
+        }
+    End Function
+
+    Public Async Function RemoveDocumentAsync(projectId As String, documentId As String) As Task(Of RemoveDocumentResult) Implements IDocumentEditService.RemoveDocumentAsync
+        Dim workspace = Await RoslynWorkspaceProvider.GetWorkspaceAsync(_package)
+
+        Dim solution = workspace.CurrentSolution
+
+        Dim project = solution.Projects.FirstOrDefault(
+            Function(p)
+                Return String.Equals(p.Id.Id.ToString(), projectId, StringComparison.OrdinalIgnoreCase)
+            End Function)
+
+        If project Is Nothing Then
+            Throw New InvalidOperationException("The requested project could not be found.")
+        End If
+
+        Dim existing = project.Documents.FirstOrDefault(
+            Function(d)
+                Return String.Equals(d.Id.Id.ToString, documentId, StringComparison.OrdinalIgnoreCase)
+            End Function)
+
+        If existing Is Nothing Then
+            Throw New InvalidOperationException($"Document ID {documentId} does not exists in project '{project.Name}'.")
+        End If
+
+        If Not AddedDocumentIds.Contains(existing.Id.Id.ToString) Then
+            Throw New InvalidOperationException($"Document ID {documentId} was not created by you. You can only remove documents you created.")
+        End If
+
+        Dim document = project.RemoveDocument(existing.Id)
+
+        Dim newSolution = project.Solution
+
+        ' Important: TryApplyChanges must run on the UI thread.
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(_cancellationToken)
+
+        If Not workspace.TryApplyChanges(newSolution) Then
+            Throw New InvalidOperationException("Visual Studio rejected the removal of the document.")
+        End If
+
+        AddedDocumentIds.Remove(documentId)
+
+        Return New RemoveDocumentResult With {
+            .Success = True
         }
     End Function
 End Class

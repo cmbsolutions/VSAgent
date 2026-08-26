@@ -23,17 +23,23 @@ Imports Microsoft.VisualStudio.Shell.Interop
 Public Class VSAgentToolWindow
     Inherits ToolWindowPane
 
+    Private ReadOnly _agentHostController As AgentHostController
+
     ''' <summary>
     ''' Initializes a new instance of the <see cref="VSAgentToolWindow"/> class.
     ''' </summary>
     Public Sub New()
         MyBase.New(Nothing)
-        Me.Caption = "VSAgentToolWindow"
+        Me.Caption = "VSAgent"
 
         'This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
         'we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on 
         'the object returned by the Content property.
         Me.Content = New VSAgentToolWindowControl()
+
+        _agentHostController = New AgentHostController()
+
+        _agentHostController.EnsureStarted()
     End Sub
 
 End Class
