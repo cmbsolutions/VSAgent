@@ -1,4 +1,4 @@
-[![wakatime](https://wakatime.com/badge/user/764142e6-ba3c-4be3-9aca-2093a1befa2d/project/87827ab1-d843-48a0-a6ff-b84036ad9fb2.svg)](https://wakatime.com/badge/user/764142e6-ba3c-4be3-9aca-2093a1befa2d/project/87827ab1-d843-48a0-a6ff-b84036ad9fb2)
+[![wakatime](https://wakatime.com/badge/github/cmbsolutions/VSAgent.svg)](https://wakatime.com/badge/github/cmbsolutions/VSAgent)
 
 # VSAgent
 
