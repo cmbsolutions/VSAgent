@@ -28,7 +28,7 @@ Namespace My
 
         <Global.System.Diagnostics.DebuggerStepThroughAttribute()>
         Protected Overrides Sub OnCreateMainForm()
-            Me.MainForm = New OpenAIClientForm()
+            Me.MainForm = New MenuForm()
         End Sub
     End Class
 End Namespace

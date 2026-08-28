@@ -121,6 +121,10 @@
       <Project>{76df7c1f-965f-4e5d-bc3d-d0ddb917b6c9}</Project>
       <Name>VSAgent.Tools</Name>
     </ProjectReference>
+    <ProjectReference Include="..\VSAgent.Transport\VSAgent.Transport.vbproj">
+      <Project>{b63a8477-7930-4059-8623-16787ac90f6a}</Project>
+      <Name>VSAgent.Transport</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json">

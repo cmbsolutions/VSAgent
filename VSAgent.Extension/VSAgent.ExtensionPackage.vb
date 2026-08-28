@@ -46,7 +46,6 @@ Namespace VSAgent.Extension
             _registry.Register(New Tools.GetAvailableToolsTool(_registry))
 
             _agentServer = New AgentPipeServer(_registry)
-            _agentServer.Start()
         End Function
 
         Protected Overrides Sub Dispose(disposing As Boolean)

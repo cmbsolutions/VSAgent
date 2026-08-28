@@ -3,5 +3,5 @@
 Public Interface IDocumentEditService
     Function ApplyDocumentEditAsync(documentId As String, filePath As String, oldText As String, newText As String) As Task(Of DocumentEditResult)
     Function AddDocumentAsync(projectId As String, name As String, text As String, folders As IReadOnlyList(Of String)) As Task(Of AddDocumentResult)
-    Function RemoveDocumentAsync(projectId As String, documentId As String) As Task(Of RemoveDocumentResult)
+    Function RemoveDocumentAsync(projectId As String, documentName As String) As Task(Of RemoveDocumentResult)
 End Interface
