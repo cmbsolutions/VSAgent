@@ -17,4 +17,8 @@ Partial Public Class VSAgentToolWindowControl
             String.Format(System.Globalization.CultureInfo.CurrentUICulture, "Invoked {0}", Me.ToString()),
             "VSAgentToolWindow")
     End Sub
+
+    Private Sub btnSend_Click(sender As Object, e As System.Windows.RoutedEventArgs) Handles btnSend.Click
+
+    End Sub
 End Class

@@ -15,7 +15,7 @@ Module Program
     Private Async Function MainAsync() As Task
 
 
-        Using vsAgent As New VSAgentPipeClient()
+        Using vsAgent As New VSAgentPipeClient("VSAgent")
 
             Console.WriteLine("Connecting to Visual Studio...")
 
@@ -38,7 +38,7 @@ Module Program
             AddHandler agent.ToolCompleted, AddressOf AgentToolCompletedEventHandler
             AddHandler agent.ToolFailed, AddressOf AgentToolFailedEventHandler
 
-            Dim hostServer As New AgentHostPipeServer("VSAGent.AgentHost", agent)
+            Dim hostServer As New AgentHostPipeServer("VSAgent.AgentHost", agent)
 
             Console.WriteLine()
             Console.ForegroundColor = ConsoleColor.DarkGray

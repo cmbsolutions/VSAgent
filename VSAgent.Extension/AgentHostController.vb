@@ -1,5 +1,4 @@
-﻿Imports System.Diagnostics
-Imports System.IO
+﻿Imports System.IO
 
 Public Class AgentHostController
     Implements IDisposable

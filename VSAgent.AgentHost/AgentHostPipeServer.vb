@@ -1,4 +1,4 @@
-﻿Imports VSAgent.Messages
+﻿Imports VSAgent.Protocol.Messages
 
 Public Class AgentHostPipeServer
     Private ReadOnly _runner As AgentRunner

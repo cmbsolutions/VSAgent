@@ -9,63 +9,25 @@ Imports VSAgent.Protocol.Messages
 Public Class VSAgentPipeClient
     Implements IDisposable
 
-    Private Const PipeName As String = "VSAgent"
+    Private ReadOnly _transport As Transport.TransportPipeClient(Of AgentRequest, AgentResponse)
 
-    Private _pipe As NamedPipeClientStream
-    Private _reader As StreamReader
-    Private _writer As StreamWriter
+    Public Sub New(PipeName As String)
+        _transport = New Transport.TransportPipeClient(Of AgentRequest, AgentResponse)(PipeName)
+    End Sub
 
-    Public Async Function ConnectAsync() As Task
-
-        If _pipe IsNot Nothing AndAlso _pipe.IsConnected Then
-            Return
-        End If
-
-        _pipe = New NamedPipeClientStream(".", PipeName, PipeDirection.InOut, PipeOptions.Asynchronous)
-
-        Await _pipe.ConnectAsync(5000)
-
-        _reader = New StreamReader(
-            _pipe,
-            New UTF8Encoding(False),
-            detectEncodingFromByteOrderMarks:=False,
-            bufferSize:=4096,
-            leaveOpen:=True)
-
-        _writer = New StreamWriter(
-            _pipe,
-            New UTF8Encoding(False),
-            bufferSize:=4096,
-            leaveOpen:=True) With {
-            .AutoFlush = True
-        }
-
+    Public Function ConnectAsync() As Task
+        Return _transport.ConnectAsync()
     End Function
 
-    Public Async Function CallToolAsync(toolName As String, parameters As JObject) As Task(Of AgentResponse)
-
-        If _pipe Is Nothing OrElse Not _pipe.IsConnected Then
-            Await ConnectAsync()
-        End If
+    Public Function CallToolAsync(toolName As String, parameters As JObject) As Task(Of AgentResponse)
 
         Dim request As New AgentRequest With {
-            .Id = Guid.NewGuid().ToString(),
-            .Tool = toolName,
-            .Parameters = If(parameters, New JObject)
+           .Id = Guid.NewGuid().ToString(),
+           .Tool = toolName,
+           .Parameters = If(parameters, New JObject)
         }
 
-        Dim json = JsonConvert.SerializeObject(request)
-
-        Await _writer.WriteLineAsync(json)
-
-        Dim responseJson = Await _reader.ReadLineAsync()
-
-        If responseJson Is Nothing Then
-            Throw New IOException("VSAgent server closed the pipe.")
-        End If
-
-        Return JsonConvert.DeserializeObject(Of AgentResponse)(responseJson)
-
+        Return _transport.SendAsync(request)
     End Function
 
     Public Async Function GetAvailableToolsAsync() As Task(Of IReadOnlyList(Of ToolDescriptor))
@@ -79,22 +41,9 @@ Public Class VSAgentPipeClient
     End Function
 
     Public Sub Dispose() Implements IDisposable.Dispose
-
         Try
-            _writer?.Dispose()
+            _transport?.Dispose()
         Catch
         End Try
-
-        Try
-            _reader?.Dispose()
-        Catch
-        End Try
-
-        Try
-            _pipe?.Dispose()
-        Catch
-        End Try
-
     End Sub
-
 End Class

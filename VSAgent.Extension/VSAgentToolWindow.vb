@@ -24,6 +24,7 @@ Public Class VSAgentToolWindow
     Inherits ToolWindowPane
 
     Private ReadOnly _agentHostController As AgentHostController
+    Private ReadOnly _agentHostClient As AgentHostClient
 
     ''' <summary>
     ''' Initializes a new instance of the <see cref="VSAgentToolWindow"/> class.
@@ -40,6 +41,8 @@ Public Class VSAgentToolWindow
         _agentHostController = New AgentHostController()
 
         _agentHostController.EnsureStarted()
+
+        _agentHostClient = New AgentHostClient("VSAgent.AgentHost")
     End Sub
 
 End Class
