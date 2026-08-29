@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VSAgent.Protocol\VSAgent.Protocol.vbproj" />
+    <ProjectReference Include="..\VSAgent.Transport\VSAgent.Transport.vbproj" />
   </ItemGroup>
 
 </Project>

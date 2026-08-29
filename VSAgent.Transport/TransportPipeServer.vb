@@ -34,9 +34,7 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
         While Not cancellationToken.IsCancellationRequested
             Try
                 Await AcceptClientAsync(cancellationToken).ConfigureAwait(False)
-            Catch ex As OperationCanceledException _
-                When cancellationToken.IsCancellationRequested
-
+            Catch ex As OperationCanceledException When cancellationToken.IsCancellationRequested
                 Exit While
             Catch ex As Exception
                 ' Replace this with proper logging later.
@@ -153,7 +151,6 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
         Catch ex As OperationCanceledException
             ' Normal shutdown.
         End Try
-
     End Function
 
     Protected Overridable Sub Dispose(disposing As Boolean)

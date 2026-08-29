@@ -26,7 +26,17 @@ Namespace Ollama
         Public Overrides Function ToString() As String
             Dim builder As New StringBuilder
 
-            Return ""
+            Dim TotalPromptEvalCount = _statistics.Sum(Function(s) s.PromptEvalCount)
+            Dim TotalPromptEvalDuration = _statistics.Sum(Function(s) s.PromptEvalDuration)
+            Dim tpedtimespan As TimeSpan = TimeSpan.FromMicroseconds(TotalPromptEvalDuration \ 1000)
+            Dim tps = TotalPromptEvalCount / tpedtimespan.TotalSeconds
+
+            Dim TotalOutputEvalCount = _statistics.Sum(Function(s) s.EvalCount)
+            Dim TotalOutputEvalDuration = _statistics.Sum(Function(s) s.EvalDuration)
+            Dim toedtimespan As TimeSpan = TimeSpan.FromMicroseconds(TotalOutputEvalDuration \ 1000)
+            Dim ots = TotalOutputEvalCount / toedtimespan.TotalSeconds
+
+            Return $"Prompt: {TotalPromptEvalCount}T, {tps}T/s. Output: {TotalOutputEvalCount}T, {ots}T/s."
         End Function
     End Class
 

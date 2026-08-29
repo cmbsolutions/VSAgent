@@ -175,6 +175,8 @@ Public Class OllamaClient
 
         result.Content = contentBuilder.ToString()
 
+        result.Statistics = _sessionStats.ToString()
+
         Return result
     End Function
 

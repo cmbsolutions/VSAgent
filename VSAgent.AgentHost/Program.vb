@@ -1,10 +1,3 @@
-Imports System
-Imports System.IO.Pipelines
-Imports System.Net.Http
-Imports System.Text
-Imports Newtonsoft.Json
-Imports Newtonsoft.Json.Linq
-
 Module Program
     ' These could come from a config.json file
     Private Const model = "qwen3.6:35b"
@@ -44,6 +37,8 @@ Module Program
             AddHandler agent.ToolStarted, AddressOf AgentToolStartedEventHandler
             AddHandler agent.ToolCompleted, AddressOf AgentToolCompletedEventHandler
             AddHandler agent.ToolFailed, AddressOf AgentToolFailedEventHandler
+
+            Dim hostServer As New AgentHostPipeServer("VSAGent.AgentHost", agent)
 
             Console.WriteLine()
             Console.ForegroundColor = ConsoleColor.DarkGray
