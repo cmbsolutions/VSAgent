@@ -1,8 +1,4 @@
-﻿Imports System.IO
-Imports System.IO.Pipes
-Imports System.Text
-Imports Newtonsoft.Json
-Imports Newtonsoft.Json.Linq
+﻿Imports Newtonsoft.Json.Linq
 Imports VSAgent.Protocol.DTO
 Imports VSAgent.Protocol.Messages
 

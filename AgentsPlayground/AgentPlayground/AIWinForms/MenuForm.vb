@@ -13,19 +13,44 @@ Public Class MenuForm
     Private WithEvents animTimer As New Timer() With {.Interval = 16, .Enabled = True} ' ~60 FPS
     Private tickCounter As Integer = 0
     Private particles As List(Of Particle) = New List(Of Particle)()
+    Private bgPanel As Panel = Nothing
     Private gridOffset As Single = 0.0F
     Private selectedPanel As Panel = Nothing
 
     ' Hover animation state
-    Private hoverTargets As Dictionary(Of Panel, (originX As Single, originY As Single, currentScale As Single)) = New Dictionary(Of Panel, (Single, Single, Single))()
-    Private targetScales As Dictionary(Of Panel, Single) = New Dictionary(Of Panel, Single)()
+    Private hoverTargets As New Dictionary(Of Panel, (Single, Single, Single))()
+    Private targetScales As New Dictionary(Of Panel, Single)()
+
+    Private Sub animTimer_Tick(sender As Object, e As EventArgs) Handles animTimer.Tick
+        tickCounter += 1
+
+        ' Update and remove dead particles - slower decay for better visibility
+        For Each p In particles.ToList()
+            p.X += CSng(p.VX)
+            p.Y += CSng(p.VY)
+            p.Alpha -= 2  ' Slower decay: was 5, now 2
+        Next
+        particles.RemoveAll(Function(p) p.Alpha <= 0)
+
+        ' Add ambient particles periodically
+        If tickCounter Mod 10 = 0 AndAlso particles.Count < 60 Then
+            Dim angle As Double = Random.Shared.NextDouble() * Math.PI * 2
+            Dim radius As Single = CSng(Random.Shared.NextDouble() * 200 + 30)
+            Dim cx As Single = Me.ClientSize.Width / 2
+            Dim cy As Single = Me.ClientSize.Height / 2
+            particles.Add(New Particle(cx + CSng(Math.Cos(angle) * radius), cy + CSng(Math.Sin(angle) * radius), Color.FromArgb(0, 229, 255)))
+        End If
+
+        ' Repaint the background panel to show particle animation
+        bgPanel?.Invalidate()
+    End Sub
 
     Public Sub New()
+        Me.SuspendLayout()
         InitializeComponent()
 
         ' Ensure layout is complete before showing
-        Me.SuspendLayout()
-        Me.ResumeLayout()
+        Me.ResumeLayout(False)
     End Sub
 
     Private Sub InitializeComponent()
@@ -40,10 +65,10 @@ Public Class MenuForm
         Me.AllowDrop = True
 
         ' ====== Background Panel (draws grid, radial gradient, and particles) ======
-        Dim bgPanel As New Panel() With {
+        bgPanel = New Panel() With {
             .Name = "bgLayer",
             .Dock = DockStyle.Fill,
-            .BackColor = Color.Transparent
+            .BackColor = Color.FromArgb(8, 12, 24)
         }
         AddHandler bgPanel.Paint, AddressOf GlassPanel_Paint
         Me.Controls.Add(bgPanel)
@@ -241,8 +266,12 @@ Public Class MenuForm
             Dim clickHandler = Sub(s As Object, e As EventArgs)
                                    Dim ft As Type = def.TargetType
                                    If ft IsNot Nothing Then
-                                       Dim instance As Form = CType(Activator.CreateInstance(ft), Form)
-                                       instance.Show()
+                                       Try
+                                           Dim instance As Form = CType(Activator.CreateInstance(ft), Form)
+                                           instance.Show()
+                                       Catch ex As Exception
+                                           System.Windows.Forms.MessageBox.Show($"Error opening form: {ft.Name}&newline{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                                       End Try
                                    End If
                                End Sub
 
@@ -256,11 +285,12 @@ Public Class MenuForm
             ' Register for particle spawning on hover
             AddHandler menuItemPanel.MouseEnter, Sub(s As Object, e As EventArgs)
                                                      Dim panel = DirectCast(s, Panel)
+                                                     ' Convert panel-relative coordinates to form/bgpPanel absolute coordinates
+                                                     Dim centerPoint As Point = panel.PointToScreen(New Point(panel.Width \ 2, panel.Height \ 2))
+                                                     Dim absLoc As Point = Me.PointToClient(centerPoint)
+
                                                      For j As Integer = 0 To 3
-                                                         particles.Add(New Particle(
-                                                             panel.Left + panel.Width / 2,
-                                                             panel.Top + panel.Height / 2,
-                                                             def.AccentColor))
+                                                         particles.Add(New Particle(absLoc.X, absLoc.Y, def.AccentColor))
                                                      Next
                                                  End Sub
 
@@ -284,17 +314,19 @@ Public Class MenuForm
         Dim closeButton As New Label() With {
             .Name = "closeButton",
             .Text = "×",
-            .Font = New Font("Segoe UI", 14.0F, FontStyle.Bold),
-            .Size = New Size(36, 36),
-            .Location = New Point(Me.Width - 36, 12),
+            .Font = New Font("Segoe UI", 24.0F, FontStyle.Bold),
+            .Size = New Size(45, 45),
+            .Location = New Point(CInt(Me.Width) - 45, 0),
             .ForeColor = Color.FromArgb(180, 200, 220),
-            .BackColor = Color.Transparent,
+            .BackColor = Color.FromArgb(18, 24, 38),
             .Cursor = Cursors.Hand,
-            .TextAlign = ContentAlignment.MiddleCenter
+            .TextAlign = ContentAlignment.MiddleCenter,
+            .TabIndex = 0,
+            .Visible = True
         }
         AddHandler closeButton.MouseEnter, Sub(s, e) DirectCast(s, Label).ForeColor = Color.FromArgb(255, 80, 80)
         AddHandler closeButton.MouseLeave, Sub(s, e) DirectCast(s, Label).ForeColor = Color.FromArgb(180, 200, 220)
-        AddHandler closeButton.Click, Sub(s, e) Me.Close()
+        AddHandler closeButton.Click, AddressOf CloseButton_Click
         Me.Controls.Add(closeButton)
 
         ' Status bar text
@@ -354,25 +386,8 @@ Public Class MenuForm
                 Using brush As New SolidBrush(Color.FromArgb(particle.Alpha, particle.Color))
                     g.FillEllipse(brush, particle.X - particle.Size / 2, particle.Y - particle.Size / 2, particle.Size, particle.Size)
                 End Using
-
-                particle.X += CSng(particle.VX)
-                particle.Y += CSng(particle.VY)
-                particle.Alpha -= 5
             End If
         Next
-
-        particles.RemoveAll(Function(p) p.Alpha <= 0)
-
-        ' Add new ambient particles periodically
-        tickCounter += 1
-        If tickCounter Mod 30 = 0 AndAlso particles.Count < 50 Then
-            Dim angle As Double = Random.Shared.NextDouble() * Math.PI * 2
-            Dim radius As Single = CSng(Random.Shared.NextDouble() * 100)
-            particles.Add(New Particle(
-                centerX + CSng(Math.Cos(angle) * radius),
-                centerY + CSng(Math.Sin(angle) * radius),
-                Color.FromArgb(0, 229, 255)))
-        End If
     End Sub
 
     ' ====== Title Panel Gradient Animation ======
@@ -408,4 +423,61 @@ Public Class MenuForm
         End Using
     End Sub
 
+    ' ====== Close Button Handler ======
+    Private Sub CloseButton_Click(sender As Object, e As EventArgs)
+        Me.Close()
+    End Sub
+
+    Protected Overrides Sub OnShown(e As EventArgs)
+        MyBase.OnShown(e)
+
+        ' Now that form is fully displayed, fix control positions and spawn particles
+        Dim closeBtn = TryCast(Me.Controls.OfType(Of Label)().FirstOrDefault(Function(l) l.Name = "closeButton"), Label)
+        If closeBtn IsNot Nothing Then
+            closeBtn.BringToFront()
+            closeBtn.Location = New Point(CInt(Me.ClientSize.Width) - closeBtn.Width - 8, 12)
+        End If
+
+        ' Spawn initial particles AFTER form is shown (ClientRectangle now has correct values)
+        Dim centerX As Single = CSng(Me.ClientRectangle.Width / 2)
+        Dim centerY As Single = CSng(Me.ClientRectangle.Height / 2)
+        For i As Integer = 0 To 50
+            Dim angle As Double = Random.Shared.NextDouble() * Math.PI * 2
+            Dim radius As Single = CSng(Random.Shared.NextDouble() * 200 + 30)
+            particles.Add(New Particle(
+                centerX + CSng(Math.Cos(angle) * radius),
+                centerY + CSng(Math.Sin(angle) * radius),
+                Color.FromArgb(0, 229, 255)))
+        Next
+
+        ' Force initial paint to display particles immediately
+        bgPanel?.Invalidate()
+    End Sub
+
+End Class
+
+''' <summary>
+''' Represents a small animated particle used for visual effects.
+''' </summary>
+Public Class Particle
+    Public Property X As Single
+    Public Property Y As Single
+    Public Property VX As Single
+    Public Property VY As Single
+    Public Property Size As Single
+    Public Property Alpha As Byte
+    Public Property Color As Color
+
+    Public Sub New(x As Single, y As Single, color As Color)
+        Me.X = x
+        Me.Y = y
+        Me.Color = color
+        ' Random velocity between -1 and 1
+        Me.VX = CSng(Random.Shared.NextDouble() * 2 - 1)
+        Me.VY = CSng(Random.Shared.NextDouble() * 2 - 1)
+        ' Random size between 1 and 4 pixels
+        Me.Size = CSng(Random.Shared.NextDouble() * 3 + 1)
+        ' Start fully opaque
+        Me.Alpha = 255
+    End Sub
 End Class

@@ -1,12 +1,5 @@
-﻿Imports System
-Imports System.Collections
-Imports System.ComponentModel
-Imports System.Data
-Imports System.Drawing
-Imports System.Runtime.InteropServices
-Imports System.Windows
+﻿Imports System.Runtime.InteropServices
 Imports Microsoft.VisualStudio.Shell
-Imports Microsoft.VisualStudio.Shell.Interop
 
 ''' <summary>
 ''' This class implements the tool window exposed by this package and hosts a user control.
@@ -36,13 +29,23 @@ Public Class VSAgentToolWindow
         'This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
         'we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on 
         'the object returned by the Content property.
-        Me.Content = New VSAgentToolWindowControl()
-
         _agentHostController = New AgentHostController()
 
         _agentHostController.EnsureStarted()
 
         _agentHostClient = New AgentHostClient("VSAgent.AgentHost")
+
+        Me.Content = New VSAgentToolWindowControl(_agentHostClient)
     End Sub
 
+    Protected Overrides Sub Dispose(disposing As Boolean)
+
+        If disposing Then
+            _agentHostClient?.Dispose()
+            _agentHostController?.Dispose()
+        End If
+
+        MyBase.Dispose(disposing)
+
+    End Sub
 End Class

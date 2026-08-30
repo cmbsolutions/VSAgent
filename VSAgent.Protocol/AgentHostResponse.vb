@@ -1,5 +1,4 @@
 ﻿Imports Newtonsoft.Json.Linq
-Imports VSAgent.Protocol.Messages
 
 Namespace Messages
     Public Class AgentHostResponse
