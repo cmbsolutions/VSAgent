@@ -14,6 +14,9 @@ Public Class AgentRunner
 
     Private ReadOnly _toolActionDescriptions As Dictionary(Of String, String)
 
+    Public Event Thinking(text As String)
+    Public Event Content(text As String)
+
     Public Event ToolStarted(toolName As String, actionDescription As String)
     Public Event ToolCompleted(toolName As String)
     Public Event ToolFailed(toolName As String, errorMessage As String)

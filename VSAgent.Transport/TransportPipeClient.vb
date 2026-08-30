@@ -1,4 +1,5 @@
-﻿Imports System.IO
+﻿Imports System.Diagnostics.Tracing
+Imports System.IO
 Imports System.IO.Pipes
 Imports System.Text
 Imports Newtonsoft.Json

@@ -138,6 +138,10 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
         Return Await _handler(request)
     End Function
 
+    Public Async Function SendEventAsync(message As Protocol.Events.AgentHostEvent) As Task
+        Throw New NotImplementedException
+    End Function
+
     Public Async Function StopAsync() As Task
 
         If _serverTask Is Nothing Then
