@@ -3,12 +3,19 @@ Imports System.IO.Pipes
 Imports System.Text
 Imports System.Threading
 Imports Newtonsoft.Json
+Imports Newtonsoft.Json.Linq
+Imports VSAgent.Protocol
+Imports VSAgent.Protocol.Messages
 
 Public Class TransportPipeServer(Of TRequest, TResponse)
     Implements IDisposable
 
     Private ReadOnly _pipeName As String
     Private ReadOnly _handler As Func(Of TRequest, Task(Of TResponse))
+
+    Private _reader As StreamReader = Nothing
+    Private _writer As StreamWriter = Nothing
+    Private ReadOnly _writeLock As New SemaphoreSlim(1, 1)
 
     Private ReadOnly _cancellationTokenSource As New CancellationTokenSource()
     Private _serverTask As Task
@@ -70,76 +77,91 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
     End Function
 
     Private Async Function ProcessClientAsync(pipe As NamedPipeServerStream, cancellationToken As CancellationToken) As Task
-        Dim reader As StreamReader = Nothing
-        Dim writer As StreamWriter = Nothing
+        Using reader As New StreamReader(pipe)
+            Using writer As New StreamWriter(pipe) With {
+                    .AutoFlush = True
+                }
+
+                _writer = writer
+
+                Try
+                    While pipe.IsConnected
+                        If cancellationToken.IsCancellationRequested Then
+                            Exit While
+                        End If
+
+                        Dim line = Await reader.ReadLineAsync()
+
+                        If line Is Nothing Then
+                            Exit While
+                        End If
+
+                        If String.IsNullOrWhiteSpace(line) Then
+                            Continue While
+                        End If
+
+                        Dim requestMessage = JsonConvert.DeserializeObject(Of TransportMessage)(line)
+
+                        If requestMessage Is Nothing Then
+                            Continue While
+                        End If
+
+                        If requestMessage.MessageType <> "request" Then
+                            Continue While
+                        End If
+
+                        Dim response = Await HandleRequestAsync(requestMessage)
+
+                        Await WriteMessageAsync(response)
+                    End While
+                Finally
+                    _writer = Nothing
+                End Try
+            End Using
+        End Using
+    End Function
+
+    Private Async Function HandleRequestAsync(requestMessage As TransportMessage) As Task(Of TransportMessage)
+        Dim request = requestMessage.Payload.ToObject(Of TRequest)()
+
+        If request Is Nothing Then
+            Throw New InvalidOperationException("Could not deserialize request payload.")
+        End If
+
+        Dim response = Await _handler(request)
+
+        Return New TransportMessage With {
+            .MessageType = "response",
+            .RequestId = requestMessage.RequestId,
+            .Payload = JObject.FromObject(response)
+        }
+    End Function
+
+    Private Async Function WriteMessageAsync(message As TransportMessage) As Task
+        If _writer Is Nothing Then
+            Return
+        End If
+
+        ' Write only one message at a time, this is to prevent json entanglement.
+        Await _writeLock.WaitAsync()
 
         Try
-            reader = New StreamReader(pipe, New UTF8Encoding(False), detectEncodingFromByteOrderMarks:=False, bufferSize:=4096, leaveOpen:=True)
+            Dim json = JsonConvert.SerializeObject(message)
 
-            writer = New StreamWriter(pipe, New UTF8Encoding(False), bufferSize:=4096, leaveOpen:=True) With {
-                .AutoFlush = True
-            }
-
-            While pipe.IsConnected AndAlso Not cancellationToken.IsCancellationRequested
-
-                Dim json As String
-
-                Try
-                    json = Await reader.ReadLineAsync().ConfigureAwait(False)
-
-                Catch ex As IOException
-                    Exit While
-                End Try
-
-                If json Is Nothing Then
-                    Exit While
-                End If
-
-                Dim response = Await HandleRequestAsync(json).ConfigureAwait(False)
-
-                Dim responseJson = JsonConvert.SerializeObject(response)
-
-                Try
-                    Await writer.WriteLineAsync(responseJson).ConfigureAwait(False)
-
-                Catch ex As IOException
-                    Exit While
-                End Try
-
-            End While
-
+            Await _writer.WriteLineAsync(json)
+            Await _writer.FlushAsync()
         Finally
-            If writer IsNot Nothing Then
-                Try
-                    writer.Dispose()
-                Catch ex As IOException
-                    ' Normal when the client closes immediately after receiving
-                    ' the final response.
-                End Try
-            End If
-
-            If reader IsNot Nothing Then
-                Try
-                    reader.Dispose()
-                Catch ex As IOException
-                    ' Client already disconnected.
-                End Try
-            End If
+            _writeLock.Release()
         End Try
     End Function
 
-    Private Async Function HandleRequestAsync(json As String) As Task(Of TResponse)
-        Dim request = JsonConvert.DeserializeObject(Of TRequest)(json)
+    Public Function SendEventAsync(payload As Object) As Task
+        Dim message As New TransportMessage With {
+            .MessageType = "event",
+            .Payload = JObject.FromObject(payload)
+        }
 
-        If request Is Nothing Then
-            Throw New InvalidOperationException("The request could not be deserialized.")
-        End If
-
-        Return Await _handler(request)
-    End Function
-
-    Public Async Function SendEventAsync(message As Protocol.Events.AgentHostEvent) As Task
-        Throw New NotImplementedException
+        Return WriteMessageAsync(message)
     End Function
 
     Public Async Function StopAsync() As Task
@@ -162,6 +184,16 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
             If disposing Then
                 _cancellationTokenSource.Cancel()
                 _cancellationTokenSource.Dispose()
+
+                Try
+                    _reader?.Dispose()
+                Catch
+                End Try
+
+                Try
+                    _writer?.Dispose()
+                Catch
+                End Try
             End If
 
             ' TODO: free unmanaged resources (unmanaged objects) and override finalizer

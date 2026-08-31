@@ -35,6 +35,8 @@ Public Class VSAgentToolWindow
 
         _agentHostClient = New AgentHostClient("VSAgent.AgentHost")
 
+        Dim unused = _agentHostClient.ConnectAsync()
+
         Me.Content = New VSAgentToolWindowControl(_agentHostClient)
     End Sub
 
