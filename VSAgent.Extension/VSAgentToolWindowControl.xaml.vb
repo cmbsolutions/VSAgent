@@ -15,6 +15,32 @@ Partial Public Class VSAgentToolWindowControl
         InitializeComponent()
 
         _agentHostClient = agentHostClient
+
+        AddHandler _agentHostClient.Thinking, AddressOf AgentHostClient_Thinking
+        AddHandler _agentHostClient.Content, AddressOf AgentHostClient_Content
+        AddHandler _agentHostClient.ToolStarted, AddressOf AgentHostClient_ToolStarted
+        AddHandler _agentHostClient.ToolCompleted, AddressOf AgentHostClient_ToolCompleted
+        AddHandler _agentHostClient.ToolFailed, AddressOf AgentHostClient_ToolFailed
+    End Sub
+
+    Private Sub AgentHostClient_ToolFailed(toolName As String, errorMessage As String)
+        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}Tool '{toolName}' failed with error: {errorMessage}")
+    End Sub
+
+    Private Sub AgentHostClient_ToolCompleted(toolName As String)
+        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}Tool '{toolName}' completed successfully.")
+    End Sub
+
+    Private Sub AgentHostClient_ToolStarted(toolName As String, actionDescription As String)
+        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}Tool '{toolName}' started: {actionDescription}")
+    End Sub
+
+    Private Sub AgentHostClient_Content(text As String)
+        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}{text}")
+    End Sub
+
+    Private Sub AgentHostClient_Thinking(text As String)
+        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}Thinking: {text}")
     End Sub
 
     Private Sub btnSend_Click(sender As Object, e As System.Windows.RoutedEventArgs) Handles btnSend.Click
@@ -47,10 +73,15 @@ Partial Public Class VSAgentToolWindowControl
         btnSend.IsEnabled = True
 
         If errorMessage IsNot Nothing Then
-            txtOutput.Text = "Error: " & errorMessage
+            Await AppendTextToOutputAsync("Error: " & errorMessage)
         Else
-            txtOutput.Text = response.Content
+            Await AppendTextToOutputAsync(response.Content)
         End If
 
+    End Function
+
+    Private Async Function AppendTextToOutputAsync(text As String) As Task
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+        txtOutput.Text &= text
     End Function
 End Class

@@ -1,4 +1,5 @@
 ﻿Imports System.Drawing.Drawing2D
+Imports System.Reflection
 
 ''' <summary>
 ''' Main menu form that allows the user to navigate to other application forms.
@@ -6,59 +7,52 @@
 Public Class MenuForm
     Inherits Form
 
-    ''' <summary>
-    ''' Centralized theme colors for the entire menu UI.
-    ''' </summary>
-    Private NotInheritable Class ThemeColors
-        Public Shared ReadOnly DarkBackground As Color = Color.FromArgb(8, 12, 24)
-        Public ReadOnly Cyan As Color = Color.FromArgb(0, 229, 255)
+    ' Animation timer and state
+    Private WithEvents animTimer As New Timer() With {.Interval = 16, .Enabled = True}
+    Private tickCounter As Integer = 0
+    Private particles As List(Of Particle) = New List(Of Particle)()
+    Private bgPanel As Panel = Nothing
+    Private _paintLock As Object = New Object()
+    Private _openedForms As HashSet(Of Form) = New HashSet(Of Form)()
 
-        ' Accent gradients
-        Public ReadOnly CyanGradientStart As Color = Color.FromArgb(0, 180, 255)
-        Public ReadOnly CyanGradientEnd As Color = Color.FromArgb(147, 60, 255)
+    Public Sub New()
+        Me.SuspendLayout()
+        InitializeComponent()
+        Me.ResumeLayout(False)
+    End Sub
 
-        Public ReadOnly BlueGradientStart As Color = Color.FromArgb(32, 145, 210)
-        Public ReadOnly BlueGradientEnd As Color = Color.FromArgb(69, 200, 255)
+    Protected Overrides Sub OnFormClosed(e As FormClosedEventArgs)
+        MyBase.OnFormClosed(e)
+        animTimer.Stop()
+        animTimer.Dispose()
+    End Sub
 
-        ' Panel colors
-        Public ReadOnly MenuItemBack As Color = Color.FromArgb(18, 24, 38)
-        Public ReadOnly MenuItemHoverBack As Color = Color.FromArgb(25, 33, 50)
-        Public ReadOnly TitleBack As Color = Color.FromArgb(25, 38, 70)
-        Public ReadOnly IconBg As Color = Color.FromArgb(10, 15, 28)
+    Private Sub SpawnParticlesAtCursor(accentColor As Color, count As Integer)
+        If Not Me.Visible AndAlso Not Me.IsHandleCreated Then Return
+        
+        Dim screenPos As Point = Cursor.Position
+        Dim clientPos As Point = Me.PointToClient(screenPos)
+        
+        SyncLock _paintLock
+            For j As Integer = 0 To count - 1
+                particles.Add(New Particle(
+                    CSng(clientPos.X + Random.Shared.Next(-6, 7)),
+                    CSng(clientPos.Y + Random.Shared.Next(-6, 7)),
+                    accentColor))
+            Next
+        End SyncLock
+    End Sub
 
-        ' Accent bar colors
-        Public ReadOnly TopBarStart As Color = Color.FromArgb(0, 180, 255)
-        Public ReadOnly TopBarEnd As Color = Color.FromArgb(147, 60, 255)
-
-        ' Close button
-        Public ReadOnly CloseNormal As Color = Color.FromArgb(180, 200, 220)
-        Public ReadOnly CloseHover As Color = Color.FromArgb(255, 80, 80)
-        Public ReadOnly CloseBg As Color = Color.FromArgb(18, 24, 38)
-
-        ' Text colors
-        Public ReadOnly TitleText As Color = Color.FromArgb(0, 229, 255)
-        Public ReadOnly SubTitleText As Color = Color.FromArgb(100, 200, 255)
-        Public ReadOnly NormalWhite As Color = Color.FromArgb(255, 255, 255)
-        Public ReadOnly DescriptionGray As Color = Color.FromArgb(120, 140, 180)
-        Public ReadOnly StatusText As Color = Color.FromArgb(60, 100, 140)
-    End Class
-
-    Dim toolTip As New ToolTip() With {
-            .InitialDelay = 100,
-            .ReshowDelay = 50,
-            .AutomaticDelay = 100,
-            .AutoPopDelay = 2000
-        }
-
-    ' ====== Main form settings ======
-    Me.Text = "╳ AIWinForms v∞"
-    Me.Size = New Size(640, 480)
-    Me.StartPosition = FormStartPosition.CenterScreen
-    Me.MinimumSize = New Size(580, 380)
-    Me.BackColor = Color.FromArgb(8, 12, 24)
-    Me.FormBorderStyle = FormBorderStyle.None
-    Me.DoubleBuffered = True
-    Me.AllowDrop = True
+    Private Sub InitializeComponent()
+        ' ====== Main form settings ======
+        Me.Text = "╳ AIWinForms v∞"
+        Me.Size = New Size(640, 480)
+        Me.StartPosition = FormStartPosition.CenterScreen
+        Me.MinimumSize = New Size(580, 380)
+        Me.BackColor = Color.FromArgb(8, 12, 24)
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.DoubleBuffered = True
+        Me.AllowDrop = True
 
         ' ====== Background Panel (draws grid, radial gradient, and particles) ======
         bgPanel = New Panel() With {
@@ -66,29 +60,28 @@ Public Class MenuForm
             .Dock = DockStyle.Fill,
             .BackColor = Color.FromArgb(8, 12, 24)
         }
-        AddHandler() bgPanel.Paint, AddressOf GlassPanel_Paint
+        AddHandler bgPanel.Paint, AddressOf GlassPanel_Paint
         Me.Controls.Add(bgPanel)
 
-    ' ====== Top Accent Bar (with animated gradient) ======
-    Dim topBar As New Panel() With {
+        ' ====== Top Accent Bar (with animated gradient) ======
+        Dim topBar As New Panel() With {
             .Name = "topAccentBar",
             .Dock = DockStyle.Top,
             .Height = 3,
             .BackColor = Color.FromArgb(0, 229, 255)
         }
-    AddHandler() topBar.Paint, AddressOf TopBar_Paint
+        AddHandler topBar.Paint, AddressOf TopBar_Paint
         Me.Controls.Add(topBar)
 
-    ' ====== Title Section with animated gradient ======
-    Dim titlePanel As New Panel() With {
+        ' ====== Title Section with animated gradient ======
+        Dim titlePanel As New Panel() With {
             .Name = "titleSection",
             .Size = New Size(600, 100),
             .Location = New Point(20, 15),
             .BackColor = Color.FromArgb(25, 38, 70)
         }
-    AddHandler() titlePanel.Paint, AddressOf TitlePanel_Paint
+        AddHandler titlePanel.Paint, AddressOf TitlePanel_Paint
 
-        ' Main title
         Dim mainTitleLabel As New Label() With {
             .Name = "mainTitle",
             .Text = "AIWinForms",
@@ -102,7 +95,6 @@ Public Class MenuForm
         }
         titlePanel.Controls.Add(mainTitleLabel)
 
-        ' Subtitle
         Dim subtitleLabel As New Label() With {
             .Name = "subtitle",
             .Text = "QUANTUM NAVIGATION SYSTEM",
@@ -124,23 +116,26 @@ Public Class MenuForm
             .BackColor = Color.Transparent
         }
 
-    ' ====== Define menu items ======
-    Dim menuDefs As List(Of MenuItemDef) = CreateMenuDefinitions()
+        ' ====== Define menu items ======
+        Dim menuDefs As List(Of MenuItemDef) = CreateMenuDefinitions()
 
-    For i As Integer = 0 To menuDefs.Count - 1
-    Dim def = menuDefs(i)
-    Dim menuItemPanel = CreateMenuItemPanel(def, toolTip)
+        For i As Integer = 0 To menuDefs.Count - 1
+            Dim def = menuDefs(i)
+            Dim menuItemPanel = CreateMenuItemPanel(def)
+            
+            ' Position each menu item vertically
+            menuItemPanel.Location = New Point(20, i * 85 + 5)
             menuContainer.Controls.Add(menuItemPanel)
         Next
 
-    ' ====== Bottom Status Bar ======
-    Dim statusBar As New Panel() With {
+        ' ====== Bottom Status Bar ======
+        Dim statusBar As New Panel() With {
             .Name = "statusBar",
             .Dock = DockStyle.Bottom,
             .Height = 30,
             .BackColor = Color.Transparent
         }
-    Me.Controls.Add(statusBar)
+        Me.Controls.Add(statusBar)
 
         ' Add all controls to form
         bgPanel.Controls.Add(titlePanel)
@@ -160,14 +155,13 @@ Public Class MenuForm
             .TabIndex = 0,
             .Visible = True
         }
-        toolTip.SetToolTip(closeButton, "Close")
         AddHandler closeButton.MouseEnter, Sub(s, e) DirectCast(s, Label).ForeColor = Color.FromArgb(255, 80, 80)
         AddHandler closeButton.MouseLeave, Sub(s, e) DirectCast(s, Label).ForeColor = Color.FromArgb(180, 200, 220)
-        AddHandler() closeButton.Click, AddressOf CloseButton_Click
+        AddHandler closeButton.Click, AddressOf CloseButton_Click
         Me.Controls.Add(closeButton)
 
-    ' ====== Status bar text ======
-    Dim statusBarLabel As New Label() With {
+        ' ====== Status bar text ======
+        Dim statusBarLabel As New Label() With {
             .Name = "statusBarText",
             .Text = "Quantum Navigation System v∞",
             .Font = New Font("Consolas", 8.0F),
@@ -178,13 +172,8 @@ Public Class MenuForm
             .TextAlign = ContentAlignment.MiddleCenter
         }
         statusBar.Controls.Add(statusBarLabel)
+    End Sub
 
-        ' Store tooltip for cleanup
-        Me.Tag = toolTip
-
-    ''' <summary>
-    ''' Creates the list of menu item definitions.
-    ''' </summary>
     Private Function CreateMenuDefinitions() As List(Of MenuItemDef)
         Return New List(Of MenuItemDef) From {
             New MenuItemDef With {
@@ -193,8 +182,8 @@ Public Class MenuForm
                 .Description = "Connect to OpenAI's advanced language models for AI-powered interactions",
                 .TargetType = GetType(OpenAIClientForm),
                 .IconChar = ChrW(9679),   ' ◉ (filled circle)
-                .GradientStart = _theme.CyanGradientStart,
-                .GradientEnd = _theme.CyanGradientEnd
+                .GradientStart = Color.FromArgb(0, 180, 255),
+                .GradientEnd = Color.FromArgb(147, 60, 255)
             },
             New MenuItemDef With {
                 .Name = "btn_JSONParser",
@@ -202,22 +191,19 @@ Public Class MenuForm
                 .Description = "Visualize and parse JSON data with interactive hierarchical tree view",
                 .TargetType = GetType(Form1),
                 .IconChar = ChrW(9678),   ' ◈ (circled diamond)
-                .GradientStart = _theme.BlueGradientStart,
-                .GradientEnd = _theme.BlueGradientEnd
+                .GradientStart = Color.FromArgb(32, 145, 210),
+                .GradientEnd = Color.FromArgb(69, 200, 255)
             }
         }
     End Function
 
-    ''' <summary>
-    ''' Creates a fully-styled menu item panel with all child controls and event handlers.
-    ''' </summary>
     Private Function CreateMenuItemPanel(def As MenuItemDef) As Panel
         ' --- Main panel (clickable region) ---
         Dim menuItemPanel As New Panel() With {
             .Name = def.Name,
             .Size = New Size(560, 70),
-            .Location = New Point(20, 0),  ' position handled by parent FlowLayoutPanel or manual offset
-            .BackColor = _theme.MenuItemBack,
+            .Location = New Point(20, 0),
+            .BackColor = Color.FromArgb(18, 24, 38),
             .BorderStyle = BorderStyle.None,
             .Cursor = Cursors.Hand
         }
@@ -229,7 +215,7 @@ Public Class MenuForm
             .Location = New Point(-1, -1),
             .BackColor = Color.Transparent
         }
-        AddHandler glowBorder.Paint, Sub(s, e) DrawGlowBorder(e, def.AccentColor)
+        AddHandler glowBorder.Paint, Sub(s, e) DrawGlowBorder(e, def.GradientStart)
         menuItemPanel.Controls.Add(glowBorder)
 
         ' --- Accent gradient bar on left ---
@@ -247,7 +233,7 @@ Public Class MenuForm
             .Name = $"iconBg_{def.Name}",
             .Size = New Size(36, 36),
             .Location = New Point(28, 17),
-            .BackColor = _theme.IconBg
+            .BackColor = Color.FromArgb(10, 15, 28)
         }
         AddHandler iconBg.Paint, Sub(s, e) DrawGradientIcon(e, def.GradientStart, def.GradientEnd)
         menuItemPanel.Controls.Add(iconBg)
@@ -260,20 +246,20 @@ Public Class MenuForm
             .Location = New Point(30, 19),
             .AutoSize = False,
             .Size = New Size(32, 32),
-            .ForeColor = _theme.NormalWhite,
+            .ForeColor = Color.FromArgb(255, 255, 255),
             .TextAlign = ContentAlignment.MiddleCenter,
             .BackColor = Color.Transparent
         }
 
-        ' --- Title label ---
+        ' --- Title label (visible text for the button) ---
         Dim titleLabel As New Label() With {
             .Name = $"title_{def.Name}",
             .Text = def.Title,
             .Font = New Font("Segoe UI", 13.0F, FontStyle.Bold, GraphicsUnit.Point),
             .AutoSize = False,
-            .Size = New Size(420, 24),
+            .Size = New Size(480, 24),
             .Location = New Point(76, 12),
-            .ForeColor = _theme.NormalWhite,
+            .ForeColor = Color.FromArgb(255, 255, 255),
             .TextAlign = ContentAlignment.MiddleLeft,
             .BackColor = Color.Transparent
         }
@@ -284,9 +270,9 @@ Public Class MenuForm
             .Text = def.Description,
             .Font = New Font("Segoe UI", 9.0F, FontStyle.Regular, GraphicsUnit.Point),
             .AutoSize = False,
-            .Size = New Size(420, 30),
+            .Size = New Size(480, 30),
             .Location = New Point(76, 38),
-            .ForeColor = _theme.DescriptionGray,
+            .ForeColor = Color.FromArgb(120, 140, 180),
             .TextAlign = ContentAlignment.MiddleLeft,
             .BackColor = Color.Transparent
         }
@@ -298,18 +284,19 @@ Public Class MenuForm
             .Location = New Point(510, 17),
             .BackColor = Color.Transparent
         }
-        AddHandler arrowPanel.Paint, Sub(s, e) DrawArrow(e, def.AccentColor)
+        AddHandler arrowPanel.Paint, Sub(s, e) DrawArrow(e, def.GradientStart)
 
-        ' Add all child controls
+        ' Add all child controls to the panel
+        menuItemPanel.Controls.Add(iconBg)
         menuItemPanel.Controls.Add(iconLabel)
         menuItemPanel.Controls.Add(titleLabel)
         menuItemPanel.Controls.Add(descLabel)
         menuItemPanel.Controls.Add(arrowPanel)
 
         ' --- Shared click handler for entire panel and ALL children ---
-        Dim handleItemClick As New EventHandler(Sub(s, e) HandleMenuItemClick(def.TargetType))
+        Dim handleItemClick As EventHandler = Sub(s, e) HandleMenuItemClick(def.TargetType)
 
-        ' Wire to every clickable child so clicks are never swallowed
+        ' Wire to every clickable child so clicks are never swallowed by WinForms
         AddHandler menuItemPanel.Click, handleItemClick
         AddHandler accentBar.Click, handleItemClick
         AddHandler iconLabel.Click, handleItemClick
@@ -317,9 +304,14 @@ Public Class MenuForm
         AddHandler descLabel.Click, handleItemClick
         AddHandler arrowPanel.Click, handleItemClick
 
-        ' --- Hover effects ---
-        Dim handleHoverEnter As EventHandler = Sub(s, e) menuItemPanel.BackColor = _theme.MenuItemHoverBack : SpawnParticlesAtScreenPoint(Cursor.Position.X, Cursor.Position.Y, def.AccentColor, 5)
-        Dim handleHoverLeave As EventHandler = Sub(s, e) menuItemPanel.BackColor = _theme.MenuItemBack
+        ' --- Hover effects (back color change + particle burst) ---
+        Dim handleHoverEnter As EventHandler = Sub(s, e)
+            menuItemPanel.BackColor = Color.FromArgb(25, 33, 50)
+            SpawnParticlesAtCursor(def.GradientStart, 5)
+        End Sub
+        Dim handleHoverLeave As EventHandler = Sub(s, e)
+            menuItemPanel.BackColor = Color.FromArgb(18, 24, 38)
+        End Sub
 
         AddHandler menuItemPanel.MouseEnter, handleHoverEnter
         AddHandler menuItemPanel.MouseLeave, handleHoverLeave
@@ -336,10 +328,6 @@ Public Class MenuForm
 
         Return menuItemPanel
     End Function
-
-#End Region
-
-#Region "Paint helpers"
 
     Private Sub DrawGlowBorder(e As PaintEventArgs, accentColor As Color)
         Dim g As Graphics = e.Graphics
@@ -379,13 +367,41 @@ Public Class MenuForm
         End Using
     End Sub
 
-#End Region
+    Private Sub animTimer_Tick(sender As Object, e As EventArgs) Handles animTimer.Tick
+        SyncLock _paintLock
+            tickCounter += 1
 
-#Region "Paint events"
+            ' Update and remove dead particles using index loop (no .ToList() allocation)
+            For idx As Integer = particles.Count - 1 To 0 Step -1
+                Dim p As Particle = particles(idx)
+                p.X += CSng(p.VX)
+                p.Y += CSng(p.VY)
+                p.Alpha -= 2
 
-    ''' <summary>
-    ''' Glass Panel Background Effect — grid + radial gradient + particles.
-    ''' </summary>
+                If p.Alpha <= 0 Then
+                    particles.RemoveAt(idx)
+                End If
+            Next
+
+            ' Add ambient particles periodically
+            If tickCounter Mod 10 = 0 AndAlso particles.Count < 60 Then
+                Dim angle As Double = Random.Shared.NextDouble() * Math.PI * 2
+                Dim radius As Single = CSng(Random.Shared.NextDouble() * 200 + 30)
+                Dim cx As Single = Me.ClientSize.Width / 2
+                Dim cy As Single = Me.ClientSize.Height / 2
+
+                If cx > 0 AndAlso cy > 0 Then
+                    particles.Add(New Particle(
+                        cx + CSng(Math.Cos(angle) * radius),
+                        cy + CSng(Math.Sin(angle) * radius),
+                        Color.FromArgb(0, 229, 255)))
+                End If
+            End If
+        End SyncLock
+
+        bgPanel?.Invalidate()
+    End Sub
+
     Private Sub GlassPanel_Paint(sender As Object, e As PaintEventArgs)
         Dim g As Graphics = e.Graphics
         g.SmoothingMode = SmoothingMode.AntiAlias
@@ -393,7 +409,7 @@ Public Class MenuForm
         If Me.Width <= 0 OrElse Me.Height <= 0 Then Return
 
         ' Animated grid background
-        g.Clear(_theme.DarkBackground)
+        g.Clear(Color.FromArgb(8, 12, 24))
 
         Dim gridSize As Integer = 40
         SyncLock _paintLock
@@ -439,9 +455,6 @@ Public Class MenuForm
         End SyncLock
     End Sub
 
-    ''' <summary>
-    ''' Title Panel Gradient Animation.
-    ''' </summary>
     Private Sub TitlePanel_Paint(sender As Object, e As PaintEventArgs)
         Dim g As Graphics = e.Graphics
         g.SmoothingMode = SmoothingMode.AntiAlias
@@ -464,9 +477,6 @@ Public Class MenuForm
         End SyncLock
     End Sub
 
-    ''' <summary>
-    ''' Top Bar Paint — animated gradient color.
-    ''' </summary>
     Private Sub TopBar_Paint(sender As Object, e As PaintEventArgs)
         Dim g As Graphics = e.Graphics
 
@@ -483,35 +493,27 @@ Public Class MenuForm
         End SyncLock
     End Sub
 
-#End Region
-
-#Region "Click handling"
-
-    ''' <summary>
-    ''' Handles opening a target form. Reuses existing instances if they are still open.
-    ''' </summary>
     Private Sub HandleMenuItemClick(targetType As Type)
         If targetType Is Nothing Then Return
 
         Try
-            ' Check if an instance is already open and visible
+            ' Check if an instance is already open and not disposed
             For Each existingForm As Form In _openedForms
-                If Not existingForm.IsDisposed AndAlso TypeOf existingForm Is Reflection.Activator.CreateInstance(targetType) Then
-                    If TypeOf existingForm.GetType().GetProperty("Name").GetValue(existingForm) = targetType.Name Then
-                        ' Reuse the existing form
-                        If existingForm.WindowState = FormWindowState.Minimized Then
-                            existingForm.WindowState = FormWindowState.Normal
-                        End If
-                        existingForm.Focus()
-                        Return
+                If Not existingForm.IsDisposed AndAlso existingForm.GetType() Is targetType Then
+                    If existingForm.WindowState = FormWindowState.Minimized Then
+                        existingForm.WindowState = FormWindowState.Normal
                     End If
+                    existingForm.Focus()
+                    Return
                 End If
             Next
 
             ' No existing instance — create a new one
             Dim instance As Form = CType(Activator.CreateInstance(targetType), Form)
             AddHandler instance.FormClosed, Sub(s, eArg) _openedForms.Remove(instance)
-            _openedForms.Add(instance)
+            SyncLock _paintLock
+                _openedForms.Add(instance)
+            End SyncLock
             instance.Show()
 
         Catch ex As MissingMethodException
@@ -529,14 +531,10 @@ Public Class MenuForm
         End Try
     End Sub
 
-    ''' <summary>
-    ''' Close button handler.
-    ''' </summary>
     Private Sub CloseButton_Click(sender As Object, e As EventArgs)
         Me.Close()
     End Sub
 
-    ' Allow the close button to also be triggered via Escape key
     Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
         If keyData = Keys.Escape Then
             Me.Close()
@@ -544,10 +542,6 @@ Public Class MenuForm
         End If
         Return MyBase.ProcessCmdKey(msg, keyData)
     End Function
-
-#End Region
-
-#Region "OnShown"
 
     Protected Overrides Sub OnShown(e As EventArgs)
         MyBase.OnShown(e)
@@ -568,14 +562,12 @@ Public Class MenuForm
             particles.Add(New Particle(
                 centerX + CSng(Math.Cos(angle) * radius),
                 centerY + CSng(Math.Sin(angle) * radius),
-                _theme.Cyan))
+                Color.FromArgb(0, 229, 255)))
         Next
 
         ' Force initial paint to display particles immediately
         bgPanel?.Invalidate()
     End Sub
-
-#End Region
 
 End Class
 
@@ -616,10 +608,4 @@ Public NotInheritable Class MenuItemDef
     Public Property IconChar As Char = ChrW(0)
     Public Property GradientStart As Color = Color.Empty
     Public Property GradientEnd As Color = Color.Empty
-    Public ReadOnly Property AccentColor As Color
-        Get
-            ' If a single accent color is preferred, return GradientStart.
-            Return Me.GradientStart
-        End Get
-    End Property
 End Class
