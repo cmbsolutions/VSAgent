@@ -1,10 +1,8 @@
 Imports System.IO
 Imports System.IO.Pipes
-Imports System.Text
 Imports System.Threading
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
-Imports VSAgent.Protocol
 Imports VSAgent.Protocol.Messages
 
 Public Class TransportPipeServer(Of TRequest, TResponse)
@@ -20,20 +18,23 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
     Private ReadOnly _cancellationTokenSource As New CancellationTokenSource()
     Private _serverTask As Task
 
+    Private ReadOnly _serverName As String
+
     Private disposedValue As Boolean
 
-    Public Sub New(PipeName As String, Handler As Func(Of TRequest, Task(Of TResponse)))
+    Public Sub New(PipeName As String, Handler As Func(Of TRequest, Task(Of TResponse)), Servername As String)
         _pipeName = PipeName
         _handler = Handler
+        _serverName = Servername
     End Sub
 
     Public Sub Start()
-        Debug.WriteLine("VSAgent: Starting server")
+        Debug.WriteLine($"VSAgent: Starting server {_serverName}")
         If _serverTask IsNot Nothing Then
             Throw New InvalidOperationException("The VSAgent server has already been started.")
         End If
 
-        Debug.WriteLine("VSAgent: Run server")
+        Debug.WriteLine($"VSAgent: Run server {_serverName}")
         _serverTask = RunServerAsync(_cancellationTokenSource.Token)
     End Sub
 
@@ -51,7 +52,7 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
     End Function
 
     Private Async Function AcceptClientAsync(cancellationToken As CancellationToken) As Task
-        Debug.WriteLine("VSAgent: Creating named pipe")
+        Debug.WriteLine($"VSAgent: Creating named pipe for server {_serverName}")
 
         Using pipe = New NamedPipeServerStream(
             _pipeName,

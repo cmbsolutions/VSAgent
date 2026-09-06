@@ -374,16 +374,16 @@ Public Class OpenAIClientForm
             lblStatus.ForeColor = Color.Green
             progressBar.Value = 100
 
+        Catch ex As TaskCanceledException
+            lblStatus.Text = "Request timed out (2 min limit)."
+            lblStatus.ForeColor = Color.Red
+
         Catch ex As OperationCanceledException
             lblStatus.Text = "Request was cancelled."
             lblStatus.ForeColor = Color.OrangeRed
 
         Catch ex As HttpRequestException
             lblStatus.Text = $"Network error: {ex.Message}"
-            lblStatus.ForeColor = Color.Red
-
-        Catch ex As TaskCanceledException
-            lblStatus.Text = "Request timed out (2 min limit)."
             lblStatus.ForeColor = Color.Red
 
         Catch ex As JsonException

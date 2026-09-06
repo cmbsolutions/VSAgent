@@ -8,7 +8,7 @@ Public Class AgentHostPipeServer
     Public Sub New(PipeName As String, runner As AgentRunner)
         _runner = runner
 
-        _transport = New Transport.TransportPipeServer(Of AgentHostRequest, AgentHostResponse)(PipeName, AddressOf HandleRequestAsync)
+        _transport = New Transport.TransportPipeServer(Of AgentHostRequest, AgentHostResponse)(PipeName, AddressOf HandleRequestAsync, "AgentHostPipeServer")
         _transport.Start()
 
         AddHandler _runner.Thinking, AddressOf Runner_Thinking
@@ -19,10 +19,7 @@ Public Class AgentHostPipeServer
     End Sub
 
     Public Async Function StopAsync() As Task
-        If _transport Is Nothing Then
-            Return
-        End If
-
+        If _transport Is Nothing Then Return
         Await _transport.StopAsync
     End Function
 
@@ -37,7 +34,12 @@ Public Class AgentHostPipeServer
                     .Success = True,
                     .Content = result
                 }
-
+            Case "interrupt"
+                Await _runner.InterruptAsync()
+                Return New AgentHostResponse With {
+                    .RequestId = request.Id,
+                    .Success = True
+                }
             Case Else
                 Return New AgentHostResponse With {
                     .RequestId = request.Id,

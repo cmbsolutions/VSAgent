@@ -10,6 +10,10 @@ Partial Public Class VSAgentToolWindowControl
 
     Private ReadOnly _agentHostClient As AgentHostClient
 
+    Private isThinking As Boolean = False
+    Private isContent As Boolean = False
+    Private isTool As Boolean = False
+
     Public Sub New(agentHostClient As AgentHostClient)
 
         InitializeComponent()
@@ -24,24 +28,50 @@ Partial Public Class VSAgentToolWindowControl
     End Sub
 
     Private Sub AgentHostClient_ToolFailed(toolName As String, errorMessage As String)
-        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}Tool '{toolName}' failed with error: {errorMessage}")
+        Dim unused = AppendTextToOutputAsync($"Failed with error: {errorMessage}")
     End Sub
 
     Private Sub AgentHostClient_ToolCompleted(toolName As String)
-        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}Tool '{toolName}' completed successfully.")
+        Dim unused = AppendTextToOutputAsync($"Completed successfully.")
     End Sub
 
     Private Sub AgentHostClient_ToolStarted(toolName As String, actionDescription As String)
-        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}Tool '{toolName}' started: {actionDescription}")
+        If Not isTool Then
+            Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Tool > ")
+            isTool = True
+        End If
+
+        isThinking = False
+        isContent = False
+        Dim unused = AppendTextToOutputAsync($"'{toolName}' started: {actionDescription}... ")
     End Sub
 
     Private Sub AgentHostClient_Content(text As String)
-        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}{text}")
+        If Not isContent Then
+            Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Assistant > ")
+            isContent = True
+        End If
+
+        isThinking = False
+        isTool = False
+        Dim unused = AppendTextToOutputAsync(text)
     End Sub
 
     Private Sub AgentHostClient_Thinking(text As String)
-        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}Thinking: {text}")
+        If Not isThinking Then
+            Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Thinking > ")
+            isThinking = True
+        End If
+
+        isContent = False
+        isTool = False
+        Dim unused = AppendTextToOutputAsync(text)
     End Sub
+
+    Public Async Function SetConnectedAsync() As Task
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+        btnSend.IsEnabled = True
+    End Function
 
     Private Sub btnSend_Click(sender As Object, e As System.Windows.RoutedEventArgs) Handles btnSend.Click
         Dim unused = ThreadHelper.JoinableTaskFactory.RunAsync(AddressOf SendPromptAsync)
@@ -83,5 +113,31 @@ Partial Public Class VSAgentToolWindowControl
     Private Async Function AppendTextToOutputAsync(text As String) As Task
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
         txtOutput.Text &= text
+    End Function
+
+    Private Sub btnStop_Click(sender As Object, e As System.Windows.RoutedEventArgs) Handles btnStop.Click
+        Dim unused = ThreadHelper.JoinableTaskFactory.RunAsync(AddressOf SendInterruptAsync)
+    End Sub
+
+    Private Async Function SendInterruptAsync() As Task
+        Dim response As AgentHostResponse = Nothing
+        Dim errorMessage As String = Nothing
+
+        Await AppendTextToOutputAsync($"{Environment.NewLine}Sending interrupt...")
+        Try
+            response = Await _agentHostClient.SendInterruptAsync()
+
+        Catch ex As Exception
+            errorMessage = ex.Message
+        End Try
+
+        ' Now we're outside Catch/Finally, so Await is allowed.
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+
+        If errorMessage IsNot Nothing Then
+            Await AppendTextToOutputAsync("Error: " & errorMessage)
+        Else
+            Await AppendTextToOutputAsync(response.Content)
+        End If
     End Function
 End Class

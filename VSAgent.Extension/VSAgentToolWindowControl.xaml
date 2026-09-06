@@ -34,7 +34,7 @@
 
             <TextBox x:Name="txtPrompt"
                      Grid.Column="0"
-                     Margin="0,0,8,0" />
+                     Margin="0,0,8,0" AutomationProperties.HelpText="Type /exit or /quit to stop." ToolTip="Type /exit or /quit to stop." Cursor="IBeam" />
 
             <Button x:Name="btnSend"
                     Grid.Column="1"

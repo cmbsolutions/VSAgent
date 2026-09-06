@@ -7,6 +7,7 @@ Public Class AgentHostClient
 
     Private ReadOnly _transport As Transport.TransportPipeClient(Of AgentHostRequest, AgentHostResponse)
 
+    Private isConnected As Boolean = False
     Public Event Thinking(text As String)
     Public Event Content(text As String)
 
@@ -16,7 +17,7 @@ Public Class AgentHostClient
 
 
     Public Sub New(PipeName As String)
-        _transport = New Transport.TransportPipeClient(Of AgentHostRequest, AgentHostResponse)(PipeName)
+        _transport = New Transport.TransportPipeClient(Of AgentHostRequest, AgentHostResponse)(PipeName, "AgentHostClient")
 
         AddHandler _transport.EventReceived, AddressOf Transport_OnEventReceived
     End Sub
@@ -54,6 +55,14 @@ Public Class AgentHostClient
             .Id = Guid.NewGuid().ToString(),
             .Type = "prompt",
             .Content = prompt
+        }
+        Return _transport.SendAsync(request)
+    End Function
+
+    Public Function SendInterruptAsync() As Task(Of AgentHostResponse)
+        Dim request As New AgentHostRequest With {
+            .Id = Guid.NewGuid().ToString(),
+            .Type = "interrupt"
         }
         Return _transport.SendAsync(request)
     End Function

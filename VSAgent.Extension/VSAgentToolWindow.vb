@@ -31,14 +31,26 @@ Public Class VSAgentToolWindow
         'the object returned by the Content property.
         _agentHostController = New AgentHostController()
 
-        _agentHostController.EnsureStarted()
-
         _agentHostClient = New AgentHostClient("VSAgent.AgentHost")
 
-        Dim unused = _agentHostClient.ConnectAsync()
+        Dim control = New VSAgentToolWindowControl(_agentHostClient)
+        Content = control
 
-        Me.Content = New VSAgentToolWindowControl(_agentHostClient)
+        Dim unused = ThreadHelper.JoinableTaskFactory.RunAsync(
+            Async Function()
+                Await InitializeAgentHostAsync()
+                Await control.SetConnectedAsync()
+            End Function)
+
     End Sub
+
+    Private Async Function InitializeAgentHostAsync() As Task
+
+        _agentHostController.EnsureStarted()
+
+        Await _agentHostClient.ConnectAsync()
+
+    End Function
 
     Protected Overrides Sub Dispose(disposing As Boolean)
 

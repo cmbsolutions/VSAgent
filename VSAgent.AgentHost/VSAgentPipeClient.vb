@@ -8,7 +8,7 @@ Public Class VSAgentPipeClient
     Private ReadOnly _transport As Transport.TransportPipeClient(Of AgentRequest, AgentResponse)
 
     Public Sub New(PipeName As String)
-        _transport = New Transport.TransportPipeClient(Of AgentRequest, AgentResponse)(PipeName)
+        _transport = New Transport.TransportPipeClient(Of AgentRequest, AgentResponse)(PipeName, "VSAgentPipeClient")
     End Sub
 
     Public Function ConnectAsync() As Task

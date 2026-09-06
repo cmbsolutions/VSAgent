@@ -8,7 +8,7 @@ Public Class AgentPipeServer
     Sub New(Tools As ToolRegistry)
         _toolRegistry = Tools
 
-        _transport = New Transport.TransportPipeServer(Of AgentRequest, AgentResponse)("VSAgent", AddressOf HandleAgentRequestAsync)
+        _transport = New Transport.TransportPipeServer(Of AgentRequest, AgentResponse)("VSAgent", AddressOf HandleAgentRequestAsync, "AgentPipeServer")
 
         _transport.Start()
     End Sub

@@ -2,6 +2,7 @@
 Imports System.IO.Pipes
 Imports System.Text
 Imports System.Threading
+Imports Microsoft.VisualBasic.CompilerServices
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 Imports VSAgent.Protocol.Messages
@@ -20,11 +21,13 @@ Public Class TransportPipeClient(Of TRequest, TResponse)
     Private ReadOnly _pendingLock As New Object()
 
     Private _readertask As Task
+    Private ReadOnly _clientName As String
 
     Public Event EventReceived(payload As JObject)
 
-    Public Sub New(PipeName As String)
+    Public Sub New(PipeName As String, ClientName As String)
         _pipeName = PipeName
+        _clientName = ClientName
     End Sub
 
     Public Async Function ConnectAsync() As Task
@@ -52,13 +55,15 @@ Public Class TransportPipeClient(Of TRequest, TResponse)
                 .AutoFlush = True
             }
 
-        _readerTask = ReadLoopAsync()
+        _readertask = ReadLoopAsync()
 
     End Function
 
     Public Async Function SendAsync(request As TRequest) As Task(Of TResponse)
 
         Dim requestId = Guid.NewGuid().ToString("N")
+
+        Debug.WriteLine($"SEND {_clientName}: {requestId}")
 
         Dim completion = New TaskCompletionSource(Of TResponse)()
 
@@ -92,6 +97,8 @@ Public Class TransportPipeClient(Of TRequest, TResponse)
 
             Dim message = JsonConvert.DeserializeObject(Of TransportMessage)(line)
 
+            Debug.WriteLine($"RECEIVED {_clientName}: type={message.MessageType}, id={message.RequestId}")
+
             If message Is Nothing Then
                 Continue While
             End If
@@ -110,8 +117,13 @@ Public Class TransportPipeClient(Of TRequest, TResponse)
     Private Sub HandleResponse(message As TransportMessage)
         Dim completion As TaskCompletionSource(Of TResponse) = Nothing
 
+        Debug.WriteLine($"HANDLE RESPONSE {_clientName}: id={message.RequestId}")
+
         SyncLock _pendingLock
-            If _pendingRequests.TryGetValue(message.RequestId, completion) Then
+            Dim found = _pendingRequests.TryGetValue(message.RequestId, completion)
+            Debug.WriteLine($"PENDING {_clientName}: FOUND={found}, count={_pendingRequests.Count}")
+
+            If found Then
                 _pendingRequests.Remove(message.RequestId)
             End If
         End SyncLock
@@ -131,6 +143,10 @@ Public Class TransportPipeClient(Of TRequest, TResponse)
         Try
 
             Dim json = JsonConvert.SerializeObject(message)
+
+            If _pipe.IsConnected AndAlso _writer Is Nothing Then
+                Throw New InvalidProgramException("Pipe is connected but writer is not initialized.")
+            End If
 
             Await _writer.WriteLineAsync(json)
             Await _writer.FlushAsync()
