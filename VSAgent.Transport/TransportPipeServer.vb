@@ -3,6 +3,7 @@ Imports System.IO.Pipes
 Imports System.Threading
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
+Imports VSAgent.Protocol
 Imports VSAgent.Protocol.Messages
 
 Public Class TransportPipeServer(Of TRequest, TResponse)
@@ -85,13 +86,19 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
 
                 _writer = writer
 
+                Debug.WriteLine($"VSAgent {_serverName}: client connected")
+
                 Try
                     While pipe.IsConnected
                         If cancellationToken.IsCancellationRequested Then
                             Exit While
                         End If
 
+                        Debug.WriteLine($"VSAgent {_serverName}: waiting for request")
+
                         Dim line = Await reader.ReadLineAsync()
+
+                        Debug.WriteLine($"VSAgent {_serverName}: received: " & If(line, "<null>"))
 
                         If line Is Nothing Then
                             Exit While
@@ -102,6 +109,7 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
                         End If
 
                         Dim requestMessage = JsonConvert.DeserializeObject(Of TransportMessage)(line)
+                        Debug.WriteLine($"VSAgent {_serverName}: type={requestMessage.MessageType}, id={requestMessage.RequestId}")
 
                         If requestMessage Is Nothing Then
                             Continue While
@@ -113,7 +121,10 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
 
                         Dim response = Await HandleRequestAsync(requestMessage)
 
+                        Debug.WriteLine($"VSAgent {_serverName}: sending response id={response.RequestId}")
+
                         Await WriteMessageAsync(response)
+                        Debug.WriteLine($"VSAgent {_serverName}: response sent id={response.RequestId}")
                     End While
                 Finally
                     _writer = Nothing
@@ -143,15 +154,21 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
             Return
         End If
 
+        Debug.WriteLine($"{_serverName}: waiting for write lock")
         ' Write only one message at a time, this is to prevent json entanglement.
         Await _writeLock.WaitAsync()
 
+        Debug.WriteLine($"{_serverName}: write lock acquired")
+
         Try
             Dim json = JsonConvert.SerializeObject(message)
-
+            Debug.WriteLine($"{_serverName}: writing {json.Length} chars")
             Await _writer.WriteLineAsync(json)
+            Debug.WriteLine($"{_serverName}: WriteLineAsync completed")
             Await _writer.FlushAsync()
+            Debug.WriteLine($"{_serverName}: FlushAsync completed")
         Finally
+            Debug.WriteLine($"{_serverName}: releasing write lock")
             _writeLock.Release()
         End Try
     End Function

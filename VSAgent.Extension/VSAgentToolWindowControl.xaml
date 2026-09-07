@@ -40,7 +40,7 @@
                     Grid.Column="1"
                     Content="Send"
                     Padding="14,5"
-                    Margin="0,0,8,0" />
+                    Margin="0,0,8,0" IsEnabled="False" />
 
             <Button x:Name="btnStop"
                     Grid.Column="2"

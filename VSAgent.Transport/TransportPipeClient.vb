@@ -2,7 +2,6 @@
 Imports System.IO.Pipes
 Imports System.Text
 Imports System.Threading
-Imports Microsoft.VisualBasic.CompilerServices
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 Imports VSAgent.Protocol.Messages
@@ -65,7 +64,7 @@ Public Class TransportPipeClient(Of TRequest, TResponse)
 
         Debug.WriteLine($"SEND {_clientName}: {requestId}")
 
-        Dim completion = New TaskCompletionSource(Of TResponse)()
+        Dim completion = New TaskCompletionSource(Of TResponse)(TaskCreationOptions.RunContinuationsAsynchronously)
 
         SyncLock _pendingLock
             _pendingRequests.Add(requestId, completion)
@@ -83,35 +82,49 @@ Public Class TransportPipeClient(Of TRequest, TResponse)
     End Function
 
     Private Async Function ReadLoopAsync() As Task
-        While _pipe IsNot Nothing AndAlso _pipe.IsConnected
 
-            Dim line = Await _reader.ReadLineAsync()
+        Debug.WriteLine($"{_clientName}: READ LOOP STARTED")
+        Try
 
-            If line Is Nothing Then
-                Exit While
-            End If
+            While _pipe IsNot Nothing AndAlso _pipe.IsConnected
 
-            If String.IsNullOrWhiteSpace(line) Then
-                Continue While
-            End If
+                Debug.WriteLine($"{_clientName}: waiting for incoming message")
+                Dim line = Await _reader.ReadLineAsync()
 
-            Dim message = JsonConvert.DeserializeObject(Of TransportMessage)(line)
+                If line Is Nothing Then
+                    Debug.WriteLine($"{_clientName}: pipe closed")
+                    Exit While
+                End If
 
-            Debug.WriteLine($"RECEIVED {_clientName}: type={message.MessageType}, id={message.RequestId}")
+                If String.IsNullOrWhiteSpace(line) Then
+                    Continue While
+                End If
 
-            If message Is Nothing Then
-                Continue While
-            End If
+                Dim message = JsonConvert.DeserializeObject(Of TransportMessage)(line)
 
-            Select Case message.MessageType
-                Case "response"
-                    HandleResponse(message)
-                Case "event"
-                    RaiseEvent EventReceived(message.Payload)
-                Case Else
-                    ' Unknown
-            End Select
-        End While
+                Debug.WriteLine($"RECEIVED {_clientName}: type={message.MessageType}, id={message.RequestId}")
+
+                If message Is Nothing Then
+                    Continue While
+                End If
+
+                Select Case message.MessageType
+                    Case "response"
+                        HandleResponse(message)
+                    Case "event"
+                        RaiseEvent EventReceived(message.Payload)
+                    Case Else
+                        ' Unknown
+                End Select
+
+                Debug.WriteLine($"{_clientName}: finished processing message")
+            End While
+
+        Catch ex As Exception
+            Debug.WriteLine($"{_clientName}: READ LOOP ERROR: {ex}")
+        Finally
+            Debug.WriteLine($"{_clientName}: READ LOOP ENDED")
+        End Try
     End Function
 
     Private Sub HandleResponse(message As TransportMessage)

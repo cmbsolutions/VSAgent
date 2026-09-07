@@ -31,6 +31,7 @@ Namespace VSAgent.Extension
             _registry.Register(New Tools.GetSolutionInfoTool(solutionService))
             _registry.Register(New Tools.GetProjectsTool(solutionService))
             _registry.Register(New Tools.GetRoslynProjectsTool(roslynWorkspaceService))
+            _registry.Register(New Tools.GetProjectDocumentsTool(roslynWorkspaceService))
             _registry.Register(New Tools.GetActiveDocumentTool(documentService))
             _registry.Register(New Tools.ReadDocumentTool(documentService))
             _registry.Register(New Tools.FindSymbolsTool(findSymbolsService))

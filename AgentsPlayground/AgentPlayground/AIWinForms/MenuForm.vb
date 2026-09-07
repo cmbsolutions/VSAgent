@@ -195,6 +195,15 @@ Public Class MenuForm
                 .IconChar = ChrW(9678),   ' ◈ (circled diamond)
                 .GradientStart = Color.FromArgb(32, 145, 210),
                 .GradientEnd = Color.FromArgb(69, 200, 255)
+            },
+            New MenuItemDef With {
+                .Name = "btn_SnakeGame",
+                .Title = "Snake Game",
+                .Description = "Classic arcade snake game — use arrow keys to control your snake and eat food",
+                .TargetType = GetType(SnakeGameForm),
+                .IconChar = ChrW(9842),   ' ✲ (heavy four-armed cross)
+                .GradientStart = Color.FromArgb(0, 180, 120),
+                .GradientEnd = Color.FromArgb(60, 255, 140)
             }
         }
     End Function

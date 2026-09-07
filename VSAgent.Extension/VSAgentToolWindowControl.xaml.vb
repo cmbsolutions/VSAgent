@@ -29,10 +29,12 @@ Partial Public Class VSAgentToolWindowControl
 
     Private Sub AgentHostClient_ToolFailed(toolName As String, errorMessage As String)
         Dim unused = AppendTextToOutputAsync($"Failed with error: {errorMessage}")
+        isTool = False
     End Sub
 
     Private Sub AgentHostClient_ToolCompleted(toolName As String)
         Dim unused = AppendTextToOutputAsync($"Completed successfully.")
+        isTool = False
     End Sub
 
     Private Sub AgentHostClient_ToolStarted(toolName As String, actionDescription As String)
@@ -101,6 +103,7 @@ Partial Public Class VSAgentToolWindowControl
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
         btnSend.IsEnabled = True
+        txtPrompt.Clear()
 
         If errorMessage IsNot Nothing Then
             Await AppendTextToOutputAsync("Error: " & errorMessage)
@@ -112,7 +115,9 @@ Partial Public Class VSAgentToolWindowControl
 
     Private Async Function AppendTextToOutputAsync(text As String) As Task
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
-        txtOutput.Text &= text
+        txtOutput.AppendText(text)
+        txtOutput.UpdateLayout()
+        txtOutput.ScrollToEnd()
     End Function
 
     Private Sub btnStop_Click(sender As Object, e As System.Windows.RoutedEventArgs) Handles btnStop.Click
