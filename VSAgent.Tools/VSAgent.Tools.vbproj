@@ -72,6 +72,8 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GetProjectDocumentsTool.vb" />
+    <Compile Include="RemoveDocumentTool.vb" />
     <Compile Include="AddDocumentTool.vb" />
     <Compile Include="ApplyDocumentEditTool.vb" />
     <Compile Include="BuildProjectTool.vb" />

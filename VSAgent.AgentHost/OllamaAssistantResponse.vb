@@ -6,5 +6,7 @@
 
         Public Property ToolCalls As New List(Of OllamaToolCall)
 
+        Public Property Statistics As String
+
     End Class
 End Namespace

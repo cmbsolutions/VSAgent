@@ -1,12 +1,5 @@
-﻿Imports System
-Imports System.Collections
-Imports System.ComponentModel
-Imports System.Data
-Imports System.Drawing
-Imports System.Runtime.InteropServices
-Imports System.Windows
+﻿Imports System.Runtime.InteropServices
 Imports Microsoft.VisualStudio.Shell
-Imports Microsoft.VisualStudio.Shell.Interop
 
 ''' <summary>
 ''' This class implements the tool window exposed by this package and hosts a user control.
@@ -23,17 +16,50 @@ Imports Microsoft.VisualStudio.Shell.Interop
 Public Class VSAgentToolWindow
     Inherits ToolWindowPane
 
+    Private ReadOnly _agentHostController As AgentHostController
+    Private ReadOnly _agentHostClient As AgentHostClient
+
     ''' <summary>
     ''' Initializes a new instance of the <see cref="VSAgentToolWindow"/> class.
     ''' </summary>
     Public Sub New()
         MyBase.New(Nothing)
-        Me.Caption = "VSAgentToolWindow"
+        Me.Caption = "VSAgent"
 
         'This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
         'we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on 
         'the object returned by the Content property.
-        Me.Content = New VSAgentToolWindowControl()
+        _agentHostController = New AgentHostController()
+
+        _agentHostClient = New AgentHostClient("VSAgent.AgentHost")
+
+        Dim control = New VSAgentToolWindowControl(_agentHostClient)
+        Content = control
+
+        Dim unused = ThreadHelper.JoinableTaskFactory.RunAsync(
+            Async Function()
+                Await InitializeAgentHostAsync()
+                Await control.SetConnectedAsync()
+            End Function)
+
     End Sub
 
+    Private Async Function InitializeAgentHostAsync() As Task
+
+        _agentHostController.EnsureStarted()
+
+        Await _agentHostClient.ConnectAsync()
+
+    End Function
+
+    Protected Overrides Sub Dispose(disposing As Boolean)
+
+        If disposing Then
+            _agentHostClient?.Dispose()
+            _agentHostController?.Dispose()
+        End If
+
+        MyBase.Dispose(disposing)
+
+    End Sub
 End Class

@@ -13,9 +13,11 @@ Public Class AgentRunner
     Private ReadOnly _messages As JArray
 
     Private ReadOnly _toolActionDescriptions As Dictionary(Of String, String)
+    Private _cancellationTokenSource As CancellationTokenSource
 
     Public Event Thinking(text As String)
     Public Event Content(text As String)
+
     Public Event ToolStarted(toolName As String, actionDescription As String)
     Public Event ToolCompleted(toolName As String)
     Public Event ToolFailed(toolName As String, errorMessage As String)
@@ -24,6 +26,10 @@ Public Class AgentRunner
 
         _vsAgent = vsAgent
         _ollama = ollama
+        _cancellationTokenSource = New CancellationTokenSource
+
+        AddHandler _ollama.ThinkingReceived, Sub(text) RaiseEvent Thinking(text)
+        AddHandler _ollama.ContentReceived, Sub(text) RaiseEvent Content(text)
 
         ' Fallback action descriptions, used when Model does not provide a description of what it is doing
         _toolActionDescriptions = toolDescriptors.ToDictionary(
@@ -38,25 +44,7 @@ Public Class AgentRunner
                 {"role", "system"},
                 {
                     "content",
-                    "
-You are an AI software development assistant connected to a running Visual Studio instance.
-
-Use the supplied Visual Studio tools whenever information or actions are required.
-
-Do not guess about source code that you have not inspected.
-
-You are allowed to modify source code and create documents using the available tools.
-
-When asked to fix or refactor code:
-1. Inspect the relevant solution, project and source code.
-2. Use diagnostics, symbol search and reference search when useful.
-3. Apply edits using the provided tools.
-4. Build the affected project or solution.
-5. If the build fails, inspect the errors and continue fixing them.
-6. Continue until the requested task is complete or a tool returns an error that prevents further progress.
-
-Do not ask the user to make code changes manually when a suitable tool exists.
-"
+                    My.Resources.system_prompt
                 }
             }
         }
@@ -70,23 +58,19 @@ Do not ask the user to make code changes manually when a suitable tool exists.
                 {"role", "user"},
                 {"content", userPrompt}
             })
-        Dim cts As New CancellationTokenSource()
 
         Do
-            Dim response = Await _ollama.SendAsync(_messages, _tools, cts.Token)
+            If _cancellationTokenSource.IsCancellationRequested Then
+                Return Nothing
+            End If
+
+            Dim response = Await _ollama.SendAsync(_messages, _tools, _cancellationTokenSource.Token)
             Dim content = response.Content
 
             Dim assistantMessage As New JObject From {
                 {"role", "assistant"},
                 {"content", content}
             }
-
-            'If Not String.IsNullOrWhiteSpace(content) Then
-            '    Console.WriteLine()
-            '    Console.ForegroundColor = ConsoleColor.Cyan
-            '    Console.WriteLine($"Qwen > {content}")
-            '    Console.ForegroundColor = ConsoleColor.White
-            'End If
 
             If response.ToolCalls.Count = 0 Then
                 _messages.Add(assistantMessage)
@@ -123,49 +107,16 @@ Do not ask the user to make code changes manually when a suitable tool exists.
 
     Private Async Function ExecuteToolCallAsync(toolCall As OllamaToolCall) As Task
 
-        Dim toolCallId = toolCall.Id
-
-        'Dim functionObject = toolCall.
-
-        'If functionObject Is Nothing Then
-        '    Throw New InvalidOperationException("Tool call contains no function.")
-        'End If
-
-        'Dim toolName = functionObject.Value(Of String)("name")
-
-        'Dim rawArguments = functionObject.Value(Of String)("arguments")
-
-        'Dim arguments As JObject
-
-        'If String.IsNullOrWhiteSpace(rawArguments) Then
-        '    arguments = New JObject()
-        'Else
-        '    Try
-        '        arguments = JObject.Parse(rawArguments)
-        '    Catch ex As JsonReaderException
-        '        Throw New InvalidOperationException($"Tool '{toolName}' returned invalid JSON arguments: {rawArguments}", ex)
-        '    End Try
-        'End If
-
-        'Dim description As String = Nothing
-
-        'Console.WriteLine()
-        'Console.ForegroundColor = ConsoleColor.Cyan
-        'If _toolActionDescriptions.TryGetValue(toolName, description) Then
-        '    Console.WriteLine($"Qwen > {description}")
-        'Else
-        '    Console.WriteLine($"Qwen > Executing {toolName}.")
-        'End If
-
-        'Console.ForegroundColor = ConsoleColor.Yellow
-        'Console.WriteLine($"Tool > {toolName}")
-        'Console.ForegroundColor = ConsoleColor.Red
-        'Console.WriteLine($"Args > {arguments.ToString(Formatting.None)}")
-        'Console.ForegroundColor = ConsoleColor.White
-
         Dim toolResult As String
+        Dim description As String = Nothing
 
         Try
+            If _toolActionDescriptions.TryGetValue(toolCall.Name, description) Then
+                RaiseEvent ToolStarted(toolCall.Name, description)
+            Else
+                RaiseEvent ToolStarted(toolCall.Name, "")
+            End If
+
             Dim response = Await _vsAgent.CallToolAsync(toolCall.Name, toolCall.Arguments)
 
             If response.Success Then
@@ -174,8 +125,7 @@ Do not ask the user to make code changes manually when a suitable tool exists.
 
                 toolResult = resultToken.ToString(Formatting.None)
 
-                Console.WriteLine("Tool result received")
-
+                RaiseEvent ToolCompleted(toolCall.Name)
             Else
 
                 toolResult =
@@ -184,9 +134,7 @@ Do not ask the user to make code changes manually when a suitable tool exists.
                         {"error", response.ErrorMessage}
                     }.ToString(Formatting.None)
 
-                Console.ForegroundColor = ConsoleColor.Red
-                Console.WriteLine($"Tool error > {response.ErrorMessage}")
-                Console.ForegroundColor = ConsoleColor.White
+                RaiseEvent ToolFailed(toolCall.Name, response.ErrorMessage)
             End If
 
         Catch ex As Exception
@@ -197,16 +145,15 @@ Do not ask the user to make code changes manually when a suitable tool exists.
                     {"error", ex.Message}
                 }.ToString(Formatting.None)
 
-            Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine($"Tool exception > {ex.Message}")
-            Console.ForegroundColor = ConsoleColor.White
+            RaiseEvent ToolFailed(toolCall.Name, ex.Message)
         End Try
 
         ' Feed the result back to Qwen.
         _messages.Add(
             New JObject From {
                 {"role", "tool"},
-                {"tool_call_id", toolCallId},
+                {"tool_call_id", toolCall.Id},
+                {"tool_name", toolCall.Name},
                 {"content", toolResult}
             })
 
@@ -243,5 +190,12 @@ Do not ask the user to make code changes manually when a suitable tool exists.
 
         Return tools
 
+    End Function
+
+    Public Async Function InterruptAsync() As Task
+        If _cancellationTokenSource IsNot Nothing Then
+            _cancellationTokenSource.Cancel()
+            Await Task.Delay(100)
+        End If
     End Function
 End Class

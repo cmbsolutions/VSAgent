@@ -58,4 +58,25 @@
       <ManifestResourceName>VSPackage</ManifestResourceName>
     </EmbeddedResource>
   </ItemGroup>
+	<Target Name="BuildAgentHost"
+			BeforeTargets="GetVsixSourceItems">
+
+		<MSBuild
+			Projects="..\VSAgent.AgentHost\VSAgent.AgentHost.vbproj"
+			Targets="Build"
+			Properties="Configuration=$(Configuration)" />
+
+		<ItemGroup>
+
+			<Content Include="..\VSAgent.AgentHost\bin\$(Configuration)\net10.0\**\*.*">
+
+				<IncludeInVSIX>true</IncludeInVSIX>
+
+				<VSIXSubPath>AgentHost\%(RecursiveDir)</VSIXSubPath>
+
+			</Content>
+
+		</ItemGroup>
+
+	</Target>
 </Project>

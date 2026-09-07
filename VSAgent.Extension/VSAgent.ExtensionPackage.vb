@@ -31,6 +31,7 @@ Namespace VSAgent.Extension
             _registry.Register(New Tools.GetSolutionInfoTool(solutionService))
             _registry.Register(New Tools.GetProjectsTool(solutionService))
             _registry.Register(New Tools.GetRoslynProjectsTool(roslynWorkspaceService))
+            _registry.Register(New Tools.GetProjectDocumentsTool(roslynWorkspaceService))
             _registry.Register(New Tools.GetActiveDocumentTool(documentService))
             _registry.Register(New Tools.ReadDocumentTool(documentService))
             _registry.Register(New Tools.FindSymbolsTool(findSymbolsService))
@@ -38,6 +39,7 @@ Namespace VSAgent.Extension
             _registry.Register(New Tools.GetRoslynDiagnosticsTool(roslynDiagnosticsService))
             _registry.Register(New Tools.ApplyDocumentEditTool(documentEditService))
             _registry.Register(New Tools.AddDocumentTool(documentEditService))
+            _registry.Register(New Tools.RemoveDocumentTool(documentEditService))
             _registry.Register(New Tools.BuildSolutionTool(buildService))
             _registry.Register(New Tools.BuildProjectTool(buildService))
 
@@ -45,7 +47,6 @@ Namespace VSAgent.Extension
             _registry.Register(New Tools.GetAvailableToolsTool(_registry))
 
             _agentServer = New AgentPipeServer(_registry)
-            _agentServer.Start()
         End Function
 
         Protected Overrides Sub Dispose(disposing As Boolean)

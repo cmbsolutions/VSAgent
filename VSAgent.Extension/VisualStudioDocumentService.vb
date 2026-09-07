@@ -32,7 +32,6 @@ Public Class VisualStudioDocumentService
             Return Nothing
         End If
 
-
         Dim result As New ActiveDocumentInfo With {
             .Name = document.Name,
             .FilePath = document.FullName
@@ -62,9 +61,7 @@ Public Class VisualStudioDocumentService
 
                     result.SelectionEndColumn = selection.BottomPoint.DisplayColumn
                 End If
-
             End If
-
         End If
 
         If document.ProjectItem IsNot Nothing AndAlso document.ProjectItem.ContainingProject IsNot Nothing Then

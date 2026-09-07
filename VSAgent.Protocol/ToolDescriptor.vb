@@ -1,5 +1,5 @@
-﻿Imports VSAgent.Protocol.Tools
-Imports Newtonsoft.Json
+﻿Imports Newtonsoft.Json
+Imports VSAgent.Protocol.Tools
 
 Namespace DTO
     Public Class ToolDescriptor
