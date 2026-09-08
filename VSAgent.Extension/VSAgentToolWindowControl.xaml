@@ -16,13 +16,13 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBox x:Name="txtOutput"
-                 Grid.Row="0"
-                 IsReadOnly="True"
-                 TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Auto"
-                 AcceptsReturn="True" />
-
+        <RichTextBox x:Name="txtOutput"
+             IsReadOnly="True"
+             VerticalScrollBarVisibility="Auto"
+             BorderThickness="0">
+            <FlowDocument PagePadding="0" />
+        </RichTextBox>
+        
         <Grid Grid.Row="1"
               Margin="0,8,0,0">
 

@@ -1,4 +1,5 @@
 ﻿
+Imports System.Windows
 Imports Microsoft.VisualStudio.Shell
 Imports VSAgent.Protocol.Messages
 
@@ -28,46 +29,46 @@ Partial Public Class VSAgentToolWindowControl
     End Sub
 
     Private Sub AgentHostClient_ToolFailed(toolName As String, errorMessage As String)
-        Dim unused = AppendTextToOutputAsync($"Failed with error: {errorMessage}")
+        Dim unused = AppendTextToOutputAsync($"Failed with error: {errorMessage}", Media.Colors.Red)
         isTool = False
     End Sub
 
     Private Sub AgentHostClient_ToolCompleted(toolName As String)
-        Dim unused = AppendTextToOutputAsync($"Completed successfully.")
+        Dim unused = AppendTextToOutputAsync($"Completed successfully.", Media.Colors.Green)
         isTool = False
     End Sub
 
     Private Sub AgentHostClient_ToolStarted(toolName As String, actionDescription As String)
         If Not isTool Then
-            Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Tool > ")
+            Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Tool > ", Media.Colors.OrangeRed)
             isTool = True
         End If
 
         isThinking = False
         isContent = False
-        Dim unused = AppendTextToOutputAsync($"'{toolName}' started: {actionDescription}... ")
+        Dim unused = AppendTextToOutputAsync($"'{toolName}' started: {actionDescription}... ", Media.Colors.OrangeRed)
     End Sub
 
     Private Sub AgentHostClient_Content(text As String)
         If Not isContent Then
-            Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Assistant > ")
+            Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Assistant > ", Media.Colors.DodgerBlue)
             isContent = True
         End If
 
         isThinking = False
         isTool = False
-        Dim unused = AppendTextToOutputAsync(text)
+        Dim unused = AppendTextToOutputAsync(text, Media.Colors.DodgerBlue)
     End Sub
 
     Private Sub AgentHostClient_Thinking(text As String)
         If Not isThinking Then
-            Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Thinking > ")
+            Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Thinking > ", Media.Colors.Gray)
             isThinking = True
         End If
 
         isContent = False
         isTool = False
-        Dim unused = AppendTextToOutputAsync(text)
+        Dim unused = AppendTextToOutputAsync(text, Media.Colors.Gray)
     End Sub
 
     Public Async Function SetConnectedAsync() As Task
@@ -106,18 +107,25 @@ Partial Public Class VSAgentToolWindowControl
         txtPrompt.Clear()
 
         If errorMessage IsNot Nothing Then
-            Await AppendTextToOutputAsync("Error: " & errorMessage)
+            Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)
         Else
-            Await AppendTextToOutputAsync(response.Content)
+            Await AppendTextToOutputAsync(response.Content, Media.Colors.DodgerBlue)
         End If
 
     End Function
 
-    Private Async Function AppendTextToOutputAsync(text As String) As Task
+    Private Async Function AppendTextToOutputAsync(text As String, color As Media.Color) As Task
+
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
-        txtOutput.AppendText(text)
+
+        Dim range As New Documents.TextRange(txtOutput.Document.ContentEnd, txtOutput.Document.ContentEnd) With {
+            .Text = text
+        }
+        range.ApplyPropertyValue(Documents.TextElement.ForegroundProperty, New Media.SolidColorBrush(color))
+
         txtOutput.UpdateLayout()
         txtOutput.ScrollToEnd()
+
     End Function
 
     Private Sub btnStop_Click(sender As Object, e As System.Windows.RoutedEventArgs) Handles btnStop.Click
@@ -128,7 +136,7 @@ Partial Public Class VSAgentToolWindowControl
         Dim response As AgentHostResponse = Nothing
         Dim errorMessage As String = Nothing
 
-        Await AppendTextToOutputAsync($"{Environment.NewLine}Sending interrupt...")
+        Await AppendTextToOutputAsync($"{Environment.NewLine}Sending interrupt...", Media.Colors.Purple)
         Try
             response = Await _agentHostClient.SendInterruptAsync()
 
@@ -140,9 +148,9 @@ Partial Public Class VSAgentToolWindowControl
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
         If errorMessage IsNot Nothing Then
-            Await AppendTextToOutputAsync("Error: " & errorMessage)
+            Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)
         Else
-            Await AppendTextToOutputAsync(response.Content)
+            Await AppendTextToOutputAsync(response.Content, Media.Colors.DodgerBlue)
         End If
     End Function
 End Class

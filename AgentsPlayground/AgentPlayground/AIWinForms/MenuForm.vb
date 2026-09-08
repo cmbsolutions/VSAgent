@@ -204,6 +204,15 @@ Public Class MenuForm
                 .IconChar = ChrW(9842),   ' ✲ (heavy four-armed cross)
                 .GradientStart = Color.FromArgb(0, 180, 120),
                 .GradientEnd = Color.FromArgb(60, 255, 140)
+            },
+            New MenuItemDef With {
+                .Name = "btn_TicTacToe",
+                .Title = "Tic Tac Toe",
+                .Description = "Play against an unbeatable AI — you are X and go first!",
+                .TargetType = GetType(TicTacToeForm),
+                .IconChar = ChrW(9745),   ' ✉ (filled square) or use a game-related icon
+                .GradientStart = Color.FromArgb(180, 60, 255),
+                .GradientEnd = Color.FromArgb(255, 60, 120)
             }
         }
     End Function
