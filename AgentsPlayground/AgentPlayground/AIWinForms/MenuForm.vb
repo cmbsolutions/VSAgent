@@ -113,10 +113,13 @@ Public Class MenuForm
         ' ====== Menu Items Container ======
         Dim menuContainer As New Panel() With {
             .Name = "menuItems",
-            .Size = New Size(600, 280),
+            .Size = New Size(600, 340),
             .Location = New Point(20, 115),
             .BackColor = Color.Transparent
         }
+
+        ' ====== Define menu items spacing (fits 5 items in 340px) ======
+        Dim itemSpacing As Integer = 68   ' 5 × 58 + 4 gaps × 2 ≈ 340
 
         ' ====== Define menu items ======
         Dim menuDefs As List(Of MenuItemDef) = CreateMenuDefinitions()
@@ -125,8 +128,8 @@ Public Class MenuForm
             Dim def = menuDefs(i)
             Dim menuItemPanel = CreateMenuItemPanel(def)
 
-            ' Position each menu item vertically
-            menuItemPanel.Location = New Point(20, i * 85 + 5)
+            ' Position each menu item vertically (spacing adjusted for smaller items)
+            menuItemPanel.Location = New Point(20, i * 68)
             menuContainer.Controls.Add(menuItemPanel)
         Next
 
@@ -213,6 +216,15 @@ Public Class MenuForm
                 .IconChar = ChrW(9745),   ' ✉ (filled square) or use a game-related icon
                 .GradientStart = Color.FromArgb(180, 60, 255),
                 .GradientEnd = Color.FromArgb(255, 60, 120)
+            },
+            New MenuItemDef With {
+                .Name = "btn_Cube3D",
+                .Title = "3D Rotating Cube",
+                .Description = "Watch a wireframe cube rotate in three dimensions",
+                .TargetType = GetType(CubeForm),
+                .IconChar = ChrW(9617),   ' ◼ (filled black square)
+                .GradientStart = Color.FromArgb(255, 100, 255),
+                .GradientEnd = Color.FromArgb(147, 60, 255)
             }
         }
     End Function
@@ -221,7 +233,7 @@ Public Class MenuForm
         ' --- Main panel (clickable region) ---
         Dim menuItemPanel As New Panel() With {
             .Name = def.Name,
-            .Size = New Size(560, 70),
+            .Size = New Size(560, 58),
             .Location = New Point(20, 0),
             .BackColor = Color.FromArgb(18, 24, 38),
             .BorderStyle = BorderStyle.None,
@@ -243,7 +255,7 @@ Public Class MenuForm
         ' --- Accent gradient bar on left ---
         Dim accentBar As New Panel() With {
             .Name = $"accent_{def.Name}",
-            .Size = New Size(4, 50),
+            .Size = New Size(4, 38),
             .Location = New Point(12, 10),
             .BackColor = Color.Transparent
         }
@@ -253,8 +265,8 @@ Public Class MenuForm
         ' --- Icon background (filled circle) ---
         Dim iconBg As New Panel() With {
             .Name = $"iconBg_{def.Name}",
-            .Size = New Size(36, 36),
-            .Location = New Point(28, 17),
+            .Size = New Size(28, 28),
+            .Location = New Point(26, 15),
             .BackColor = Color.FromArgb(10, 15, 28)
         }
         AddHandler iconBg.Paint, Sub(s, e) DrawGradientIcon(e, def.GradientStart, def.GradientEnd)
@@ -264,10 +276,10 @@ Public Class MenuForm
         Dim iconLabel As New Label() With {
             .Name = $"icon_{def.Name}",
             .Text = def.IconChar.ToString(),
-            .Font = New Font("Segoe UI Emoji", 16.0F),
-            .Location = New Point(30, 19),
+            .Font = New Font("Segoe UI Emoji", 13.0F),
+            .Location = New Point(28, 17),
             .AutoSize = False,
-            .Size = New Size(32, 32),
+            .Size = New Size(24, 24),
             .ForeColor = Color.FromArgb(255, 255, 255),
             .TextAlign = ContentAlignment.MiddleCenter,
             .BackColor = Color.Transparent
@@ -278,10 +290,10 @@ Public Class MenuForm
         Dim titleLabel As New Label() With {
             .Name = $"title_{def.Name}",
             .Text = def.Title,
-            .Font = New Font("Segoe UI", 13.0F, FontStyle.Bold, GraphicsUnit.Point),
+            .Font = New Font("Segoe UI", 11.0F, FontStyle.Bold, GraphicsUnit.Point),
             .AutoSize = False,
-            .Size = New Size(480, 24),
-            .Location = New Point(76, 12),
+            .Size = New Size(480, 16),
+            .Location = New Point(62, 14),
             .ForeColor = Color.FromArgb(255, 255, 255),
             .TextAlign = ContentAlignment.MiddleLeft,
             .BackColor = Color.Transparent
@@ -292,10 +304,10 @@ Public Class MenuForm
         Dim descLabel As New Label() With {
             .Name = $"desc_{def.Name}",
             .Text = def.Description,
-            .Font = New Font("Segoe UI", 9.0F, FontStyle.Regular, GraphicsUnit.Point),
+            .Font = New Font("Segoe UI", 8.0F),
             .AutoSize = False,
-            .Size = New Size(480, 30),
-            .Location = New Point(76, 38),
+            .Size = New Size(480, 16),
+            .Location = New Point(62, 32),
             .ForeColor = Color.FromArgb(120, 140, 180),
             .TextAlign = ContentAlignment.MiddleLeft,
             .BackColor = Color.Transparent

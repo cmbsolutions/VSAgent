@@ -26,6 +26,11 @@ Partial Public Class VSAgentToolWindowControl
         AddHandler _agentHostClient.ToolStarted, AddressOf AgentHostClient_ToolStarted
         AddHandler _agentHostClient.ToolCompleted, AddressOf AgentHostClient_ToolCompleted
         AddHandler _agentHostClient.ToolFailed, AddressOf AgentHostClient_ToolFailed
+        AddHandler _agentHostClient.Statistics, AddressOf AgentHostClient_Statistics
+    End Sub
+
+    Private Sub AgentHostClient_Statistics(statistics As String)
+        Dim unused = UpdateStatisticsAsync(statistics)
     End Sub
 
     Private Sub AgentHostClient_ToolFailed(toolName As String, errorMessage As String)
@@ -126,6 +131,13 @@ Partial Public Class VSAgentToolWindowControl
         txtOutput.UpdateLayout()
         txtOutput.ScrollToEnd()
 
+    End Function
+
+    Private Async Function UpdateStatisticsAsync(text As String) As Task
+
+        Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+
+        lblStats.Content = text
     End Function
 
     Private Sub btnStop_Click(sender As Object, e As System.Windows.RoutedEventArgs) Handles btnStop.Click

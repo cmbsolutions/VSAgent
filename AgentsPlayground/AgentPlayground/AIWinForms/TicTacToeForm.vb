@@ -115,9 +115,6 @@ Public Class TicTacToeForm
                     .FlatStyle = FlatStyle.Flat,
                     .Cursor = Cursors.Hand
                 }
-                ' Make buttons transparent to show panel background
-                'btn.FlatAppearance.BorderSize = 0
-                AddHandler btn.Paint, AddressOf DrawCellBackground
                 AddHandler btn.MouseEnter, AddressOf CellMouseEnter
                 AddHandler btn.MouseLeave, AddressOf CellMouseLeave
                 AddHandler btn.Click, AddressOf Cell_Click
@@ -143,16 +140,6 @@ Public Class TicTacToeForm
         AddHandler resetButton.MouseLeave, AddressOf ResetMouseLeave
         AddHandler resetButton.Click, AddressOf ResetButton_Click
         Me.Controls.Add(resetButton)
-    End Sub
-
-    Private Sub DrawCellBackground(sender As Object, e As PaintEventArgs)
-        Dim btn = DirectCast(sender, Button)
-        Dim g As Graphics = e.Graphics
-        If boardPanel IsNot Nothing AndAlso (boardPanel.Width <= 0 OrElse boardPanel.Height <= 0) Then Return
-        g.SmoothingMode = SmoothingMode.AntiAlias
-        Using brush As New SolidBrush(btn.BackColor)
-            g.FillRectangle(brush, 0, 0, CSng(btn.Width), CSng(btn.Height))
-        End Using
     End Sub
 
     Private Sub CellMouseEnter(sender As Object, e As EventArgs)

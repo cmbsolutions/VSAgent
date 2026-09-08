@@ -5,22 +5,22 @@ Imports Newtonsoft.Json.Linq
 Namespace Ollama
 
     Public Class OllamaSessionStatistics
-        Private _statistics As ReadOnlyCollection(Of OllamaSessionStatistic)
+        Private _statistics As List(Of OllamaSessionStatistic)
 
         Sub New()
-            _statistics = New ReadOnlyCollection(Of OllamaSessionStatistic)(New List(Of OllamaSessionStatistic))
+            _statistics = New List(Of OllamaSessionStatistic)
         End Sub
 
         Public Sub AddStatistic(chunk As JObject)
-            Dim unused = _statistics.Append(New OllamaSessionStatistic With {
-                               .Id = _statistics.Count,
-                               .TotalDuration = chunk.Value(Of Int64?)("total_duration").GetValueOrDefault(0),
-                               .LoadDuration = chunk.Value(Of Int64?)("load_duration").GetValueOrDefault(0),
-                               .PromptEvalCount = chunk.Value(Of Int64?)("prompt_eval_count").GetValueOrDefault(0),
-                               .PromptEvalDuration = chunk.Value(Of Int64?)("prompt_eval_duration").GetValueOrDefault(0),
-                               .EvalCount = chunk.Value(Of Int64?)("eval_count").GetValueOrDefault(0),
-                               .EvalDuration = chunk.Value(Of Int64?)("eval_duration").GetValueOrDefault(0)
-                               })
+            _statistics.Add(New OllamaSessionStatistic With {
+                    .Id = _statistics.Count,
+                    .TotalDuration = chunk.Value(Of Int64?)("total_duration").GetValueOrDefault(0),
+                    .LoadDuration = chunk.Value(Of Int64?)("load_duration").GetValueOrDefault(0),
+                    .PromptEvalCount = chunk.Value(Of Int64?)("prompt_eval_count").GetValueOrDefault(0),
+                    .PromptEvalDuration = chunk.Value(Of Int64?)("prompt_eval_duration").GetValueOrDefault(0),
+                    .EvalCount = chunk.Value(Of Int64?)("eval_count").GetValueOrDefault(0),
+                    .EvalDuration = chunk.Value(Of Int64?)("eval_duration").GetValueOrDefault(0)
+                    })
         End Sub
 
         Public Overrides Function ToString() As String

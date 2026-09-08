@@ -16,7 +16,11 @@ Public Class AgentHostPipeServer
         AddHandler _runner.ToolStarted, AddressOf Runner_ToolStarted
         AddHandler _runner.ToolCompleted, AddressOf Runner_ToolCompleted
         AddHandler _runner.ToolFailed, AddressOf Runner_ToolFailed
+        AddHandler _runner.Statistics, AddressOf Runner_Statistics
+
     End Sub
+
+
 
     Public Async Function StopAsync() As Task
         If _transport Is Nothing Then Return
@@ -93,6 +97,14 @@ Public Class AgentHostPipeServer
                     .Type = "toolFailed",
                     .ToolName = toolName,
                     .ActionDescription = actionDescription
+                })
+    End Sub
+
+    Private Sub Runner_Statistics(statistics As String)
+        Dim unused = _transport.SendEventAsync(
+                New AgentHostEvent With {
+                    .Type = "statistics",
+                    .Text = statistics
                 })
     End Sub
 End Class

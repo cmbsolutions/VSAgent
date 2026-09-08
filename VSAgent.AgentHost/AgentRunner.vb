@@ -22,6 +22,8 @@ Public Class AgentRunner
     Public Event ToolCompleted(toolName As String)
     Public Event ToolFailed(toolName As String, errorMessage As String)
 
+    Public Event Statistics(statistics As String)
+
     Public Sub New(vsAgent As VSAgentPipeClient, ollama As OllamaClient, toolDescriptors As IReadOnlyList(Of ToolDescriptor))
 
         _vsAgent = vsAgent
@@ -30,6 +32,7 @@ Public Class AgentRunner
 
         AddHandler _ollama.ThinkingReceived, Sub(text) RaiseEvent Thinking(text)
         AddHandler _ollama.ContentReceived, Sub(text) RaiseEvent Content(text)
+        AddHandler _ollama.StatisticsReceived, Sub(stats) RaiseEvent Statistics(stats)
 
         ' Fallback action descriptions, used when Model does not provide a description of what it is doing
         _toolActionDescriptions = toolDescriptors.ToDictionary(
