@@ -20,7 +20,7 @@
         <RichTextBox x:Name="txtOutput"
              IsReadOnly="True"
              VerticalScrollBarVisibility="Auto"
-             BorderThickness="0">
+             BorderThickness="0" IsUndoEnabled="False" AllowDrop="False">
             <FlowDocument PagePadding="0" />
         </RichTextBox>
 
@@ -57,6 +57,11 @@
                     Padding="14,5" />
 
         </Grid>
+        <Expander x:Name="expSettings" Height="100" Header="Settings" Margin="25,0,25,124">
+            <Grid Background="#FFE5E5E5">
+                <CheckBox x:Name="chkThinking" Content="Show Thinking process" IsChecked="True"/>
+            </Grid>
+        </Expander>
 
 
     </Grid>

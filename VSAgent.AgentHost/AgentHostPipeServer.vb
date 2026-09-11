@@ -17,10 +17,16 @@ Public Class AgentHostPipeServer
         AddHandler _runner.ToolCompleted, AddressOf Runner_ToolCompleted
         AddHandler _runner.ToolFailed, AddressOf Runner_ToolFailed
         AddHandler _runner.Statistics, AddressOf Runner_Statistics
+        AddHandler _runner.TaskCancelled, AddressOf Runner_TaskCancelled
 
     End Sub
 
-
+    Private Sub Runner_TaskCancelled()
+        Dim unused = _transport.SendEventAsync(
+                New AgentHostEvent With {
+                    .Type = "taskCancelled"
+                })
+    End Sub
 
     Public Async Function StopAsync() As Task
         If _transport Is Nothing Then Return

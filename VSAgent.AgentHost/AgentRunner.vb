@@ -24,6 +24,8 @@ Public Class AgentRunner
 
     Public Event Statistics(statistics As String)
 
+    Public Event TaskCancelled()
+
     Public Sub New(vsAgent As VSAgentPipeClient, ollama As OllamaClient, toolDescriptors As IReadOnlyList(Of ToolDescriptor))
 
         _vsAgent = vsAgent
@@ -64,6 +66,7 @@ Public Class AgentRunner
 
         Do
             If _cancellationTokenSource.IsCancellationRequested Then
+                RaiseEvent TaskCancelled()
                 Return Nothing
             End If
 

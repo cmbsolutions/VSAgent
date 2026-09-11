@@ -1,5 +1,4 @@
-﻿Imports System.Collections.ObjectModel
-Imports System.Text
+﻿Imports System.Text
 Imports Newtonsoft.Json.Linq
 
 Namespace Ollama
@@ -36,7 +35,7 @@ Namespace Ollama
             Dim toedtimespan As TimeSpan = TimeSpan.FromMicroseconds(TotalOutputEvalDuration \ 1000)
             Dim ots = TotalOutputEvalCount / toedtimespan.TotalSeconds
 
-            Return $"Prompt: {TotalPromptEvalCount}T, {tps}T/s. Output: {TotalOutputEvalCount}T, {ots}T/s."
+            Return $"Prompt: {TotalPromptEvalCount}T, {tps:F3}T/s. Output: {TotalOutputEvalCount}T, {ots:F3}T/s."
         End Function
     End Class
 

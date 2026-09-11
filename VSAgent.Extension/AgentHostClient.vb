@@ -11,6 +11,7 @@ Public Class AgentHostClient
     Public Event Thinking(text As String)
     Public Event Content(text As String)
     Public Event Statistics(statistics As String)
+    Public Event TaskCancelled()
 
     Public Event ToolStarted(toolName As String, actionDescription As String)
     Public Event ToolCompleted(toolName As String)
@@ -43,6 +44,8 @@ Public Class AgentHostClient
                 RaiseEvent ToolFailed(hostEvent.ToolName, hostEvent.Text)
             Case "statistics"
                 RaiseEvent Statistics(hostEvent.Text)
+            Case "taskCancelled"
+                RaiseEvent TaskCancelled()
             Case Else
                 Throw New InvalidOperationException($"Unknown eventtype received: {hostEvent.Type}")
         End Select

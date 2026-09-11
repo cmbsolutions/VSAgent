@@ -27,6 +27,16 @@ Partial Public Class VSAgentToolWindowControl
         AddHandler _agentHostClient.ToolCompleted, AddressOf AgentHostClient_ToolCompleted
         AddHandler _agentHostClient.ToolFailed, AddressOf AgentHostClient_ToolFailed
         AddHandler _agentHostClient.Statistics, AddressOf AgentHostClient_Statistics
+        AddHandler _agentHostClient.TaskCancelled, AddressOf AgentHostClient_TaskCancelled
+
+    End Sub
+
+    Private Sub AgentHostClient_TaskCancelled()
+        isTool = False
+        isThinking = False
+        isContent = False
+
+        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}Task is cancelled by user.{Environment.NewLine}", Media.Colors.Orange)
     End Sub
 
     Private Sub AgentHostClient_Statistics(statistics As String)
@@ -66,6 +76,8 @@ Partial Public Class VSAgentToolWindowControl
     End Sub
 
     Private Sub AgentHostClient_Thinking(text As String)
+        If Not chkThinking.IsChecked Then Exit Sub
+
         If Not isThinking Then
             Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Thinking > ", Media.Colors.Gray)
             isThinking = True
@@ -93,10 +105,17 @@ Partial Public Class VSAgentToolWindowControl
             Return
         End If
 
+        isTool = False
+        isThinking = False
+        isContent = False
+
+        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}User > {prompt}{Environment.NewLine}", Media.Colors.DarkViolet)
+
         Dim response As AgentHostResponse = Nothing
         Dim errorMessage As String = Nothing
 
         btnSend.IsEnabled = False
+        txtPrompt.Clear()
 
         Try
             response = Await _agentHostClient.SendPromptAsync(prompt)
@@ -109,7 +128,7 @@ Partial Public Class VSAgentToolWindowControl
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
         btnSend.IsEnabled = True
-        txtPrompt.Clear()
+
 
         If errorMessage IsNot Nothing Then
             Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)

@@ -308,9 +308,9 @@ Public Class TicTacToeForm
     Private Function Minimax(isMaximizing As Boolean, depth As Integer) As Integer
         Dim result = CheckWinner()
 
-        If result = 2 Then Return ComputerScore - depth ' computer wins (prefer faster win)
-        If result = 1 Then Return PlayerScore + depth ' player wins (delay loss)
-        If result = 0 Then Return TieScore            ' tie
+        If result = 2 Then Return ComputerScore - depth    ' computer wins (prefer faster win)
+        If result = 1 Then Return PlayerScore + depth      ' player wins (delay loss)
+        If result = 3 Then Return TieScore                 ' board full, it's a tie
 
         If isMaximizing Then
             Dim bestScore As Integer = Integer.MinValue
