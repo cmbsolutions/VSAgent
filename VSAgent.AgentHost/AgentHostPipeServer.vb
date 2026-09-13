@@ -1,9 +1,11 @@
-﻿Imports VSAgent.Protocol.Events
+﻿Imports System.Threading
+Imports VSAgent.Protocol.Events
 Imports VSAgent.Protocol.Messages
 
 Public Class AgentHostPipeServer
     Private ReadOnly _runner As AgentRunner
     Private ReadOnly _transport As Transport.TransportPipeServer(Of AgentHostRequest, AgentHostResponse)
+    Private _currentRunCancellation As CancellationTokenSource
 
     Public Sub New(PipeName As String, runner As AgentRunner)
         _runner = runner
@@ -34,31 +36,50 @@ Public Class AgentHostPipeServer
     End Function
 
     Private Async Function HandleRequestAsync(request As AgentHostRequest) As Task(Of AgentHostResponse)
-
         Select Case request.Type
             Case "prompt"
-                Dim result = Await _runner.RunAsync(request.Content)
+                Try
+                    _currentRunCancellation?.Dispose()
+                    _currentRunCancellation = New CancellationTokenSource()
 
-                Return New AgentHostResponse With {
-                    .RequestId = request.Id,
-                    .Success = True,
-                    .Content = result
-                }
+                    Dim result = Await _runner.RunAsync(request.Content, _currentRunCancellation.Token)
+
+                    Return New AgentHostResponse With {
+                        .RequestId = request.Id,
+                        .Success = True,
+                        .Content = result
+                    }
+                Catch ex As OperationCanceledException
+                    Return New AgentHostResponse With {
+                        .Success = True,
+                        .Content = Nothing
+                    }
+                Finally
+                    _currentRunCancellation.Dispose()
+                    _currentRunCancellation = Nothing
+                End Try
             Case "interrupt"
-                Await _runner.InterruptAsync()
-                Return New AgentHostResponse With {
-                    .RequestId = request.Id,
-                    .Success = True
-                }
+                'Await _runner.InterruptAsync()
+                If _currentRunCancellation IsNot Nothing Then
+                    Await _currentRunCancellation.CancelAsync()
+                    Return New AgentHostResponse With {
+                        .RequestId = request.Id,
+                        .Success = True
+                    }
+                Else
+                    Return New AgentHostResponse With {
+                        .RequestId = request.Id,
+                        .Success = False,
+                        .ErrorMessage = "No active run to interrupt."
+                    }
+                End If
             Case Else
                 Return New AgentHostResponse With {
                     .RequestId = request.Id,
                     .Success = False,
                     .ErrorMessage = $"Unknown request type: {request.Type}"
                 }
-
         End Select
-
     End Function
 
     Private Sub Runner_Thinking(text As String)

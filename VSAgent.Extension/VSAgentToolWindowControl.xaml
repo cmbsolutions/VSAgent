@@ -9,22 +9,40 @@
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300"
              Name="MyToolWindow">
-    <Grid Margin="8">
+    <Grid x:Name="ThisGrid" Margin="8">
 
         <Grid.RowDefinitions>
+            <RowDefinition Height="22" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <RichTextBox x:Name="txtOutput"
+        <Expander Grid.Row="0" x:Name="expSettings" Height="100" Header="" Foreground="#FFFDFDFD" Grid.RowSpan="2" VerticalAlignment="Top">
+            <Grid Background="#FFE5E5E5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="27*"/>
+                </Grid.ColumnDefinitions>
+                <CheckBox x:Name="chkThinking" Content="Show Thinking process" IsChecked="True" Grid.ColumnSpan="2"/>
+            </Grid>
+        </Expander>
+
+        <RichTextBox Grid.Row="1" x:Name="txtOutput"
              IsReadOnly="True"
              VerticalScrollBarVisibility="Auto"
              BorderThickness="0" IsUndoEnabled="False" AllowDrop="False">
-            <FlowDocument PagePadding="0" />
+            <FlowDocument PagePadding="0"
+                          TextElement.FontSize="12">
+                <FlowDocument.Resources>
+                    <Style TargetType="{x:Type Paragraph}">
+                        <Setter Property="Margin" Value="0"/>
+                    </Style>
+                </FlowDocument.Resources>
+            </FlowDocument>
         </RichTextBox>
 
-        <Grid Grid.Row="1" Margin="0,8,0,0">
+        <Grid Grid.Row="2" Margin="0,8,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
@@ -57,12 +75,5 @@
                     Padding="14,5" />
 
         </Grid>
-        <Expander x:Name="expSettings" Height="100" Header="Settings" Margin="25,0,25,124">
-            <Grid Background="#FFE5E5E5">
-                <CheckBox x:Name="chkThinking" Content="Show Thinking process" IsChecked="True"/>
-            </Grid>
-        </Expander>
-
-
     </Grid>
 </UserControl>

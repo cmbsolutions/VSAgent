@@ -119,12 +119,14 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
                             Continue While
                         End If
 
-                        Dim response = Await HandleRequestAsync(requestMessage)
+                        ProcessRequest(requestMessage)
 
-                        Debug.WriteLine($"VSAgent {_serverName}: sending response id={response.RequestId}")
+                        'Dim response = Await HandleRequestAsync(requestMessage)
 
-                        Await WriteMessageAsync(response)
-                        Debug.WriteLine($"VSAgent {_serverName}: response sent id={response.RequestId}")
+                        'Debug.WriteLine($"VSAgent {_serverName}: sending response id={response.RequestId}")
+
+                        'Await WriteMessageAsync(response)
+                        'Debug.WriteLine($"VSAgent {_serverName}: response sent id={response.RequestId}")
                     End While
                 Finally
                     _writer = Nothing
@@ -132,6 +134,15 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
             End Using
         End Using
     End Function
+
+    Private Sub ProcessRequest(message As TransportMessage)
+
+        Dim unused = Task.Run(Async Function()
+                                  Dim response = Await HandleRequestAsync(message)
+
+                                  Await WriteMessageAsync(response)
+                              End Function)
+    End Sub
 
     Private Async Function HandleRequestAsync(requestMessage As TransportMessage) As Task(Of TransportMessage)
         Dim request = requestMessage.Payload.ToObject(Of TRequest)()

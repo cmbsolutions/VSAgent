@@ -9,6 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\18392_inferno_rapidgun.wav" />
+    <None Remove="Resources\18400_inferno_waterxplo.wav" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\18392_inferno_rapidgun.wav" />
+    <EmbeddedResource Include="Resources\18400_inferno_waterxplo.wav" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Import Include="System.Data" />
     <Import Include="System.Drawing" />
     <Import Include="System.Windows.Forms" />

@@ -132,8 +132,6 @@ Partial Public Class VSAgentToolWindowControl
 
         If errorMessage IsNot Nothing Then
             Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)
-        Else
-            Await AppendTextToOutputAsync(response.Content, Media.Colors.DodgerBlue)
         End If
 
     End Function
@@ -180,8 +178,14 @@ Partial Public Class VSAgentToolWindowControl
 
         If errorMessage IsNot Nothing Then
             Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)
-        Else
-            Await AppendTextToOutputAsync(response.Content, Media.Colors.DodgerBlue)
         End If
     End Function
+
+    Private Sub expSettings_Collapsed(sender As Object, e As RoutedEventArgs) Handles expSettings.Collapsed
+        ThisGrid.RowDefinitions.First.Height = New GridLength(22)
+    End Sub
+
+    Private Sub expSettings_Expanded(sender As Object, e As RoutedEventArgs) Handles expSettings.Expanded
+        ThisGrid.RowDefinitions.First.Height = New GridLength(122)
+    End Sub
 End Class
