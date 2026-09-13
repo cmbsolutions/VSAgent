@@ -22,6 +22,7 @@ Public Class OllamaClient
 
     Public Event ThinkingReceived(text As String)
     Public Event ContentReceived(text As String)
+    Public Event StatisticsReceived(statistics As String)
 
     Private _sessionStats As New OllamaSessionStatistics
 
@@ -156,6 +157,7 @@ Public Class OllamaClient
             ' When done is received
             If chunk.Value(Of Boolean?)("done").GetValueOrDefault(False) Then
                 _sessionStats.AddStatistic(chunk)
+                Debug.WriteLine(_sessionStats.ToString())
 
                 Exit While
             End If
@@ -170,6 +172,8 @@ Public Class OllamaClient
             RaiseEvent ContentReceived(_contentBuffer.ToString())
             _contentBuffer.Clear()
         End If
+
+        RaiseEvent StatisticsReceived(_sessionStats.ToString())
 
         result.Thinking = thinkingBuilder.ToString()
 

@@ -1,3 +1,5 @@
+Imports System.Threading
+
 Module Program
     ' These could come from a config.json file
     Private Const model = "qwen3.6:35b"
@@ -7,6 +9,8 @@ Module Program
     Private isThinking As Boolean = False
     Private isContent As Boolean = False
     Private isTool As Boolean = False
+    Private _currentRunCancellation As CancellationTokenSource
+
 
     Sub Main(args As String())
         MainAsync().GetAwaiter().GetResult()
@@ -59,9 +63,20 @@ Module Program
                     Exit Do
                 End If
 
-                Try
-                    Await agent.RunAsync(prompt)
+                If prompt.Equals("/cancel", StringComparison.OrdinalIgnoreCase) Then
+                    _currentRunCancellation?.Cancel()
+                    Continue Do
+                End If
 
+                Try
+                    _currentRunCancellation?.Dispose()
+                    _currentRunCancellation = New CancellationTokenSource()
+
+                    Await agent.RunAsync(prompt, _currentRunCancellation.Token)
+
+                    Console.ForegroundColor = ConsoleColor.DarkGray
+                    Console.WriteLine("Type /cancel to cancel the current task.")
+                    Console.ForegroundColor = ConsoleColor.White
                 Catch ex As Exception
                     Console.WriteLine()
                     Console.ForegroundColor = ConsoleColor.Red

@@ -1,6 +1,4 @@
-[![wakatime](https://wakatime.com/badge/github/cmbsolutions/VSAgent.svg)](https://wakatime.com/badge/github/cmbsolutions/VSAgent)
-
-# VSAgent
+﻿# VSAgent
 
 An AI-powered Visual Studio extension that connects Visual Studio's Roslyn compiler platform with large language models (LLMs) through a tool-based agent architecture. It enables an LLM to inspect, modify, build, and navigate .NET codebases programmatically via named-pipe IPC.
 
@@ -13,20 +11,20 @@ An AI-powered Visual Studio extension that connects Visual Studio's Roslyn compi
   - [System Diagram](#system-diagram)
   - [Component Description](#component-description)
 - [Projects](#projects)
-  - [VSAgent.Abstractions](#vsagentabstractions)
-  - [VSAgent.Protocol](#vsagentprotocol)
-  - [VSAgent.Transport](#vsagenttransport)
-  - [VSAgent.Server](#vsagentserver)
-  - [VSAgent.Tools](#vsagenttools)
-  - [VSAgent.AgentHost](#vsagentagenthost)
-  - [VSAgent.Extension](#vsagentextension)
-- [Available Tools](#available-tools-complete-list)
+  - [VSAgent.Abstractions](#vsaagentabstractions)
+  - [VSAgent.Protocol](#vsaagentprotocol)
+  - [VSAgent.Transport](#vsaagenttransport)
+  - [VSAgent.Server](#vsaagentserverserver)
+  - [VSAgent.Tools](#vsaagenttools)
+  - [VSAgent.AgentHost](#vsaagentagenthost)
+  - [VSAgent.Extension](#vsaagentextension)
+- [Available Tools](#available-tools)
 - [Communication Protocol](#communication-protocol)
 - [Build & Target Frameworks](#build--target-frameworks)
 - [Dependencies](#dependencies)
 - [Key Workflows](#key-workflows)
   - [Tool Execution Flow](#tool-execution-flow)
-  - [LLM Agent Loop](#llm-agent-loop-agenthost-main)
+  - [LLM Agent Loop](#llm-agent-loop)
 - [Getting Started](#getting-started)
 - [File Statistics](#file-statistics)
 
@@ -147,7 +145,8 @@ The system is written in **VB.NET** and consists of **7 projects** organized int
 |---|---|
 | Language | VB.NET |
 | Target Framework | .NET Standard 2.0 |
-| Output Path | `bin\Debug\Netstandard2.0\VSAgent.Protocol.dll` |
+| Output Path | `bin\Debug
+etstandard2.0\VSAgent.Protocol.dll` |
 | Document Count | 32 (including source + generated) |
 | Project References | 0 |
 | Metadata References | 114 |
@@ -200,7 +199,8 @@ The system is written in **VB.NET** and consists of **7 projects** organized int
 |---|---|
 | Language | VB.NET |
 | Target Framework | .NET Standard 2.0 |
-| Output Path | `bin\Debug\Netstandard2.0\VSAgent.Transport.dll` |
+| Output Path | `bin\Debug
+etstandard2.0\VSAgent.Transport.dll` |
 | Document Count | 4 (including generated) |
 | Project References | 1 |
 | Metadata References | 114 |
@@ -278,7 +278,8 @@ The system is written in **VB.NET** and consists of **7 projects** organized int
 |---|---|
 | Language | VB.NET |
 | Target Framework | .NET 10.0 |
-| Output Path | `bin\Debug\Net10.0\VSAgent.AgentHost.dll` |
+| Output Path | `bin\Debug
+et10.0\VSAgent.AgentHost.dll` |
 | Document Count | 12 (including generated) |
 | Project References | 2 |
 | Metadata References | 168 |
@@ -303,7 +304,8 @@ The system is written in **VB.NET** and consists of **7 projects** organized int
 |---|---|
 | Language | VB.NET |
 | Target Framework | .NET Framework 4.7.2 |
-| Output Path | `bin\Debug\Net472\VSAgent.Extension.dll` |
+| Output Path | `bin\Debug
+et472\VSAgent.Extension.dll` |
 | Document Count | 19 (including generated) |
 | Project References | 5 |
 | Metadata References | 150 |
@@ -452,12 +454,16 @@ Below is the comprehensive inventory of all 16 tools exposed by the VSAgent serv
 | Project | Target Framework | Configuration | Output File |
 |---|---|---|---|
 | VSAgent.Abstractions | .NET Framework 4.7.2 | Debug/Release | `bin\Debug\VSAgent.Abstractions.dll` |
-| VSAgent.Protocol | .NET Standard 2.0 | Debug/Release | `bin\Debug\Netstandard2.0\VSAgent.Protocol.dll` |
-| VSAgent.Transport | .NET Standard 2.0 | Debug/Release | `bin\Debug\Netstandard2.0\VSAgent.Transport.dll` |
+| VSAgent.Protocol | .NET Standard 2.0 | Debug/Release | `bin\Debug
+etstandard2.0\VSAgent.Protocol.dll` |
+| VSAgent.Transport | .NET Standard 2.0 | Debug/Release | `bin\Debug
+etstandard2.0\VSAgent.Transport.dll` |
 | VSAgent.Server | .NET Framework 4.7.2 | Debug/Release | `bin\Debug\VSAgent.Server.dll` |
 | VSAgent.Tools | .NET Framework 4.7.2 | Debug/Release | `bin\Debug\VSAgent.Tools.dll` |
-| VSAgent.AgentHost | **.NET 10.0** (SDK-style) | Debug/Release | `bin\Debug\Net10.0\VSAgent.AgentHost.dll` |
-| VSAgent.Extension | .NET Framework 4.7.2 | Debug/Release | `bin\Debug\Net472\VSAgent.Extension.dll` |
+| VSAgent.AgentHost | **.NET 10.0** (SDK-style) | Debug/Release | `bin\Debug
+et10.0\VSAgent.AgentHost.dll` |
+| VSAgent.Extension | .NET Framework 4.7.2 | Debug/Release | `bin\Debug
+et472\VSAgent.Extension.dll` |
 
 ---
 
@@ -568,27 +574,29 @@ Loop continues (calls Ollama again with updated conversation)
 Open `VSAgent.slnx` in Visual Studio and build the solution, or use `dotnet build` from the root directory.
 
 ```bash
-cd <folder>\VSAgent
+cd E:\My Documents\localRepos\VSAgent
 dotnet build VSAgent.slnx
 ```
 
 ### Running
 
 1. **Launch Visual Studio** with the VSAgent extension loaded (the VSIX package will start automatically)
-2. The extension's `AgentHostController` will launch `VSAgent.AgentHost.exe` as a child process, this happens when the tollwindow is opened.
+2. The extension's `AgentHostController` will launch `VSAgent.AgentHost.exe` as a child process
 3. The AgentHost connects to the server on named pipe `"VSAgent"` and waits for input
 4. **In the toolwindow** type prompts (e.g., "Build the solution", "Find references to Main in Program.vb")
 5. The agent will use Ollama to decide which tools to call and act on your behalf
 
 ### Configuration
 
-The default Ollama settings are hardcoded in `Program.Main()` for now, this will change in future iterations:
+The default Ollama settings are hardcoded in `Program.Main()`:
 
 ```vb
 Private Const model = "qwen3.6:35b"
 Private Const base_url = "http://localhost:11434/"
 Private Const APIKey = "ollama"
 ```
+
+These can be modified directly or extracted to a `config.json` file in future iterations.
 
 ---
 
@@ -609,4 +617,4 @@ Private Const APIKey = "ollama"
 
 ## License
 
-See [LICENSE](LICENSE) for licensing information.
+This project is private/internal to the VSAgent development.

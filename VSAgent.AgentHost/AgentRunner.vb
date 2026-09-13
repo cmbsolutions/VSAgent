@@ -22,14 +22,18 @@ Public Class AgentRunner
     Public Event ToolCompleted(toolName As String)
     Public Event ToolFailed(toolName As String, errorMessage As String)
 
+    Public Event Statistics(statistics As String)
+
+    Public Event TaskCancelled()
+
     Public Sub New(vsAgent As VSAgentPipeClient, ollama As OllamaClient, toolDescriptors As IReadOnlyList(Of ToolDescriptor))
 
         _vsAgent = vsAgent
         _ollama = ollama
-        _cancellationTokenSource = New CancellationTokenSource
 
         AddHandler _ollama.ThinkingReceived, Sub(text) RaiseEvent Thinking(text)
         AddHandler _ollama.ContentReceived, Sub(text) RaiseEvent Content(text)
+        AddHandler _ollama.StatisticsReceived, Sub(stats) RaiseEvent Statistics(stats)
 
         ' Fallback action descriptions, used when Model does not provide a description of what it is doing
         _toolActionDescriptions = toolDescriptors.ToDictionary(
@@ -51,7 +55,7 @@ Public Class AgentRunner
 
     End Sub
 
-    Public Async Function RunAsync(userPrompt As String) As Task(Of String)
+    Public Async Function RunAsync(userPrompt As String, cancellationToken As CancellationToken) As Task(Of String)
 
         _messages.Add(
             New JObject From {
@@ -60,11 +64,12 @@ Public Class AgentRunner
             })
 
         Do
-            If _cancellationTokenSource.IsCancellationRequested Then
+            If cancellationToken.IsCancellationRequested Then
+                RaiseEvent TaskCancelled()
                 Return Nothing
             End If
 
-            Dim response = Await _ollama.SendAsync(_messages, _tools, _cancellationTokenSource.Token)
+            Dim response = Await _ollama.SendAsync(_messages, _tools, cancellationToken)
             Dim content = response.Content
 
             Dim assistantMessage As New JObject From {
@@ -79,6 +84,7 @@ Public Class AgentRunner
                 Dim calls As New JArray()
 
                 For Each toolCall In response.ToolCalls
+
 
                     calls.Add(
                         New JObject From {
@@ -100,6 +106,12 @@ Public Class AgentRunner
             End If
 
             For Each toolCall In response.ToolCalls
+
+                If cancellationToken.IsCancellationRequested Then
+                    RaiseEvent TaskCancelled()
+                    Return Nothing
+                End If
+
                 Await ExecuteToolCallAsync(toolCall)
             Next
         Loop
@@ -192,10 +204,10 @@ Public Class AgentRunner
 
     End Function
 
-    Public Async Function InterruptAsync() As Task
-        If _cancellationTokenSource IsNot Nothing Then
-            _cancellationTokenSource.Cancel()
-            Await Task.Delay(100)
-        End If
-    End Function
+    'Public Async Function InterruptAsync(cancellationToken As CancellationToken) As Task
+    '    If cancellationToken.Then Then
+    '        _cancellationTokenSource.Cancel()
+    '        Await Task.Delay(100)
+    '    End If
+    'End Function
 End Class

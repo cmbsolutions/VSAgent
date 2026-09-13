@@ -6,6 +6,10 @@
     Private score As Integer = 0
     Private gameRunning As Boolean = False
     Private rnd As New Random()
+    
+    ' Cached temporary paths for embedded sound files
+    Private eatSoundPath As String = ""
+    Private gameOverSoundPath As String = ""
 
     Public Sub New()
         InitializeComponent()
@@ -54,6 +58,102 @@
 
         gamePanel.Invalidate()
     End Sub
+    
+    ''' <summary>Tries to load an embedded resource from the assembly and save it to a temp file.</summary>
+    Private Function GetTempSoundFile(resourceName As String) As String
+        Dim asm As Reflection.Assembly = Reflection.Assembly.GetExecutingAssembly()
+        
+        ' Get all resource names to find the correct format
+        Dim resourceNames() As String = asm.GetManifestResourceNames()
+        Dim foundName As String = Nothing
+        
+        For Each name As String In resourceNames
+            If name.Contains(resourceName) Then
+                foundName = name
+                Exit For
+            End If
+        Next
+        
+        If foundName Is Nothing Then Return Nothing
+        
+        ' Read the embedded resource
+        Using stream As IO.Stream = asm.GetManifestResourceStream(foundName)
+            If stream Is Nothing Then Return Nothing
+            
+            Dim tempPath As String = IO.Path.Combine(IO.Path.GetTempPath(), $"{Guid.NewGuid()}.wav")
+            
+            ' Copy to temp file
+            Using fileStream As New IO.FileStream(tempPath, IO.FileMode.CreateNew)
+                stream.CopyTo(fileStream)
+            End Using
+            
+            Return tempPath
+        End Using
+    End Function
+    
+    ''' <summary>Gets the eat sound path, loading from embedded resources if needed.</summary>
+    Private Function GetEatSoundPath() As String
+        If eatSoundPath = "" Then
+            eatSoundPath = GetTempSoundFile("18392_inferno_rapidgun")
+        End If
+        
+        If IO.File.Exists(eatSoundPath) Then
+            Return eatSoundPath
+        Else
+            ' Fallback to system sound if embedded resource not found
+            Return Nothing
+        End If
+    End Function
+    
+    ''' <summary>Gets the game over sound path, loading from embedded resources if needed.</summary>
+    Private Function GetGameOverSoundPath() As String
+        If gameOverSoundPath = "" Then
+            gameOverSoundPath = GetTempSoundFile("18400_inferno_waterxplo")
+        End If
+        
+        If IO.File.Exists(gameOverSoundPath) Then
+            Return gameOverSoundPath
+        Else
+            ' Fallback to system sound if embedded resource not found
+            Return Nothing
+        End If
+    End Function
+    
+    ''' <summary>Plays a sound effect for eating food.</summary>
+    Private Sub PlayEatSound()
+        Try
+            Dim soundPath As String = GetEatSoundPath()
+            If soundPath IsNot Nothing And IO.File.Exists(soundPath) Then
+                ' Play asynchronously so it doesn't block the game loop
+                Using player As New System.Media.SoundPlayer(soundPath)
+                    player.Play()
+                End Using
+            Else
+                ' Fallback to system sound if embedded resource not found
+                My.Computer.Audio.Play("SystemAsterisk", AudioPlayMode.WaitToComplete)
+            End If
+        Catch ex As Exception
+            ' Silent fail - sounds are nice-to-have, not required
+        End Try
+    End Sub
+    
+    ''' <summary>Plays a sound effect for game over.</summary>
+    Private Sub PlayGameOverSound()
+        Try
+            Dim soundPath As String = GetGameOverSoundPath()
+            If soundPath IsNot Nothing And IO.File.Exists(soundPath) Then
+                ' Play asynchronously so it doesn't block the game loop
+                Using player As New System.Media.SoundPlayer(soundPath)
+                    player.Play()
+                End Using
+            Else
+                ' Fallback to system sound if embedded resource not found
+                My.Computer.Audio.Play("SystemHand", AudioPlayMode.WaitToComplete)
+            End If
+        Catch ex As Exception
+            ' Silent fail - sounds are nice-to-have, not required
+        End Try
+    End Sub
 
     Private Sub gameTimer_Tick(sender As Object, e As EventArgs) Handles gameTimer.Tick
         If Not gameRunning Then Return
@@ -90,6 +190,8 @@
             score += 10
             scoreLabel.Text = $"Score: {score}"
             
+            PlayEatSound()
+            
             ' Speed up slightly
             If gameTimer.Interval > 50 Then
                 gameTimer.Interval -= 5
@@ -106,6 +208,7 @@
     Private Sub GameOver()
         gameRunning = False
         gameTimer.Stop()
+        PlayGameOverSound()
         statusText.Text = "Game Over!"
         restartButton.Visible = True
     End Sub
