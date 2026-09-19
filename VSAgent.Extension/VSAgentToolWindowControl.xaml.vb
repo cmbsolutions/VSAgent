@@ -115,6 +115,8 @@ Partial Public Class VSAgentToolWindowControl
         Dim errorMessage As String = Nothing
 
         btnSend.IsEnabled = False
+        btnStop.IsEnabled = True
+
         txtPrompt.Clear()
 
         Try
@@ -128,7 +130,7 @@ Partial Public Class VSAgentToolWindowControl
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
         btnSend.IsEnabled = True
-
+        btnStop.IsEnabled = False
 
         If errorMessage IsNot Nothing Then
             Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)
@@ -165,6 +167,7 @@ Partial Public Class VSAgentToolWindowControl
         Dim response As AgentHostResponse = Nothing
         Dim errorMessage As String = Nothing
 
+        btnStop.IsEnabled = False
         Await AppendTextToOutputAsync($"{Environment.NewLine}Sending interrupt...", Media.Colors.Purple)
         Try
             response = Await _agentHostClient.SendInterruptAsync()
@@ -175,6 +178,8 @@ Partial Public Class VSAgentToolWindowControl
 
         ' Now we're outside Catch/Finally, so Await is allowed.
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+
+        btnSend.IsEnabled = True
 
         If errorMessage IsNot Nothing Then
             Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)

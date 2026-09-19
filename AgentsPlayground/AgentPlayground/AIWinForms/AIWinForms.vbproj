@@ -11,11 +11,21 @@
   <ItemGroup>
     <None Remove="Resources\18392_inferno_rapidgun.wav" />
     <None Remove="Resources\18400_inferno_waterxplo.wav" />
+    <None Remove="Resources\Animated_Explosion.gif" />
+    <None Remove="Resources\beamBlue.png" />
+    <None Remove="Resources\starfighter.png" />
+    <None Remove="Resources\stars.png" />
+    <None Remove="Resources\XWing.png" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\18392_inferno_rapidgun.wav" />
     <EmbeddedResource Include="Resources\18400_inferno_waterxplo.wav" />
+    <EmbeddedResource Include="Resources\Animated_Explosion.gif" />
+    <EmbeddedResource Include="Resources\beamBlue.png" />
+    <EmbeddedResource Include="Resources\starfighter.png" />
+    <EmbeddedResource Include="Resources\stars.png" />
+    <EmbeddedResource Include="Resources\XWing.png" />
   </ItemGroup>
 
   <ItemGroup>
