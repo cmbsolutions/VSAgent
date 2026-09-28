@@ -44,7 +44,7 @@ Partial Public Class VSAgentToolWindowControl
     End Sub
 
     Private Sub AgentHostClient_ToolFailed(toolName As String, errorMessage As String)
-        Dim unused = AppendTextToOutputAsync($"Failed with error: {errorMessage}", Media.Colors.Red)
+        Dim unused = AppendTextToOutputAsync($"Failed with error: {errorMessage}", Media.Colors.IndianRed)
         isTool = False
     End Sub
 
@@ -109,7 +109,7 @@ Partial Public Class VSAgentToolWindowControl
         isThinking = False
         isContent = False
 
-        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}User > {prompt}{Environment.NewLine}", Media.Colors.DarkViolet)
+        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}User > {prompt}{Environment.NewLine}", Media.Colors.LightSalmon)
 
         Dim response As AgentHostResponse = Nothing
         Dim errorMessage As String = Nothing

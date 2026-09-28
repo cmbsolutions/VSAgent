@@ -7,7 +7,7 @@ Imports Task = System.Threading.Tasks.Task
 ''' <summary>
 ''' Command handler
 ''' </summary>
-Public NotInheritable Class AboutCommand
+Public NotInheritable Class VSAgentExtension
 
     ''' <summary>
     ''' Command ID.
@@ -25,7 +25,7 @@ Public NotInheritable Class AboutCommand
     Private ReadOnly package As AsyncPackage
 
     ''' <summary>
-    ''' Initializes a new instance of the <see cref="AboutCommand"/> class.
+    ''' Initializes a new instance of the <see cref="VSAgent"/> class.
     ''' Adds our command handlers for menu (the commands must exist in the command table file)
     ''' </summary>
     ''' <param name="package">Owner package, not null.</param>
@@ -48,7 +48,7 @@ Public NotInheritable Class AboutCommand
     ''' <summary>
     ''' Gets the instance of the command.
     ''' </summary>
-    Public Shared Property Instance As AboutCommand
+    Public Shared Property Instance As VSAgentExtension
 
     ''' <summary>
     ''' Get service provider from the owner package.
@@ -69,7 +69,7 @@ Public NotInheritable Class AboutCommand
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken)
 
         Dim commandService As OleMenuCommandService = Await package.GetServiceAsync(GetType(IMenuCommandService))
-        Instance = New AboutCommand(package, commandService)
+        Instance = New VSAgentExtension(package, commandService)
     End Function
 
     ''' <summary>
