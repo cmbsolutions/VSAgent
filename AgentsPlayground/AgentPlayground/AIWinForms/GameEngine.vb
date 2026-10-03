@@ -18,7 +18,17 @@ Public Class GameEngine
     Public Property SurfaceWidth As Integer = 900
     Public Property SurfaceHeight As Integer = 700
 
-    ' ===== Player state =====
+    ' ===== Sprites (set by the form from embedded resources) =====
+    ''' <summary>Tiled starfield background image.</summary>
+    Public Property StarsImage As Image = Nothing
+    ''' <summary>Player ship sprite.</summary>
+    Public Property PlayerImage As Image = Nothing
+    ''' <summary>Enemy X-Wing sprite.</summary>
+    Public Property EnemyImage As Image = Nothing
+    ''' <summary>Bullet / blue beam sprite.</summary>
+    Public Property BulletImage As Image = Nothing
+
+    ' ===== Starfield scroll (used by renderer) =====
     Public Property PlayerX As Double = 430
     Public Property PlayerY As Double = 620
     Public Const PLAYER_WIDTH As Integer = 40
@@ -36,15 +46,10 @@ Public Class GameEngine
     Private enemySpawnTimer As Double = 0
     Private enemySpawnInterval As Double = 90 / 60.0 ' frames to seconds: spawn every ~1.5s at 60fps
     Private enemySpeedBase As Double = 2.0
-    Public ReadOnly Property EnemyWaveCount As Integer
-        Get
-            Return enemyWaveCount
-        End Get
-    End Property
-    Private enemyWaveCount As Integer = 0
+    Public EnemyWaveCount As Integer = 0
 
     ' ===== Bullets =====
-    Public ReadOnly Property Bullets As New List(Of Bullet)()
+    Public Property Bullets As New List(Of Bullet)()
     Private bulletCooldown As Double = 0
     Private Const BULLET_COOLDOWN As Double = 8 / 60.0 ' seconds
 
@@ -57,7 +62,6 @@ Public Class GameEngine
         End Get
     End Property
     Private scrollOffsetY As Double = 0
-    Public Property StarImage As Image = Nothing
 
     ' ===== Explosions =====
     Public ReadOnly Property Explosions As New List(Of ExplosionParticle)()
@@ -129,6 +133,7 @@ Public Class GameEngine
         shakeDuration = 0
         scrollOffsetY = 0
         StatusText = "Arrow Keys/WASD to Move — Space to Shoot"
+        ' Do NOT clear sprite images — they are set by the form once and persist
     End Sub
 
     ''' <summary>Initialize the starfield with random stars spread across a large area.</summary>
@@ -352,16 +357,16 @@ Public Class GameEngine
     End Sub
 
     Private Sub FireBullet()
-        Dim bulletWidth As Integer = If(StarImage IsNot Nothing AndAlso StarImage.Width > 0, CInt(Math.Max(4, StarImage.Width * 0.25)), 6)
-        Dim bulletHeight As Integer = If(StarImage IsNot Nothing AndAlso StarImage.Height > 0, CInt(Math.Max(10, StarImage.Height * 0.75)), 30)
+        Dim bulletWidth As Integer = If(BulletImage IsNot Nothing AndAlso BulletImage.Width > 0, CInt(Math.Max(4, BulletImage.Width * 0.25)), 6)
+        Dim bulletHeight As Integer = If(BulletImage IsNot Nothing AndAlso BulletImage.Height > 0, CInt(Math.Max(10, BulletImage.Height * 0.75)), 30)
         Dim offset As Integer = CInt((PLAYER_WIDTH - bulletWidth) / 2)
         Bullets.Add(New Bullet(CInt(PlayerX + offset), CInt(PlayerY), bulletWidth, bulletHeight, 10))
         Bullets.Add(New Bullet(CInt(PlayerX + PLAYER_WIDTH - offset - bulletWidth), CInt(PlayerY), bulletWidth, bulletHeight, 10))
     End Sub
 
     Private Sub SpawnEnemy()
-        Dim eW As Integer = If(StarImage IsNot Nothing AndAlso StarImage.Width > 0, StarImage.Width, 40)
-        Dim eH As Integer = If(StarImage IsNot Nothing AndAlso StarImage.Height > 0, StarImage.Height, 40)
+        Dim eW As Integer = If(EnemyImage IsNot Nothing AndAlso EnemyImage.Width > 0, EnemyImage.Width, 40)
+        Dim eH As Integer = If(EnemyImage IsNot Nothing AndAlso EnemyImage.Height > 0, EnemyImage.Height, 40)
         Dim x As Double = rng.Next(0, SurfaceWidth - eW)
         Dim pointsMult As Single = CSng(rng.NextDouble() * 1.5 + 0.5)
         Dim speedMult As Single = CSng(rng.NextDouble() * 0.8 + 0.6)
@@ -419,12 +424,12 @@ End Class
 
 
 ''' <summary>A bullet (blue beam).</summary>
-Public Structure Bullet
-    Public ReadOnly Property X As Integer
-    Public ReadOnly Property Y As Integer
-    Public ReadOnly Property Width As Integer
-    Public ReadOnly Property Height As Integer
-    Public ReadOnly Property Speed As Integer
+Public Class Bullet
+    Public Property X As Integer
+    Public Property Y As Integer
+    Public Property Width As Integer
+    Public Property Height As Integer
+    Public Property Speed As Integer
 
     Public Sub New(x As Integer, y As Integer, width As Integer, height As Integer, speed As Integer)
         Me.X = x
@@ -432,9 +437,8 @@ Public Structure Bullet
         Me.Width = width
         Me.Height = height
         Me.Speed = speed
-    End Structure
-End Structure
-
+    End Sub
+End Class
 
 ''' <summary>A particle in an explosion.</summary>
 Public Class ExplosionParticle

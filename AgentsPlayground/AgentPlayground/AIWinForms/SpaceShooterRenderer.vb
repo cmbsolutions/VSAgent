@@ -3,16 +3,23 @@ Imports System.Drawing.Drawing2D
 
 ''' <summary>
 ''' Renders all game entities onto a Graphics surface. Pure rendering — no game logic.
+''' All draw calls are minimal and use pre-loaded sprite images when available,
+''' with fast fallback shapes otherwise.
 ''' </summary>
 Public Class SpaceShooterRenderer
 
     ''' <summary>Draw the entire game frame.</summary>
     Public Shared Sub Render(g As Graphics, engine As GameEngine)
         g.SmoothingMode = SmoothingMode.AntiAlias
-        g.InterpolationMode = InterpolationMode.HighQualityBilinear
+        g.InterpolationMode = InterpolationMode.NearestNeighbor   ' pixel-perfect sprites
 
         ' Clear to deep space blue-black
         g.Clear(Color.FromArgb(0, 0, 10))
+
+        ' Apply screen shake offset when active
+        If engine.ShakeOffsetX <> 0 OrElse engine.ShakeOffsetY <> 0 Then
+            g.TranslateTransform(CSng(engine.ShakeOffsetX), CSng(engine.ShakeOffsetY))
+        End If
 
         RenderStarfield(g, engine)
         RenderBullets(g, engine)
@@ -21,48 +28,45 @@ Public Class SpaceShooterRenderer
         RenderExplosions(g, engine)
         RenderHUD(g, engine)
         RenderGameOver(g, engine)
+
+        ' Restore transform after shake
+        If engine.ShakeOffsetX <> 0 OrElse engine.ShakeOffsetY <> 0 Then
+            g.ResetTransform()
+        End If
     End Sub
 
-    ''' <summary>Draw the scrolling starfield.</summary>
+    ''' <summary>Draw the scrolling starfield by tiling StarsImage across the canvas with scroll offset.</summary>
     Private Shared Sub RenderStarfield(g As Graphics, engine As GameEngine)
-        If engine.StarImage IsNot Nothing AndAlso engine.StarImage.Width > 0 Then
-            ' Draw pre-rendered star image tiles
-            Dim scrollY As Double = engine.ScrollOffsetYValue Mod 3000.0
-            For Each star In engine.Stars
-                Dim drawY As Double = (star.Y - scrollY)
-                ' Wrap stars that go off the top back to bottom
-                While drawY < 0 : drawY += 3000.0 : End While
-                If drawY > engine.SurfaceHeight + star.Size Then Continue For
+        Dim tileW As Integer = 100   ' default tile size for stars.png
+        Dim tileH As Integer = 75
+        If engine.StarsImage IsNot Nothing AndAlso engine.StarsImage.Width > 0 Then
+            tileW = engine.StarsImage.Width
+            tileH = engine.StarsImage.Height
 
-                g.DrawImage(engine.StarImage,
-                            CSng(star.X),
-                            CSng(drawY - star.Size / 2.0),
-                            CSng(CSng(star.Size) * 1.5F),
-                            CSng(CSng(star.Size) * 1.5F))
+            ' Draw the starfield image tiled across the entire canvas with scroll offsets
+            Dim scrollY As Double = engine.ScrollOffsetYValue Mod tileH
+            ' Count how many tiles wide/tall we need to cover the panel
+            Dim colsNeeded As Integer = (engine.SurfaceWidth \ tileW) + 2
+            Dim rowsNeeded As Integer = (engine.SurfaceHeight \ tileH) + 2
+            For row As Integer = -1 To rowsNeeded
+                For col As Integer = -1 To colsNeeded
+                    g.DrawImage(engine.StarsImage,
+                                CSng(col * tileW),
+                                CSng(row * tileH - scrollY),
+                                CSng(tileW),
+                                CSng(tileH))
+                Next
             Next
         Else
-            ' Fallback: draw stars as white dots
-            Dim scrollY As Double = engine.ScrollOffsetYValue Mod 3000.0
-            For Each star In engine.Stars
-                Dim drawY As Double = (star.Y - scrollY)
-                While drawY < 0 : drawY += 3000.0 : End While
-                If drawY > engine.SurfaceHeight + star.Size Then Continue For
-
-                Dim alpha As Integer = CInt(150 + star.Size * 40)
-                Using br As New SolidBrush(Color.FromArgb(alpha, Color.White))
-                    g.FillEllipse(br, CSng(star.X), CSng(drawY - star.Size / 2.0),
-                                  CSng(star.Size), CSng(star.Size))
-                End Using
-            Next
-
-            ' Add extra scattered tiny stars for depth (static background layer)
+            ' Fallback: draw scattered dots as stars
             Dim rng As New Random(42)
-            For i As Integer = 0 To 100 - 1
+            For i As Integer = 0 To 150 - 1
                 Dim sx As Double = rng.Next(0, engine.SurfaceWidth)
                 Dim sy As Double = (rng.NextDouble() * engine.SurfaceHeight + engine.ScrollOffsetYValue * 0.3) Mod engine.SurfaceHeight
                 If sy < 0 Then sy += engine.SurfaceHeight
-                Using br As New SolidBrush(Color.FromArgb(80, Color.White))
-                    g.FillEllipse(br, CSng(sx), CSng(sy), 1.0F, 1.0F)
+                Dim sz As Integer = rng.Next(1, 3)
+                Using br As New SolidBrush(Color.FromArgb(CByte(rng.Next(80, 200)), Color.White))
+                    g.FillEllipse(br, CSng(sx), CSng(sy), CSng(sz), CSng(sz))
                 End Using
             Next
         End If
@@ -71,14 +75,14 @@ Public Class SpaceShooterRenderer
     ''' <summary>Draw all bullets.</summary>
     Private Shared Sub RenderBullets(g As Graphics, engine As GameEngine)
         For Each b In engine.Bullets
-            If engine.StarImage IsNot Nothing AndAlso engine.StarImage.Width > 0 Then
-                g.DrawImage(engine.StarImage, CSng(b.X), CSng(b.Y), CSng(b.Width), CSng(b.Height))
+            If engine.BulletImage IsNot Nothing AndAlso engine.BulletImage.Width > 0 Then
+                g.DrawImage(engine.BulletImage, CSng(b.X), CSng(b.Y), CSng(b.Width), CSng(b.Height))
             Else
+                ' Fallback: bright blue beam with glow
+                Using glowBrush As New SolidBrush(Color.FromArgb(60, 100, 200, 255))
+                    g.FillEllipse(glowBrush, CSng(b.X - b.Width), CSng(b.Y - 4), CSng(b.Width * 3), CSng(b.Height + 8))
+                End Using
                 Using br As New SolidBrush(Color.FromArgb(128, 140, 255))
-                    ' Add glow effect
-                    Using glowBrush As New SolidBrush(Color.FromArgb(60, 100, 200, 255))
-                        g.FillEllipse(glowBrush, CSng(b.X - b.Width), CSng(b.Y - 4), CSng(b.Width * 3), CSng(b.Height + 8))
-                    End Using
                     g.FillRectangle(br, CSng(b.X), CSng(b.Y), CSng(b.Width), CSng(b.Height))
                 End Using
             End If
@@ -88,10 +92,10 @@ Public Class SpaceShooterRenderer
     ''' <summary>Draw all enemies.</summary>
     Private Shared Sub RenderEnemies(g As Graphics, engine As GameEngine)
         For Each ene In engine.Enemies
-            If engine.StarImage IsNot Nothing AndAlso engine.StarImage.Width > 0 Then
-                g.DrawImage(engine.StarImage, CSng(ene.X), CSng(ene.Y), CSng(ene.Width), CSng(ene.Height))
+            If engine.EnemyImage IsNot Nothing AndAlso engine.EnemyImage.Width > 0 Then
+                g.DrawImage(engine.EnemyImage, CSng(ene.X), CSng(ene.Y), CSng(ene.Width), CSng(ene.Height))
             Else
-                ' Fallback: draw enemy as red triangle
+                ' Fallback: red triangle
                 Using pen As New Pen(Color.Red, 2.0F)
                     Dim pts() As PointF = {
                         New PointF(CSng(ene.X + ene.Width / 2), CSng(ene.Y + ene.Height)),
@@ -109,40 +113,34 @@ Public Class SpaceShooterRenderer
     Private Shared Sub RenderPlayer(g As Graphics, engine As GameEngine)
         If Not engine.PlayerAlive Then Return
 
-        If engine.StarImage IsNot Nothing AndAlso engine.StarImage.Width > 0 Then
-            g.DrawImage(engine.StarImage,
-                        CSng(engine.PlayerX),
-                        CSng(engine.PlayerY),
-                        CSng(CSng(engine.StarImage.Width) * (PLAYER_WIDTH / CSng(engine.StarImage.Width))),
-                        CSng(CSng(engine.StarImage.Height) * (PLAYER_HEIGHT / CSng(engine.StarImage.Height))))
+        Dim px = engine.PlayerX
+        Dim py = engine.PlayerY
+        Dim pw = GameEngine.PLAYER_WIDTH
+        Dim ph = GameEngine.PLAYER_HEIGHT
 
-            ' Engine flame
-            Dim flameH As Single = 8 + CSng(Math.Sin(Environment.TickCount64 / 50.0)) * 3
-            Using flameBrush As New SolidBrush(Color.FromArgb(255, 200, CByte(Math.Max(0, 150 + CInt(Math.Sin(Environment.TickCount64 / 80.0) * 105))), 0))
-                g.FillRectangle(flameBrush,
-                    CSng(engine.PlayerX + PLAYER_WIDTH * 0.3),
-                    CSng(engine.PlayerY + PLAYER_HEIGHT),
-                    CSng(PLAYER_WIDTH * 0.4),
-                    flameH)
+        If engine.PlayerImage IsNot Nothing AndAlso engine.PlayerImage.Width > 0 Then
+            g.DrawImage(engine.PlayerImage, CSng(px), CSng(py), CSng(pw), CSng(ph))
+
+            ' Engine flame (animated)
+            Dim t As Double = Environment.TickCount64 / 50.0
+            Dim flameH As Single = CSng(8 + Math.Sin(t) * 3)
+            Using flameBrush As New SolidBrush(Color.FromArgb(255, 255, CByte(Math.Max(0, 150 + CInt(Math.Sin(t * 0.8) * 105))), 0))
+                g.FillRectangle(flameBrush, CSng(px + pw * 0.3), CSng(py + ph), CSng(pw * 0.4), flameH)
             End Using
         Else
             ' Fallback: draw a simple triangle shape
             Using pen As New Pen(Color.FromArgb(0, 200, 255), 2.0F)
                 Dim pts() As PointF = {
-                    New PointF(CSng(engine.PlayerX + PLAYER_WIDTH / 2), CSng(engine.PlayerY)),
-                    New PointF(CSng(engine.PlayerX), CSng(engine.PlayerY + PLAYER_HEIGHT)),
-                    New PointF(CSng(engine.PlayerX + PLAYER_WIDTH), CSng(engine.PlayerY + PLAYER_HEIGHT))
+                    New PointF(CSng(px + pw / 2), CSng(py)),
+                    New PointF(CSng(px), CSng(py + ph)),
+                    New PointF(CSng(px + pw), CSng(py + ph))
                 }
                 g.FillPolygon(Brushes.BlueViolet, pts)
                 g.DrawPolygon(pen, pts)
 
                 ' Engine flame
                 Using flameBrush As New SolidBrush(Color.FromArgb(255, 255, 150, 0))
-                    g.FillRectangle(flameBrush,
-                        CSng(engine.PlayerX + PLAYER_WIDTH * 0.3),
-                        CSng(engine.PlayerY + PLAYER_HEIGHT),
-                        CSng(PLAYER_WIDTH * 0.4),
-                        8)
+                    g.FillRectangle(flameBrush, CSng(px + pw * 0.3), CSng(py + ph), CSng(pw * 0.4), 8)
                 End Using
             End Using
         End If
@@ -172,12 +170,6 @@ Public Class SpaceShooterRenderer
 
     ''' <summary>Draw HUD overlay.</summary>
     Private Shared Sub RenderHUD(g As Graphics, engine As GameEngine)
-        Dim hudFont As New Font("Consolas", 9.0F)
-        Using hBrush As New SolidBrush(Color.FromArgb(100, Color.White))
-            g.DrawString($"Wave: {engine.EnemyWaveCount}", hudFont, hBrush, 8, CSng(engine.SurfaceHeight - 20))
-        End Using
-
-        ' Score and lives at top
         Dim hudFontBig As New Font("Consolas", 14.0F, FontStyle.Bold)
         Using scoreBrush As New SolidBrush(Color.White)
             g.DrawString($"Score: {engine.Score}", hudFontBig, scoreBrush, 8, 8)
@@ -205,14 +197,11 @@ Public Class SpaceShooterRenderer
         Using br As New SolidBrush(Color.FromArgb(150, Color.White))
             g.DrawString($"Final Score: {engine.Score}", subFont, br,
                 CSng((engine.SurfaceWidth - CInt(g.MeasureString($"Final Score: {engine.Score}", subFont).Width)) / 2),
-                CSNG(engine.SurfaceHeight / 2 + 20))
+                CSng(engine.SurfaceHeight / 2 + 20))
         End Using
 
         goFont.Dispose()
         subFont.Dispose()
     End Sub
 
-    ' Need to import PLAYER_WIDTH and PLAYER_HEIGHT
-    Private Const PLAYER_WIDTH As Integer = GameEngine.PLAYER_WIDTH
-    Private Const PLAYER_HEIGHT As Integer = GameEngine.PLAYER_HEIGHT
 End Class

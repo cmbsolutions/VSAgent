@@ -235,15 +235,6 @@ Public Class MenuForm
                 .IconChar = ChrW(9733),   ' ★ (black star)
                 .GradientStart = Color.FromArgb(255, 140, 0),
                 .GradientEnd = Color.FromArgb(255, 60, 60)
-            },
-            New MenuItemDef With {
-                .Name = "btn_ImageDownloader",
-                .Title = "Image Dopwnloader",
-                .Description = "Browse to a url and download all selected images",
-                .TargetType = GetType(WebImageDownloaderForm),
-                .IconChar = ChrW(9738),   ' ◙ (black star)
-                .GradientStart = Color.FromArgb(13, 140, 55),
-                .GradientEnd = Color.FromArgb(33, 60, 160)
             }
         }
     End Function
