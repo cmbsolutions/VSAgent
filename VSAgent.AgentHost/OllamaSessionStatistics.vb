@@ -28,14 +28,20 @@ Namespace Ollama
             Dim TotalPromptEvalCount = _statistics.Sum(Function(s) s.PromptEvalCount)
             Dim TotalPromptEvalDuration = _statistics.Sum(Function(s) s.PromptEvalDuration)
             Dim tpedtimespan As TimeSpan = TimeSpan.FromMicroseconds(TotalPromptEvalDuration \ 1000)
-            Dim tps = TotalPromptEvalCount / tpedtimespan.TotalSeconds
+            Dim ttps = TotalPromptEvalCount / tpedtimespan.TotalSeconds
+            Dim LastPromptEvalCount = _statistics.LastOrDefault()?.PromptEvalCount
+            Dim LastPromptEvalDuration = _statistics.LastOrDefault()?.PromptEvalDuration
+            Dim tps = If(LastPromptEvalDuration.HasValue AndAlso LastPromptEvalDuration.Value > 0, LastPromptEvalCount / TimeSpan.FromMicroseconds(LastPromptEvalDuration.Value \ 1000).TotalSeconds, 0)
 
             Dim TotalOutputEvalCount = _statistics.Sum(Function(s) s.EvalCount)
             Dim TotalOutputEvalDuration = _statistics.Sum(Function(s) s.EvalDuration)
             Dim toedtimespan As TimeSpan = TimeSpan.FromMicroseconds(TotalOutputEvalDuration \ 1000)
-            Dim ots = TotalOutputEvalCount / toedtimespan.TotalSeconds
+            Dim tots = TotalOutputEvalCount / toedtimespan.TotalSeconds
+            Dim LastOutputEvalCount = _statistics.LastOrDefault()?.EvalCount
+            Dim LastOutputEvalDuration = _statistics.LastOrDefault()?.EvalDuration
+            Dim ots = If(LastOutputEvalDuration.HasValue AndAlso LastOutputEvalDuration.Value > 0, LastOutputEvalCount / TimeSpan.FromMicroseconds(LastOutputEvalDuration.Value \ 1000).TotalSeconds, 0)
 
-            Return $"Prompt: {TotalPromptEvalCount}T, {tps:F3}T/s. Output: {TotalOutputEvalCount}T, {ots:F3}T/s."
+            Return $"Prompt Total: {TotalPromptEvalCount}T, Last: {tps:F3}T/s, avg: {ttps:F3}T/s. | Output Total: {TotalOutputEvalCount}T, Last: {ots:F3}T/s, avg: {tots:F3}T/s."
         End Function
     End Class
 
