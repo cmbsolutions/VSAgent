@@ -42,7 +42,7 @@ Module Program
             AddHandler agent.ToolCompleted, AddressOf AgentToolCompletedEventHandler
             AddHandler agent.ToolFailed, AddressOf AgentToolFailedEventHandler
 
-            Dim hostServer As New AgentHostPipeServer("VSAgent.AgentHost", agent)
+            Dim hostServer As New AgentHostPipeServer("VSAgent.AgentHost", agent, ollama)
 
             Console.WriteLine()
             Console.ForegroundColor = ConsoleColor.DarkGray

@@ -20,7 +20,7 @@ Namespace Tools
 
         Public ReadOnly Property Description As String Implements ITool.Description
             Get
-                Return "Gets a list of all projects in the current solution SDK Style."
+                Return "Gets a list of all projects in the current solution SDK Style. Use this only when getRoslynProjects is giving no results."
             End Get
         End Property
 

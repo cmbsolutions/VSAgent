@@ -6,12 +6,13 @@ Imports System.Threading
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 Imports VSAgent.Ollama
+Imports VSAgent.Protocol.Ollama
 
 Public Class OllamaClient
     Implements IDisposable
 
     Private ReadOnly _http As HttpClient
-    Private ReadOnly _model As String
+    Private _model As String
     Private disposedValue As Boolean
 
     Private ReadOnly _thinkingBuffer As New StringBuilder()
@@ -197,6 +198,29 @@ Public Class OllamaClient
 
         Return lastChar = ControlChars.Lf OrElse lastChar = "."c OrElse lastChar = ":"c OrElse lastChar = ";"c
     End Function
+
+    Public Async Function GetModelsAsync(cancellationToken As CancellationToken) As Task(Of List(Of OllamaModel))
+        Using request As New HttpRequestMessage(HttpMethod.Get, "/api/tags")
+            Using response = Await _http.SendAsync(request, cancellationToken)
+                response.EnsureSuccessStatusCode()
+
+                Dim json = Await response.Content.ReadAsStringAsync()
+
+                Dim root = JObject.Parse(json)
+
+                Return root("models").Select(
+                    Function(m) New OllamaModel With {
+                        .Name = m.Value(Of String)("name"),
+                        .Size = m.Value(Of Long)("size")
+                    }).ToList()
+            End Using
+        End Using
+    End Function
+
+    Public Sub SetModel(model As String)
+        _model = model
+    End Sub
+
 
     Protected Overridable Sub Dispose(disposing As Boolean)
         If Not disposedValue Then

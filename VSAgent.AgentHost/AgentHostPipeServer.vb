@@ -1,14 +1,17 @@
 ﻿Imports System.Threading
+Imports Newtonsoft.Json
 Imports VSAgent.Protocol.Events
 Imports VSAgent.Protocol.Messages
 
 Public Class AgentHostPipeServer
     Private ReadOnly _runner As AgentRunner
+    Private ReadOnly _ollama As OllamaClient
     Private ReadOnly _transport As Transport.TransportPipeServer(Of AgentHostRequest, AgentHostResponse)
     Private _currentRunCancellation As CancellationTokenSource
 
-    Public Sub New(PipeName As String, runner As AgentRunner)
+    Public Sub New(PipeName As String, runner As AgentRunner, ollama As OllamaClient)
         _runner = runner
+        _ollama = ollama
 
         _transport = New Transport.TransportPipeServer(Of AgentHostRequest, AgentHostResponse)(PipeName, AddressOf HandleRequestAsync, "AgentHostPipeServer")
         _transport.Start()
@@ -59,7 +62,6 @@ Public Class AgentHostPipeServer
                     _currentRunCancellation = Nothing
                 End Try
             Case "interrupt"
-                'Await _runner.InterruptAsync()
                 If _currentRunCancellation IsNot Nothing Then
                     Await _currentRunCancellation.CancelAsync()
                     Return New AgentHostResponse With {
@@ -73,6 +75,41 @@ Public Class AgentHostPipeServer
                         .ErrorMessage = "No active run to interrupt."
                     }
                 End If
+            Case "getmodels"
+                Try
+                    _currentRunCancellation?.Dispose()
+                    _currentRunCancellation = New CancellationTokenSource()
+
+                    Dim result = Await _ollama.GetModelsAsync(_currentRunCancellation.Token)
+
+                    Return New AgentHostResponse With {
+                        .RequestId = request.Id,
+                        .Success = True,
+                        .Content = JsonConvert.SerializeObject(result)
+                    }
+                Catch ex As OperationCanceledException
+                    Return New AgentHostResponse With {
+                        .Success = True,
+                        .Content = Nothing
+                    }
+                Finally
+                    _currentRunCancellation.Dispose()
+                    _currentRunCancellation = Nothing
+                End Try
+            Case "setmodel"
+                Try
+                    Dim modelName = request.Content
+                    _ollama.SetModel(modelName)
+                    Return New AgentHostResponse With {
+                        .RequestId = request.Id,
+                        .Success = True
+                    }
+                Catch ex As Exception
+                    Return New AgentHostResponse With {
+                        .Success = False,
+                        .Content = "Model could not be set."
+                    }
+                End Try
             Case Else
                 Return New AgentHostResponse With {
                     .RequestId = request.Id,

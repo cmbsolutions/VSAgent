@@ -12,8 +12,6 @@ Public Class VisualStudioDocumentEditService
     Private ReadOnly _package As AsyncPackage
     Private ReadOnly _cancellationToken As CancellationToken
 
-    Private AddedDocumentIds As New List(Of String)
-
     Public Sub New(package As AsyncPackage, cancellationToken As CancellationToken)
         _package = package
         _cancellationToken = cancellationToken
@@ -218,8 +216,6 @@ Public Class VisualStudioDocumentEditService
         ' Resolve again from the updated workspace.
         Dim updatedDocument = workspace.CurrentSolution.GetDocument(document.Id)
 
-        AddedDocumentIds.Add(document.Name)
-
         Return New AddDocumentResult With {
             .Success = True,
             .DocumentId = document.Id.Id.ToString(),
@@ -230,7 +226,7 @@ Public Class VisualStudioDocumentEditService
         }
     End Function
 
-    Public Async Function RemoveDocumentAsync(projectId As String, documentName As String) As Task(Of RemoveDocumentResult) Implements IDocumentEditService.RemoveDocumentAsync
+    Public Async Function RemoveDocumentAsync(projectId As String, roslyndocumentid As String, documentName As String) As Task(Of RemoveDocumentResult) Implements IDocumentEditService.RemoveDocumentAsync
         Dim workspace = Await RoslynWorkspaceProvider.GetWorkspaceAsync(_package)
 
         Dim solution = workspace.CurrentSolution
@@ -246,15 +242,15 @@ Public Class VisualStudioDocumentEditService
 
         Dim existing = project.Documents.FirstOrDefault(
             Function(d)
-                Return String.Equals(d.Name, documentName, StringComparison.OrdinalIgnoreCase)
+                Return String.Equals(d.Id.Id.ToString, roslyndocumentid, StringComparison.OrdinalIgnoreCase)
             End Function)
 
         If existing Is Nothing Then
             Throw New InvalidOperationException($"Document {documentName} does not exists in project '{project.Name}'.")
         End If
 
-        If Not AddedDocumentIds.Contains(existing.Name) Then
-            Throw New InvalidOperationException($"Document {documentName} was not created by you. You can only remove documents you created.")
+        If existing.Name <> documentName Then
+            Throw New InvalidOperationException($"Document {documentName} is not the correct name for the given roslyndocumentid.")
         End If
 
         Dim document = project.RemoveDocument(existing.Id)
@@ -267,8 +263,6 @@ Public Class VisualStudioDocumentEditService
         If Not workspace.TryApplyChanges(newSolution) Then
             Throw New InvalidOperationException("Visual Studio rejected the removal of the document.")
         End If
-
-        AddedDocumentIds.Remove(documentName)
 
         Return New RemoveDocumentResult With {
             .Success = True

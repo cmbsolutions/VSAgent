@@ -1,7 +1,9 @@
 ﻿
 Imports System.Windows
 Imports Microsoft.VisualStudio.Shell
+Imports Newtonsoft.Json
 Imports VSAgent.Protocol.Messages
+Imports VSAgent.Protocol.Ollama
 
 '''<summary>
 ''' Interaction logic for VSAgentToolWindowControl.xaml
@@ -44,7 +46,7 @@ Partial Public Class VSAgentToolWindowControl
     End Sub
 
     Private Sub AgentHostClient_ToolFailed(toolName As String, errorMessage As String)
-        Dim unused = AppendTextToOutputAsync($"Failed with error: {errorMessage}", Media.Colors.Red)
+        Dim unused = AppendTextToOutputAsync($"Failed with error: {errorMessage}", Media.Colors.IndianRed)
         isTool = False
     End Sub
 
@@ -90,6 +92,12 @@ Partial Public Class VSAgentToolWindowControl
 
     Public Async Function SetConnectedAsync() As Task
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+
+        Dim modelsJson = Await _agentHostClient.SendGetModelsAsync()
+        Dim availableModels = JsonConvert.DeserializeObject(Of List(Of OllamaModel))(modelsJson.Content)
+
+        cmbModels.ItemsSource = availableModels.Select(Function(c) c.Name).ToList()
+
         btnSend.IsEnabled = True
     End Function
 
@@ -109,12 +117,14 @@ Partial Public Class VSAgentToolWindowControl
         isThinking = False
         isContent = False
 
-        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}User > {prompt}{Environment.NewLine}", Media.Colors.DarkViolet)
+        Dim unused = AppendTextToOutputAsync($"{Environment.NewLine}User > {prompt}{Environment.NewLine}", Media.Colors.LightSalmon)
 
         Dim response As AgentHostResponse = Nothing
         Dim errorMessage As String = Nothing
 
         btnSend.IsEnabled = False
+        btnStop.IsEnabled = True
+
         txtPrompt.Clear()
 
         Try
@@ -128,7 +138,7 @@ Partial Public Class VSAgentToolWindowControl
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
         btnSend.IsEnabled = True
-
+        btnStop.IsEnabled = False
 
         If errorMessage IsNot Nothing Then
             Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)
@@ -165,6 +175,7 @@ Partial Public Class VSAgentToolWindowControl
         Dim response As AgentHostResponse = Nothing
         Dim errorMessage As String = Nothing
 
+        btnStop.IsEnabled = False
         Await AppendTextToOutputAsync($"{Environment.NewLine}Sending interrupt...", Media.Colors.Purple)
         Try
             response = Await _agentHostClient.SendInterruptAsync()
@@ -175,6 +186,8 @@ Partial Public Class VSAgentToolWindowControl
 
         ' Now we're outside Catch/Finally, so Await is allowed.
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+
+        btnSend.IsEnabled = True
 
         If errorMessage IsNot Nothing Then
             Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)
@@ -187,5 +200,9 @@ Partial Public Class VSAgentToolWindowControl
 
     Private Sub expSettings_Expanded(sender As Object, e As RoutedEventArgs) Handles expSettings.Expanded
         ThisGrid.RowDefinitions.First.Height = New GridLength(122)
+    End Sub
+
+    Private Sub cmbModels_SelectionChanged(sender As Object, e As Controls.SelectionChangedEventArgs) Handles cmbModels.SelectionChanged
+        Dim unused = _agentHostClient.SendSetModelAsync(cmbModels.SelectedValue.ToString())
     End Sub
 End Class

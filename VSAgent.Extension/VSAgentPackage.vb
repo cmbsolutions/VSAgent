@@ -24,9 +24,9 @@ Imports Task = System.Threading.Tasks.Task
 <PackageRegistration(UseManagedResourcesOnly:=True, AllowsBackgroundLoading:=True)>
 <InstalledProductRegistration("#110", "#112", "1.0", IconResourceID:=400)>
 <ProvideMenuResource("Menus.ctmenu", 1)>
-<Guid(AboutCommandPackage.PackageGuidString)>
+<Guid(VSAgentPackage.PackageGuidString)>
 <ProvideToolWindow(GetType(VSAgentToolWindow))>
-Public NotInheritable Class AboutCommandPackage
+Public NotInheritable Class VSAgentPackage
     Inherits AsyncPackage
 
     ''' <summary>
@@ -57,7 +57,7 @@ Public NotInheritable Class AboutCommandPackage
         ' When initialized asynchronously, the current thread may be a background thread at this point.
         ' Do any initialization that requires the UI thread after switching to the UI thread.
         Await Me.JoinableTaskFactory.SwitchToMainThreadAsync()
-        Await AboutCommand.InitializeAsync(Me)
+        Await VSAgentExtension.InitializeAsync(Me)
         Await VSAgentToolWindowCommand.InitializeAsync(Me)
     End Function
 

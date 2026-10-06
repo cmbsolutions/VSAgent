@@ -42,6 +42,8 @@ Namespace VSAgent.Extension
             _registry.Register(New Tools.RemoveDocumentTool(documentEditService))
             _registry.Register(New Tools.BuildSolutionTool(buildService))
             _registry.Register(New Tools.BuildProjectTool(buildService))
+            _registry.Register(New Tools.GetProjectFilesTool(roslynWorkspaceService))
+
 
             ' This one always last!!!!
             _registry.Register(New Tools.GetAvailableToolsTool(_registry))

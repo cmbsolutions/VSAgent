@@ -18,30 +18,53 @@ Public Class VSAgentToolWindow
 
     Private ReadOnly _agentHostController As AgentHostController
     Private ReadOnly _agentHostClient As AgentHostClient
-
+    Private initialising As Boolean = False
     ''' <summary>
     ''' Initializes a new instance of the <see cref="VSAgentToolWindow"/> class.
     ''' </summary>
     Public Sub New()
         MyBase.New(Nothing)
+
         Me.Caption = "VSAgent"
 
         'This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
         'we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on 
         'the object returned by the Content property.
+
         _agentHostController = New AgentHostController()
 
         _agentHostClient = New AgentHostClient("VSAgent.AgentHost")
 
-        Dim control = New VSAgentToolWindowControl(_agentHostClient)
-        Content = control
+        If Not initialising Then
+            initialising = True
+            Dim control = New VSAgentToolWindowControl(_agentHostClient)
+            Content = control
 
-        Dim unused = ThreadHelper.JoinableTaskFactory.RunAsync(
+            Dim unused = ThreadHelper.JoinableTaskFactory.RunAsync(
             Async Function()
                 Await InitializeAgentHostAsync()
                 Await control.SetConnectedAsync()
             End Function)
+        End If
+    End Sub
 
+    Protected Overrides Sub OnCreate()
+        MyBase.OnCreate()
+
+        If Not initialising Then
+            initialising = True
+            Dim control = TryCast(Content, VSAgentToolWindowControl)
+
+            If control Is Nothing Then
+                control = New VSAgentToolWindowControl(_agentHostClient)
+                Content = control
+            End If
+            Dim unused = ThreadHelper.JoinableTaskFactory.RunAsync(
+                        Async Function()
+                            Await InitializeAgentHostAsync()
+                            Await control.SetConnectedAsync()
+                        End Function)
+        End If
     End Sub
 
     Private Async Function InitializeAgentHostAsync() As Task

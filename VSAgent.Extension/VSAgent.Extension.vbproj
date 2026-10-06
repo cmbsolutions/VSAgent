@@ -13,12 +13,13 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="AboutCommandPackage.vsct" />
     <None Remove="VSAgentToolWindowControl.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="LICENSE.txt" />
-    <Content Include="vsagent.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="VSAgentPackage.vb" />
   </ItemGroup>
   <ItemGroup>
     <ProjectCapability Include="CreateVsixContainer" />
@@ -48,7 +49,7 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
-    <VSCTCompile Include="AboutCommandPackage.vsct">
+    <VSCTCompile Include="VSAgentPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <Generator></Generator>
     </VSCTCompile>

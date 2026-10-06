@@ -48,7 +48,7 @@ Public Class MenuForm
     Private Sub InitializeComponent()
         ' ====== Main form settings ======
         Me.Text = "╳ AIWinForms v∞"
-        Me.Size = New Size(640, 480)
+        Me.Size = New Size(640, 580)
         Me.StartPosition = FormStartPosition.CenterScreen
         Me.MinimumSize = New Size(580, 380)
         Me.BackColor = Color.FromArgb(8, 12, 24)
@@ -110,16 +110,17 @@ Public Class MenuForm
         }
         titlePanel.Controls.Add(subtitleLabel)
 
-        ' ====== Menu Items Container ======
+        ' ====== Menu Items Container (scrollable) ======
         Dim menuContainer As New Panel() With {
             .Name = "menuItems",
-            .Size = New Size(600, 340),
+            .Size = New Size(600, 410),
             .Location = New Point(20, 115),
-            .BackColor = Color.Transparent
+            .BackColor = Color.Transparent,
+            .AutoScroll = True
         }
 
-        ' ====== Define menu items spacing (fits 5 items in 340px) ======
-        Dim itemSpacing As Integer = 68   ' 5 × 58 + 4 gaps × 2 ≈ 340
+        ' ====== Define menu items spacing (fits 6 items in 410px) ======
+        Dim itemSpacing As Integer = 68   ' 6 × 58 + 5 gaps × 2 ≈ 410
 
         ' ====== Define menu items ======
         Dim menuDefs As List(Of MenuItemDef) = CreateMenuDefinitions()
@@ -225,6 +226,15 @@ Public Class MenuForm
                 .IconChar = ChrW(9617),   ' ◼ (filled black square)
                 .GradientStart = Color.FromArgb(255, 100, 255),
                 .GradientEnd = Color.FromArgb(147, 60, 255)
+            },
+            New MenuItemDef With {
+                .Name = "btn_SpaceShooter",
+                .Title = "Space Shooter",
+                .Description = "Fly your starfighter through space and destroy enemy X-Wings with blue beam weapons",
+                .TargetType = GetType(SpaceShooterForm),
+                .IconChar = ChrW(9733),   ' ★ (black star)
+                .GradientStart = Color.FromArgb(255, 140, 0),
+                .GradientEnd = Color.FromArgb(255, 60, 60)
             }
         }
     End Function

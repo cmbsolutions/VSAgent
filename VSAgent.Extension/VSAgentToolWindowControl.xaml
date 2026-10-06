@@ -6,8 +6,7 @@
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
              Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-             mc:Ignorable="d"
-             d:DesignHeight="300" d:DesignWidth="300"
+             mc:Ignorable="d" d:DesignHeight="300"  d:DesignWidth="300"
              Name="MyToolWindow">
     <Grid x:Name="ThisGrid" Margin="8">
 
@@ -18,20 +17,31 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Expander Grid.Row="0" x:Name="expSettings" Height="100" Header="" Foreground="#FFFDFDFD" Grid.RowSpan="2" VerticalAlignment="Top">
-            <Grid Background="#FFE5E5E5">
+        <Expander Grid.Row="0" x:Name="expSettings" Height="100" Header="" Foreground="#FFFDFDFD" VerticalAlignment="Top">
+            <Grid Background="#FF272727">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="22"/>
+                    <RowDefinition Height="28"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="27*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <CheckBox x:Name="chkThinking" Content="Show Thinking process" IsChecked="True" Grid.ColumnSpan="2"/>
+                <CheckBox x:Name="chkThinking" Content="Show Thinking process" IsChecked="True" Grid.ColumnSpan="2" Foreground="White"/>
+                <ComboBox x:Name="cmbModels" Margin="50,5,-115,0" Grid.Row="1" VerticalAlignment="Top"/>
+                <Label Content="Model:" HorizontalAlignment="Left" Margin="4,3,0,0" Grid.Row="1" VerticalAlignment="Top" Foreground="White"/>
             </Grid>
         </Expander>
 
         <RichTextBox Grid.Row="1" x:Name="txtOutput"
              IsReadOnly="True"
              VerticalScrollBarVisibility="Auto"
-             BorderThickness="0" IsUndoEnabled="False" AllowDrop="False">
+             BorderThickness="1,1,1,1" IsUndoEnabled="False" AllowDrop="False" Cursor="IBeam" BorderBrush="#FF3462EF" Foreground="#FFE8E8E8">
+            <RichTextBox.Background>
+                <LinearGradientBrush EndPoint="1,1" StartPoint="0,0" SpreadMethod="Pad" MappingMode="RelativeToBoundingBox">
+                    <GradientStop Color="#FF232323" Offset="0"/>
+                    <GradientStop Color="#FF2D2D2D" Offset="1"/>
+                </LinearGradientBrush>
+            </RichTextBox.Background>
             <FlowDocument PagePadding="0"
                           TextElement.FontSize="12">
                 <FlowDocument.Resources>
@@ -50,7 +60,7 @@
             <Label x:Name="lblStats" Content="Enter a message below and hit send." Grid.Column="0" Foreground="#FFA2A1A1" Padding="5,0,5,0" HorizontalContentAlignment="Stretch"/>
         </Grid>
 
-        <Grid Grid.Row="2"
+        <Grid Grid.Row="3"
               Margin="0,8,0,0">
 
             <Grid.ColumnDefinitions>
@@ -61,18 +71,25 @@
 
             <TextBox x:Name="txtPrompt"
                      Grid.Column="0"
-                     Margin="0,0,8,0" AutomationProperties.HelpText="Type /exit or /quit to stop." ToolTip="Type /exit or /quit to stop." Cursor="IBeam" />
+                     Margin="0,0,8,0" AutomationProperties.HelpText="Type /exit or /quit to stop." ToolTip="Type /exit or /quit to stop." Cursor="IBeam" BorderBrush="#FF3462EF" Foreground="#FFE8E8E8" CaretBrush="#FFE6E6E6" >
+                <TextBox.Background>
+                    <LinearGradientBrush EndPoint="1,1" StartPoint="0,0">
+                        <GradientStop Color="#FF232323"/>
+                        <GradientStop Color="#FF2D2D2D" Offset="1"/>
+                    </LinearGradientBrush>
+                </TextBox.Background>
+            </TextBox>
 
             <Button x:Name="btnSend"
                     Grid.Column="1"
                     Content="Send"
                     Padding="14,5"
-                    Margin="0,0,8,0" IsEnabled="False" />
+                    Margin="0,0,8,0" IsEnabled="False" Background="#FF2D2D2D" Foreground="#FFE8E8E8" />
 
             <Button x:Name="btnStop"
                     Grid.Column="2"
                     Content="Stop"
-                    Padding="14,5" />
+                    Padding="14,5" IsEnabled="False" Background="#FF2D2D2D" Foreground="#FFE8E8E8" />
 
         </Grid>
     </Grid>

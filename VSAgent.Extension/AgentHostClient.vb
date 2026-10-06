@@ -73,6 +73,24 @@ Public Class AgentHostClient
         Return _transport.SendAsync(request)
     End Function
 
+    Public Function SendSetModelAsync(model As String) As Task(Of AgentHostResponse)
+
+        Dim request As New AgentHostRequest With {
+            .Id = Guid.NewGuid().ToString(),
+            .Type = "setmodel",
+            .Content = model
+        }
+        Return _transport.SendAsync(request)
+    End Function
+
+    Public Function SendGetModelsAsync() As Task(Of AgentHostResponse)
+        Dim request As New AgentHostRequest With {
+            .Id = Guid.NewGuid().ToString(),
+            .Type = "getmodels"
+        }
+        Return _transport.SendAsync(request)
+    End Function
+
     Public Sub Dispose() Implements IDisposable.Dispose
         Try
             _transport?.Dispose()

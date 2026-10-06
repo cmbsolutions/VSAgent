@@ -33,6 +33,10 @@ Namespace Tools
                             .Type = "string",
                             .Description = "Roslyn project ID where the document lives."
                         }},
+                        {"roslyndocumentid", New ToolPropertySchema With {
+                            .Type = "string",
+                            .Description = "Roslyn document ID."
+                        }},
                         {"documentname", New ToolPropertySchema With {
                             .Type = "string",
                             .Description = "The name of the document."
@@ -40,6 +44,7 @@ Namespace Tools
                     },
                     .Required = New List(Of String) From {
                         "projectid",
+                        "roslyndocumentid",
                         "documentname"
                     }
                 }
@@ -62,7 +67,7 @@ Namespace Tools
             Try
                 Dim parameters = request.GetParameters(Of RemoveDocumentParameters)()
 
-                Dim result = Await _documentEditService.RemoveDocumentAsync(parameters.ProjectId, parameters.DocumentName)
+                Dim result = Await _documentEditService.RemoveDocumentAsync(parameters.ProjectId, parameters.RoslynDocumentId, parameters.DocumentName)
 
                 Return AgentResponse.Ok(request.Id, Version, result)
 
