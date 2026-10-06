@@ -6,6 +6,7 @@ Imports System.Threading
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 Imports VSAgent.Ollama
+Imports VSAgent.Protocol.Ollama
 
 Public Class OllamaClient
     Implements IDisposable

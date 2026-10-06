@@ -18,12 +18,17 @@
         </Grid.RowDefinitions>
 
         <Expander Grid.Row="0" x:Name="expSettings" Height="100" Header="" Foreground="#FFFDFDFD" VerticalAlignment="Top">
-            <Grid Background="#FFE5E5E5">
+            <Grid Background="#FF272727">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="22"/>
+                    <RowDefinition Height="28"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="27*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <CheckBox x:Name="chkThinking" Content="Show Thinking process" IsChecked="True" Grid.ColumnSpan="2"/>
+                <CheckBox x:Name="chkThinking" Content="Show Thinking process" IsChecked="True" Grid.ColumnSpan="2" Foreground="White"/>
+                <ComboBox x:Name="cmbModels" Margin="50,5,-115,0" Grid.Row="1" VerticalAlignment="Top"/>
+                <Label Content="Model:" HorizontalAlignment="Left" Margin="4,3,0,0" Grid.Row="1" VerticalAlignment="Top" Foreground="White"/>
             </Grid>
         </Expander>
 

@@ -1,7 +1,9 @@
 ﻿
 Imports System.Windows
 Imports Microsoft.VisualStudio.Shell
+Imports Newtonsoft.Json
 Imports VSAgent.Protocol.Messages
+Imports VSAgent.Protocol.Ollama
 
 '''<summary>
 ''' Interaction logic for VSAgentToolWindowControl.xaml
@@ -90,6 +92,12 @@ Partial Public Class VSAgentToolWindowControl
 
     Public Async Function SetConnectedAsync() As Task
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
+
+        Dim modelsJson = Await _agentHostClient.SendGetModelsAsync()
+        Dim availableModels = JsonConvert.DeserializeObject(Of List(Of OllamaModel))(modelsJson.Content)
+
+        cmbModels.ItemsSource = availableModels.Select(Function(c) c.Name).ToList()
+
         btnSend.IsEnabled = True
     End Function
 
@@ -192,5 +200,9 @@ Partial Public Class VSAgentToolWindowControl
 
     Private Sub expSettings_Expanded(sender As Object, e As RoutedEventArgs) Handles expSettings.Expanded
         ThisGrid.RowDefinitions.First.Height = New GridLength(122)
+    End Sub
+
+    Private Sub cmbModels_SelectionChanged(sender As Object, e As Controls.SelectionChangedEventArgs) Handles cmbModels.SelectionChanged
+        Dim unused = _agentHostClient.SendSetModelAsync(cmbModels.SelectedValue.ToString())
     End Sub
 End Class

@@ -17,7 +17,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="LICENSE.txt" />
-    <Content Include="vsagent.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="VSAgentPackage.vb" />
