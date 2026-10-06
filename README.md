@@ -147,8 +147,7 @@ The system is written in **VB.NET** and consists of **7 projects** organized int
 |---|---|
 | Language | VB.NET |
 | Target Framework | .NET Standard 2.0 |
-| Output Path | `bin\Debug
-etstandard2.0\VSAgent.Protocol.dll` |
+| Output Path | `bin\Debug\Netstandard2.0\VSAgent.Protocol.dll` |
 | Document Count | 32 (including source + generated) |
 | Project References | 0 |
 | Metadata References | 114 |
@@ -201,8 +200,7 @@ etstandard2.0\VSAgent.Protocol.dll` |
 |---|---|
 | Language | VB.NET |
 | Target Framework | .NET Standard 2.0 |
-| Output Path | `bin\Debug
-etstandard2.0\VSAgent.Transport.dll` |
+| Output Path | `bin\Debug\Netstandard2.0\VSAgent.Transport.dll` |
 | Document Count | 4 (including generated) |
 | Project References | 1 |
 | Metadata References | 114 |
@@ -280,8 +278,7 @@ etstandard2.0\VSAgent.Transport.dll` |
 |---|---|
 | Language | VB.NET |
 | Target Framework | .NET 10.0 |
-| Output Path | `bin\Debug
-et10.0\VSAgent.AgentHost.dll` |
+| Output Path | `bin\Debug\Net10.0\VSAgent.AgentHost.dll` |
 | Document Count | 12 (including generated) |
 | Project References | 2 |
 | Metadata References | 168 |
@@ -306,8 +303,7 @@ et10.0\VSAgent.AgentHost.dll` |
 |---|---|
 | Language | VB.NET |
 | Target Framework | .NET Framework 4.7.2 |
-| Output Path | `bin\Debug
-et472\VSAgent.Extension.dll` |
+| Output Path | `bin\Debug\Net472\VSAgent.Extension.dll` |
 | Document Count | 19 (including generated) |
 | Project References | 5 |
 | Metadata References | 150 |
@@ -456,16 +452,12 @@ Below is the comprehensive inventory of all 16 tools exposed by the VSAgent serv
 | Project | Target Framework | Configuration | Output File |
 |---|---|---|---|
 | VSAgent.Abstractions | .NET Framework 4.7.2 | Debug/Release | `bin\Debug\VSAgent.Abstractions.dll` |
-| VSAgent.Protocol | .NET Standard 2.0 | Debug/Release | `bin\Debug
-etstandard2.0\VSAgent.Protocol.dll` |
-| VSAgent.Transport | .NET Standard 2.0 | Debug/Release | `bin\Debug
-etstandard2.0\VSAgent.Transport.dll` |
+| VSAgent.Protocol | .NET Standard 2.0 | Debug/Release | `bin\Debug\Netstandard2.0\VSAgent.Protocol.dll` |
+| VSAgent.Transport | .NET Standard 2.0 | Debug/Release | `bin\Debug\Netstandard2.0\VSAgent.Transport.dll` |
 | VSAgent.Server | .NET Framework 4.7.2 | Debug/Release | `bin\Debug\VSAgent.Server.dll` |
 | VSAgent.Tools | .NET Framework 4.7.2 | Debug/Release | `bin\Debug\VSAgent.Tools.dll` |
-| VSAgent.AgentHost | **.NET 10.0** (SDK-style) | Debug/Release | `bin\Debug
-et10.0\VSAgent.AgentHost.dll` |
-| VSAgent.Extension | .NET Framework 4.7.2 | Debug/Release | `bin\Debug
-et472\VSAgent.Extension.dll` |
+| VSAgent.AgentHost | **.NET 10.0** (SDK-style) | Debug/Release | `bin\Debug\Net10.0\VSAgent.AgentHost.dll` |
+| VSAgent.Extension | .NET Framework 4.7.2 | Debug/Release | `bin\Debug\Net472\VSAgent.Extension.dll` |
 
 ---
 
