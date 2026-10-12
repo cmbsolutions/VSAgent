@@ -5,6 +5,7 @@ Namespace Ollama
 
     Public Class OllamaSessionStatistics
         Private _statistics As List(Of OllamaSessionStatistic)
+        Public Property ContextLength As Integer = 0
 
         Sub New()
             _statistics = New List(Of OllamaSessionStatistic)
@@ -41,7 +42,16 @@ Namespace Ollama
             Dim LastOutputEvalDuration = _statistics.LastOrDefault()?.EvalDuration
             Dim ots = If(LastOutputEvalDuration.HasValue AndAlso LastOutputEvalDuration.Value > 0, LastOutputEvalCount / TimeSpan.FromMicroseconds(LastOutputEvalDuration.Value \ 1000).TotalSeconds, 0)
 
-            Return $"Prompt Total: {TotalPromptEvalCount}T, Last: {tps:F3}T/s, avg: {ttps:F3}T/s. | Output Total: {TotalOutputEvalCount}T, Last: {ots:F3}T/s, avg: {tots:F3}T/s."
+
+            Dim last = _statistics.LastOrDefault()
+            Dim percentage As Double = 0.0
+            If last IsNot Nothing AndAlso contextLength > 0 Then
+                Dim usedTokens = last.PromptEvalCount
+
+                percentage = usedTokens / CDbl(ContextLength) * 100.0
+            End If
+
+            Return $"Prompt Total: {TotalPromptEvalCount}T, Last: {tps:F3}T/s, avg: {ttps:F3}T/s. | Output Total: {TotalOutputEvalCount}T, Last: {ots:F3}T/s, avg: {tots:F3}T/s. | Context: {percentage:F2}%"
         End Function
     End Class
 

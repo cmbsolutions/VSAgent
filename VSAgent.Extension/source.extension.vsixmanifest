@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="VSAgent.Extension.d809f506-b031-4022-98b0-191d555282cc" Version="1.0" Language="en-US" Publisher="CMBSolutions" />
+    <Identity Id="VSAgent.Extension.d809f506-b031-4022-98b0-191d555282cc" Version="0.6" Language="en-US" Publisher="CMBSolutions" />
     <DisplayName>VSAgent.Extension</DisplayName>
     <Description>Visual Studio extension to expose visual studio to a coding agent.</Description>
     <License>LICENSE.txt</License>
-    <Icon>vsagent.ico</Icon>
+    <Icon>vsagent-extension-icon.png</Icon>
     <Tags>Visual Studio, AI, codex, LLM, claude, ollama</Tags>
   </Metadata>
   <Installation>

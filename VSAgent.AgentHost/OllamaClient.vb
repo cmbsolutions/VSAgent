@@ -14,6 +14,7 @@ Public Class OllamaClient
     Private ReadOnly _http As HttpClient
     Private _model As String
     Private disposedValue As Boolean
+    Private _context_length_retrieved As Boolean = False
 
     Private ReadOnly _thinkingBuffer As New StringBuilder()
     Private ReadOnly _contentBuffer As New StringBuilder()
@@ -158,11 +159,16 @@ Public Class OllamaClient
             ' When done is received
             If chunk.Value(Of Boolean?)("done").GetValueOrDefault(False) Then
                 _sessionStats.AddStatistic(chunk)
-                Debug.WriteLine(_sessionStats.ToString())
-
                 Exit While
             End If
         End While
+
+        ' Get the context_length if it hasn't been retrieved yet
+        If Not _context_length_retrieved Then
+            Dim ctxLength = Await GetContextLengthAsync(cancellationToken)
+            _sessionStats.ContextLength = ctxLength
+            _context_length_retrieved = True
+        End If
 
         If _thinkingBuffer.Length > 0 Then
             RaiseEvent ThinkingReceived(_thinkingBuffer.ToString())
@@ -221,6 +227,19 @@ Public Class OllamaClient
         _model = model
     End Sub
 
+    Public Async Function GetContextLengthAsync(cancellationToken As CancellationToken) As Task(Of Integer)
+        Using request As New HttpRequestMessage(HttpMethod.Get, "/api/ps")
+            Using response = Await _http.SendAsync(request, cancellationToken)
+                response.EnsureSuccessStatusCode()
+
+                Dim json = Await response.Content.ReadAsStringAsync()
+
+                Dim root = JObject.Parse(json)
+
+                Return root("models").Select(Function(m) m.Value(Of Integer)("context_length")).FirstOrDefault()
+            End Using
+        End Using
+    End Function
 
     Protected Overridable Sub Dispose(disposing As Boolean)
         If Not disposedValue Then
