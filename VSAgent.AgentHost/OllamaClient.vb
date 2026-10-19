@@ -158,6 +158,10 @@ Public Class OllamaClient
 
             ' When done is received
             If chunk.Value(Of Boolean?)("done").GetValueOrDefault(False) Then
+                result.DoneReason = chunk.Value(Of String)("done_reason")
+                result.PromptEvalCount = chunk.Value(Of Integer?)("prompt_eval_count").GetValueOrDefault(0)
+                result.EvalCount = chunk.Value(Of Integer?)("eval_count").GetValueOrDefault(0)
+
                 _sessionStats.AddStatistic(chunk)
                 Exit While
             End If
@@ -187,6 +191,13 @@ Public Class OllamaClient
         result.Content = contentBuilder.ToString()
 
         result.Statistics = _sessionStats.ToString()
+
+        Debug.WriteLine(
+            $"Ollama finished: Reason={result.DoneReason}, " &
+            $"Prompt={result.PromptEvalCount}, " &
+            $"Generated={result.EvalCount}, " &
+            $"Tools={result.ToolCalls.Count}, " &
+            $"ContentLength={result.Content.Length}")
 
         Return result
     End Function

@@ -43,6 +43,7 @@ Namespace VSAgent.Extension
             _registry.Register(New Tools.BuildSolutionTool(buildService))
             _registry.Register(New Tools.BuildProjectTool(buildService))
             _registry.Register(New Tools.GetProjectFilesTool(roslynWorkspaceService))
+            _registry.Register(New Tools.InspectTypeTool(roslynWorkspaceService))
 
 
             ' This one always last!!!!

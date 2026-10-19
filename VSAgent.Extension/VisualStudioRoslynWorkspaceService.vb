@@ -1,4 +1,5 @@
 ﻿Imports Microsoft.CodeAnalysis
+Imports Microsoft.VisualStudio.Package
 Imports Microsoft.VisualStudio.Shell
 Imports VSAgent.Protocol.DTO
 
@@ -126,4 +127,68 @@ Public Class VisualStudioRoslynWorkspaceService
             ' Handle exceptions (e.g., access denied) if necessary
         End Try
     End Sub
+
+    Public Async Function InspectTypeAsync(projectId As String, typeName As String, memberName As String) As Task(Of InspectTypeInfo) Implements IRoslynWorkspaceService.InspectTypeAsync
+        Dim workspace = Await RoslynWorkspaceProvider.GetWorkspaceAsync(_package)
+
+        Dim result As New InspectTypeInfo
+
+        Dim solution = workspace.CurrentSolution
+
+        Dim project = solution.Projects.FirstOrDefault(
+            Function(p)
+                Return String.Equals(p.Id.Id.ToString(), projectId, StringComparison.OrdinalIgnoreCase)
+            End Function)
+
+        If project Is Nothing Then
+            Throw New InvalidOperationException("The requested project could not be found.")
+        End If
+
+        Dim compilation = Await project.GetCompilationAsync()
+
+        Dim typeSymbol = compilation.GetTypeByMetadataName(typeName)
+
+        If typeSymbol Is Nothing Then
+            Throw New InvalidOperationException("The requested typeName could not be found.")
+        End If
+
+        Dim displayFormat As SymbolDisplayFormat = SymbolDisplayFormat.VisualBasicErrorMessageFormat
+
+        Select Case project.Language
+            Case LanguageNames.CSharp
+                displayFormat = SymbolDisplayFormat.CSharpErrorMessageFormat
+            Case LanguageNames.VisualBasic
+                displayFormat = SymbolDisplayFormat.VisualBasicErrorMessageFormat
+        End Select
+
+        result.TypeName = typeSymbol.ToDisplayString(displayFormat)
+        result.Kind = typeSymbol.Kind.ToString()
+        result.Assembly = typeSymbol.ContainingAssembly.ToDisplayString(displayFormat)
+
+        If memberName <> "" Then
+            Dim methods = typeSymbol.GetMembers(memberName).OfType(Of IMethodSymbol)()
+
+            For Each method In methods
+                result.Members.Add(
+                    New InspectTypeMemberInfo With {
+                        .Name = method.Name,
+                        .Kind = method.Kind.ToString(),
+                        .Signature = method.ToDisplayString(displayFormat)
+                    })
+            Next
+        End If
+
+        For Each field In typeSymbol.GetMembers().OfType(Of IFieldSymbol)()
+            If field.HasConstantValue Then
+                result.Members.Add(
+                New InspectTypeMemberInfo With {
+                    .Name = field.Name,
+                    .Kind = field.Kind.ToString(),
+                    .Signature = field.ToDisplayString(displayFormat)
+                })
+            End If
+        Next
+
+        Return result
+    End Function
 End Class
