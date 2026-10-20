@@ -67,7 +67,7 @@ Namespace Tools
         Public Async Function ExecuteAsync(request As AgentRequest) As Task(Of AgentResponse) Implements ITool.ExecuteAsync
 
             Try
-                Dim projects = Await _workspaceService.GetProjectsAsync().ConfigureAwait(False)
+                Dim projects = Await _workspaceService.InspectTypeAsync(request.Parameters("projectid").ToString, request.Parameters("typename").ToString, request.Parameters("membername").ToString).ConfigureAwait(False)
 
                 Return AgentResponse.Ok(request.Id, Version, projects)
 

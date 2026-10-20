@@ -45,8 +45,12 @@ Public Class OllamaClient
             {"messages", messages},
             {"tools", tools},
             {"tool_choice", "auto"},
-            {"think", True},
-            {"stream", True}
+            {"think", "low"},
+            {"stream", True},
+            {"options", New JObject From {
+                {"num_ctx", 32768},
+                {"num_predict", 8192}
+            }}
         }
 
         Using request As New HttpRequestMessage(HttpMethod.Post, "api/chat")
