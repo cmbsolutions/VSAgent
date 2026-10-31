@@ -30,14 +30,14 @@ Public Class SpaceShooterForm
 
     ''' <summary>Loads all game images once and wires them into the engine.</summary>
     Private Sub LoadAllImages()
-        If _loadedImages Then Return
+        If _loadedImages Then Exit Sub
         imgStars = LoadEmbeddedImage("stars.png")
         If IsValidImage(imgStars) Then engine.StarsImage = imgStars
         _loadedImages = True
-    End Function
+    End Sub
 
     ''' <summary>Checks whether an image is a valid non-placeholder bitmap.</summary>
-    Private Shared Function IsValidImage(img As Image) As Boolean
+    Private Function IsValidImage(img As Image) As Boolean
         Return img IsNot Nothing AndAlso img.Width >= 16 AndAlso img.Height >= 16
     End Function
 

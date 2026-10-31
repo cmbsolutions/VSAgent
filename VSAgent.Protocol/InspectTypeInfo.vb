@@ -4,6 +4,10 @@
         Public Property Kind As String
         Public Property Assembly As String
         Public Property Members As New List(Of InspectTypeMemberInfo)
+
+        Public Overrides Function ToString() As String
+            Return $"{TypeName}, {Kind}, {Assembly}, {Members.Count}"
+        End Function
     End Class
 
     Public Class InspectTypeMemberInfo
