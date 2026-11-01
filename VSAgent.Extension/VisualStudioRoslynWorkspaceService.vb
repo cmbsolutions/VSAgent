@@ -162,32 +162,40 @@ Public Class VisualStudioRoslynWorkspaceService
         End Select
 
         result.TypeName = typeSymbol.ToDisplayString(displayFormat)
-        result.Kind = typeSymbol.Kind.ToString()
+        result.BaseType = If(typeSymbol.BaseType IsNot Nothing, typeSymbol.BaseType.ToDisplayString(displayFormat), String.Empty)
         result.Assembly = typeSymbol.ContainingAssembly.ToDisplayString(displayFormat)
 
-        If memberName <> "" Then
-            Dim methods = typeSymbol.GetMembers(memberName).OfType(Of IMethodSymbol)()
+        Dim currentType As INamedTypeSymbol = typeSymbol
 
-            For Each method In methods
-                result.Members.Add(
-                    New InspectTypeMemberInfo With {
-                        .Name = method.Name,
-                        .Kind = method.Kind.ToString(),
-                        .Signature = method.ToDisplayString(displayFormat)
-                    })
+        While currentType IsNot Nothing
+            For Each memberSymbol In currentType.GetMembers()
+
+                If Not String.IsNullOrWhiteSpace(memberName) AndAlso Not String.Equals(memberSymbol.Name, memberName, StringComparison.OrdinalIgnoreCase) Then
+                    Continue For
+                End If
+
+                If memberSymbol.DeclaredAccessibility = Accessibility.Public OrElse
+                    memberSymbol.DeclaredAccessibility = Accessibility.Protected OrElse
+                    memberSymbol.DeclaredAccessibility = Accessibility.ProtectedOrInternal Then
+
+                    Dim methodSymbol = TryCast(memberSymbol, IMethodSymbol)
+
+                    result.Members.Add(New InspectTypeMemberInfo With {
+                            .Name = memberSymbol.Name,
+                            .Kind = memberSymbol.Kind.ToString(),
+                            .Signature = memberSymbol.ToDisplayString(displayFormat),
+                            .DeclaredIn = currentType.ToDisplayString(displayFormat),
+                            .IsOverridable = methodSymbol IsNot Nothing AndAlso (methodSymbol.IsVirtual OrElse methodSymbol.IsAbstract OrElse methodSymbol.IsOverride) AndAlso Not methodSymbol.IsSealed
+                        })
+
+                End If
             Next
-        End If
-
-        For Each field In typeSymbol.GetMembers().OfType(Of IFieldSymbol)()
-            If field.HasConstantValue Then
-                result.Members.Add(
-                New InspectTypeMemberInfo With {
-                    .Name = field.Name,
-                    .Kind = field.Kind.ToString(),
-                    .Signature = field.ToDisplayString(displayFormat)
-                })
+            If memberName <> "" Then
+                currentType = currentType.BaseType
+            Else
+                currentType = Nothing
             End If
-        Next
+        End While
 
         Return result
     End Function

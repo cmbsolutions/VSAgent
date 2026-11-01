@@ -1,18 +1,17 @@
-﻿Imports System.Drawing.Drawing2D
-Imports System.ComponentModel
+﻿Imports System.ComponentModel
+Imports System.Drawing.Drawing2D
+Imports System.Windows.Forms
 
-Partial Class TabControlAdvanced
-    Inherits Control
+Public Class TabControlAdvanced
+    Inherits ContainerControl
 
     Public Event TabChanged As EventHandler
 
-    Private _tabs As New List(Of TabPageAdvanced)
     Private _selectedIndex As Integer = -1
     Private _tabHeight As Integer = 32
     Private _tabPadding As Integer = 16
     Private _hoveredTabIndex As Integer = -1
     Private _activeTabRects As List(Of Rectangle) = New List(Of Rectangle)
-    Private _contentTop As Integer = 0
 
     ' ─── Color Palette ───────────────────────────────────────────────
     Private _tabNormalColor As Color = Color.FromArgb(45, 45, 48)
@@ -31,52 +30,71 @@ Partial Class TabControlAdvanced
         End Get
         Set(value As Integer)
             _tabHeight = Math.Max(24, value)
+            LayoutTabs()
             Invalidate()
         End Set
     End Property
 
-    <DefaultValue(-1)>
+    <Browsable(False), DefaultValue(-1)>
     Public Property SelectedIndex As Integer
         Get
             Return _selectedIndex
         End Get
         Set(value As Integer)
-            If value < -1 OrElse value >= _tabs.Count Then
+            If value < -1 OrElse value >= TabPages.Count Then
                 Throw New ArgumentOutOfRangeException(NameOf(value))
             End If
             _selectedIndex = value
-            RecreateContentPanel()
+            LayoutTabs()
             Invalidate()
             RaiseEvent TabChanged(Me, EventArgs.Empty)
         End Set
     End Property
 
-    Public ReadOnly Property Tabs As IReadOnlyList(Of TabPageAdvanced)
+    ' ─── Tab Pages Collection ────────────────────────────────────────
+    Public ReadOnly Property TabPages As List(Of TabPageAdvanced)
         Get
-            Return _tabs
+            Return Controls.OfType(Of TabPageAdvanced).ToList()
         End Get
     End Property
 
     ' ─── Tab Management ──────────────────────────────────────────────
-    Public Sub AddTab(ByVal name As String, ByVal content As Control)
-        Dim page As New TabPageAdvanced(name, content)
-        _tabs.Add(page)
-        If _selectedIndex < 0 Then _selectedIndex = 0
-        RecreateContentPanel()
-        Invalidate()
-    End Sub
-
     Public Sub AddTab(ByVal name As String)
-        AddTab(name, New Panel())
+        Dim page As New TabPageAdvanced()
+        page.Name = name
+        Controls.Add(page)
+        If _selectedIndex < 0 Then _selectedIndex = 0
+        LayoutTabs()
+        Invalidate()
     End Sub
 
     Public Sub RemoveAt(ByVal index As Integer)
-        If index < 0 OrElse index >= _tabs.Count Then Return
-        _tabs(index).Dispose()
-        _tabs.RemoveAt(index)
-        If _selectedIndex >= _tabs.Count Then _selectedIndex = _tabs.Count - 1
-        RecreateContentPanel()
+        Dim pages = TabPages
+        If index < 0 OrElse index >= pages.Count Then Return
+        Controls.Remove(pages(index))
+        pages(index).Dispose()
+        If _selectedIndex >= TabPages.Count Then _selectedIndex = TabPages.Count - 1
+        LayoutTabs()
         Invalidate()
+    End Sub
+
+    ' ─── Designer Support ────────────────────────────────────────────
+    Protected Overrides Sub OnControlAdded(ByVal e As ControlEventArgs)
+        MyBase.OnControlAdded(e)
+        If TypeOf e.Control Is TabPageAdvanced Then
+            If _selectedIndex < 0 Then _selectedIndex = 0
+            LayoutTabs()
+            Invalidate()
+        End If
+    End Sub
+
+    Protected Overrides Sub OnControlRemoved(ByVal e As ControlEventArgs)
+        MyBase.OnControlRemoved(e)
+        If TypeOf e.Control Is TabPageAdvanced Then
+            If _selectedIndex >= TabPages.Count Then _selectedIndex = TabPages.Count - 1
+            LayoutTabs()
+            Invalidate()
+        End If
     End Sub
 
     ' ─── Constructor ─────────────────────────────────────────────────
@@ -90,27 +108,21 @@ Partial Class TabControlAdvanced
         DoubleBuffered = True
         Font = New Font("Segoe UI", 9.5F)
         BackColor = _contentBg
+        Me.Size = New Size(300, 200)
     End Sub
 
-    ' ─── Content Panel Management ────────────────────────────────────
-    Private Sub RecreateContentPanel()
-        ' Remove all children except the tab strip area
-        For Each c As Control In Controls
-            c.Dispose()
+    ' ─── Layout ──────────────────────────────────────────────────────
+    Private Sub LayoutTabs()
+        Dim contentTop As Integer = _tabHeight + 4
+        For Each page As TabPageAdvanced In Controls.OfType(Of TabPageAdvanced)
+            Dim idx As Integer = TabPages.IndexOf(page)
+            Dim isSelected As Boolean = (idx = _selectedIndex)
+            page.Top = contentTop
+            page.Left = 0
+            page.Width = Me.Width
+            page.Height = Me.Height - contentTop
+            page.Visible = isSelected
         Next
-        Controls.Clear()
-
-        _contentTop = _tabHeight + 4
-
-        If _selectedIndex < 0 OrElse _selectedIndex >= _tabs.Count Then Return
-
-        Dim content As Control = _tabs(_selectedIndex).Content
-        content.Top = _contentTop
-        content.Left = 0
-        content.Width = Me.Width
-        content.Height = Me.Height - _contentTop
-        content.Visible = True
-        Controls.Add(content)
     End Sub
 
     ' ─── Painting ────────────────────────────────────────────────────
@@ -120,16 +132,21 @@ Partial Class TabControlAdvanced
         g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit
 
         ' Fill background
-        g.FillRectangle(Brushes.Black, ClientRectangle)
+        g.FillRectangle(New SolidBrush(_contentBg), ClientRectangle)
 
         _activeTabRects.Clear()
 
         ' Draw tabs
+        Dim pages = TabPages
         Dim x As Integer = 0
         Dim measureFont As Font = Font
 
-        For i As Integer = 0 To _tabs.Count - 1
-            Dim textSize As SizeF = g.MeasureString(_tabs(i).TabName, measureFont)
+        For i As Integer = 0 To pages.Count - 1
+            Dim page = pages(i)
+            Dim tabName As String = If(String.IsNullOrEmpty(page.Name) AndAlso page.Site IsNot Nothing, page.Site.Name, page.Name)
+            If String.IsNullOrEmpty(tabName) Then tabName = "Tab" & (i + 1)
+
+            Dim textSize As SizeF = g.MeasureString(tabName, measureFont)
             Dim tabWidth As Integer = CInt(textSize.Width) + _tabPadding * 2
             Dim tabRect As New Rectangle(x, 2, tabWidth, _tabHeight - 2)
             _activeTabRects.Add(tabRect)
@@ -137,7 +154,7 @@ Partial Class TabControlAdvanced
             If i = _selectedIndex Then
                 ' Active tab – white rounded rectangle
                 DrawRoundedRect(g, tabRect, 8, _tabActiveColor, Nothing)
-                g.DrawString(_tabs(i).TabName, measureFont,
+                g.DrawString(tabName, measureFont,
                              New SolidBrush(_tabActiveText),
                              tabRect.X + _tabPadding,
                              tabRect.Y + (tabRect.Height - textSize.Height) / 2)
@@ -149,13 +166,13 @@ Partial Class TabControlAdvanced
 
             ElseIf i = _hoveredTabIndex Then
                 DrawRoundedRect(g, tabRect, 8, _tabHoverColor, Nothing)
-                g.DrawString(_tabs(i).TabName, measureFont,
+                g.DrawString(tabName, measureFont,
                              New SolidBrush(_tabNormalText),
                              tabRect.X + _tabPadding,
                              tabRect.Y + (tabRect.Height - textSize.Height) / 2)
             Else
                 DrawRoundedRect(g, tabRect, 8, _tabNormalColor, Nothing)
-                g.DrawString(_tabs(i).TabName, measureFont,
+                g.DrawString(tabName, measureFont,
                              New SolidBrush(_tabNormalText),
                              tabRect.X + _tabPadding,
                              tabRect.Y + (tabRect.Height - textSize.Height) / 2)
@@ -165,7 +182,7 @@ Partial Class TabControlAdvanced
         Next
 
         ' Content area border (subtle)
-        Dim contentRect As New Rectangle(0, _contentTop, Me.Width, Me.Height - _contentTop)
+        Dim contentRect As New Rectangle(0, _tabHeight + 4, Me.Width, Me.Height - _tabHeight - 4)
         g.DrawRectangle(Pens.Gray, contentRect)
     End Sub
 
@@ -212,7 +229,7 @@ Partial Class TabControlAdvanced
         Dim idx As Integer = HitTestTab(e.Location)
         If idx >= 0 AndAlso idx <> _selectedIndex Then
             _selectedIndex = idx
-            RecreateContentPanel()
+            LayoutTabs()
             Invalidate()
             RaiseEvent TabChanged(Me, EventArgs.Empty)
         End If
@@ -227,39 +244,39 @@ Partial Class TabControlAdvanced
 
     Protected Overrides Sub OnResize(ByVal e As EventArgs)
         MyBase.OnResize(e)
-        RecreateContentPanel()
+        LayoutTabs()
     End Sub
 End Class
 
 Public Class TabPageAdvanced
-    Implements IDisposable
+    Inherits System.Windows.Forms.Control
 
-    Private _name As String
-    Private _content As Control
-    Private _disposed As Boolean
-
-    Public ReadOnly Property TabName As String
-        Get
-            Return _name
-        End Get
-    End Property
-
+    <Browsable(False)>
     Public ReadOnly Property Content As Control
         Get
-            Return _content
+            Return DirectCast(Me.Tag, Control)
         End Get
     End Property
 
-    Public Sub New(ByVal name As String, ByVal content As Control)
-        _name = name
-        _content = content
+    <Browsable(False), DefaultValue("")>
+    Public Property TabName As String
+        Get
+            Return Name
+        End Get
+        Set(value As String)
+            Name = value
+            Invalidate()
+        End Set
+    End Property
+
+    Public Sub New()
+        TabStop = False
+        BackColor = Color.White
     End Sub
 
-    Public Sub Dispose() Implements IDisposable.Dispose
-        If Not _disposed Then
-            _content?.Dispose()
-            _disposed = True
-        End If
-        GC.SuppressFinalize(Me)
+    Public Sub New(ByVal name As String, ByVal content As Control)
+        Me.New()
+        Name = name
+        Tag = content
     End Sub
 End Class

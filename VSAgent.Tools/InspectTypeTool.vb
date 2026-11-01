@@ -27,7 +27,7 @@ Namespace Tools
 
         Public ReadOnly Property Description As String Implements ITool.Description
             Get
-                Return "Gets a list of members and properties of provided typename (including 3rd party NuGet packages). The typename must be fully qualified name. Use typename and membername to get a list of the actual enum values supported."
+                Return "Gets a list of methods, properties, events, fields, and constructors for the specified typename. Supply the membername to get details about a specific member, including overloads, baseclasses or enumeration values. The typename must be fully a qualified name."
             End Get
         End Property
 
@@ -70,10 +70,10 @@ Namespace Tools
             Try
                 Dim parameters = request.GetParameters(Of InspectTypeParameters)()
 
-                Dim inspecTypeInfo = Await _workspaceService.InspectTypeAsync(parameters.ProjectId, parameters.TypeName, parameters.MemberName).ConfigureAwait(False)
+                Dim inspectTypeInfo = Await _workspaceService.InspectTypeAsync(parameters.ProjectId, parameters.TypeName, parameters.MemberName).ConfigureAwait(False)
 
-                Debug.WriteLine($"{inspecTypeInfo}")
-                Return AgentResponse.Ok(request.Id, Version, inspecTypeInfo)
+                Debug.WriteLine($"{inspectTypeInfo}")
+                Return AgentResponse.Ok(request.Id, Version, inspectTypeInfo)
 
             Catch ex As Exception
                 Debug.WriteLine(ex.Message)
