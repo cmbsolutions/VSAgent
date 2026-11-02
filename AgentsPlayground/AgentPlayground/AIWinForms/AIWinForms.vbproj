@@ -36,6 +36,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+    <PackageReference Include="MySqlConnector" Version="2.6.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,13 +54,11 @@
     </None>
   </ItemGroup>
 
-	<Target Name="RemoveWebView2WpfReference"
-        BeforeTargets="ResolveAssemblyReferences">
+	<Target Name="RemoveWebView2WpfReference" BeforeTargets="ResolveAssemblyReferences">
 
 		<ItemGroup>
 			<Reference Remove="Microsoft.Web.WebView2.Wpf" />
-			<Reference Remove="@(Reference)"
-					   Condition="'%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+			<Reference Remove="@(Reference)" Condition="'%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
 		</ItemGroup>
 
 	</Target>

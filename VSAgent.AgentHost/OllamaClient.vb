@@ -46,10 +46,11 @@ Public Class OllamaClient
             {"tools", tools},
             {"tool_choice", "auto"},
             {"think", "low"},
+            {"reasoning_effort", "medium"},
             {"stream", True},
             {"options", New JObject From {
                 {"num_ctx", 32768},
-                {"num_predict", 8192}
+                {"num_predict", 8196}
             }}
         }
 
