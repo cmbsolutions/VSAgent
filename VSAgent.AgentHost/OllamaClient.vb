@@ -7,12 +7,12 @@ Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 Imports VSAgent.Ollama
 Imports VSAgent.Protocol.Ollama
+Imports VSAgent.Protocol.Settings
 
 Public Class OllamaClient
     Implements IDisposable
 
     Private ReadOnly _http As HttpClient
-    Private _model As String
     Private disposedValue As Boolean
     Private _context_length_retrieved As Boolean = False
 
@@ -28,11 +28,13 @@ Public Class OllamaClient
 
     Private _sessionStats As New OllamaSessionStatistics
 
-    Public Sub New(baseUrl As String, model As String)
-        _model = model
+    Private _settings As VSAgentSettings
+
+    Public Sub New(settings As VSAgentSettings)
+        _settings = settings
 
         _http = New HttpClient With {
-            .BaseAddress = New Uri(baseUrl),
+            .BaseAddress = New Uri(_settings.OllamaBaseURL),
             .Timeout = Timeout.InfiniteTimeSpan
         }
 
@@ -41,16 +43,16 @@ Public Class OllamaClient
 
     Public Async Function SendAsync(messages As JArray, tools As JArray, cancellationToken As CancellationToken) As Task(Of OllamaAssistantResponse)
         Dim body As New JObject From {
-            {"model", _model},
+            {"model", _settings.Model},
             {"messages", messages},
             {"tools", tools},
             {"tool_choice", "auto"},
-            {"think", "low"},
-            {"reasoning_effort", "medium"},
+            {"think", If(_settings?.ReasoningEffort Is Nothing, "medium", _settings.ReasoningEffort)},
+            {"reasoning_effort", If(_settings?.ReasoningEffort Is Nothing, "medium", _settings.ReasoningEffort)},
             {"stream", True},
             {"options", New JObject From {
-                {"num_ctx", 32768},
-                {"num_predict", 8196}
+                {"num_ctx", If(_settings?.NumCtx > 0, _settings.NumCtx, 32768)},
+                {"num_predict", If(_settings?.NumPredict > 0, _settings.NumPredict, 8192)}
             }}
         }
 
@@ -239,8 +241,8 @@ Public Class OllamaClient
         End Using
     End Function
 
-    Public Sub SetModel(model As String)
-        _model = model
+    Public Sub SetSettings(settings As VSAgentSettings)
+        _settings = settings
     End Sub
 
     Public Async Function GetContextLengthAsync(cancellationToken As CancellationToken) As Task(Of Integer)

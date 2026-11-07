@@ -4,6 +4,7 @@ Imports Microsoft.VisualStudio.Shell
 Imports Newtonsoft.Json
 Imports VSAgent.Protocol.Messages
 Imports VSAgent.Protocol.Ollama
+Imports VSAgent.Protocol.Settings
 
 '''<summary>
 ''' Interaction logic for VSAgentToolWindowControl.xaml
@@ -17,10 +18,15 @@ Partial Public Class VSAgentToolWindowControl
     Private isContent As Boolean = False
     Private isTool As Boolean = False
 
+    Private _settings As VSAgentSettings
+
+    Private _availableModels As New List(Of String)
+
     Public Sub New(agentHostClient As AgentHostClient)
 
         InitializeComponent()
 
+        _settings = Settings.SettingsManager.Load()
         _agentHostClient = agentHostClient
 
         AddHandler _agentHostClient.Thinking, AddressOf AgentHostClient_Thinking
@@ -30,7 +36,6 @@ Partial Public Class VSAgentToolWindowControl
         AddHandler _agentHostClient.ToolFailed, AddressOf AgentHostClient_ToolFailed
         AddHandler _agentHostClient.Statistics, AddressOf AgentHostClient_Statistics
         AddHandler _agentHostClient.TaskCancelled, AddressOf AgentHostClient_TaskCancelled
-
     End Sub
 
     Private Sub AgentHostClient_TaskCancelled()
@@ -78,7 +83,7 @@ Partial Public Class VSAgentToolWindowControl
     End Sub
 
     Private Sub AgentHostClient_Thinking(text As String)
-        If Not chkThinking.IsChecked Then Exit Sub
+        If Not _settings.ShowThinking Then Exit Sub
 
         If Not isThinking Then
             Dim unused1 = AppendTextToOutputAsync($"{Environment.NewLine}Thinking > ", Media.Colors.Gray)
@@ -96,12 +101,14 @@ Partial Public Class VSAgentToolWindowControl
         Dim modelsJson = Await _agentHostClient.SendGetModelsAsync()
         Dim availableModels = JsonConvert.DeserializeObject(Of List(Of OllamaModel))(modelsJson.Content)
 
-        cmbModels.ItemsSource = availableModels.Select(Function(c) c.Name).ToList()
+        _availableModels.Clear()
+        _availableModels.AddRange(availableModels.Select(Function(c) c.Name))
 
         btnSend.IsEnabled = True
     End Function
 
     Private Sub btnSend_Click(sender As Object, e As System.Windows.RoutedEventArgs) Handles btnSend.Click
+        btnSettings.IsEnabled = False
         Dim unused = ThreadHelper.JoinableTaskFactory.RunAsync(AddressOf SendPromptAsync)
     End Sub
 
@@ -139,6 +146,7 @@ Partial Public Class VSAgentToolWindowControl
 
         btnSend.IsEnabled = True
         btnStop.IsEnabled = False
+        btnSettings.IsEnabled = True
 
         If errorMessage IsNot Nothing Then
             Await AppendTextToOutputAsync("Error: " & errorMessage, Media.Colors.IndianRed)
@@ -194,15 +202,32 @@ Partial Public Class VSAgentToolWindowControl
         End If
     End Function
 
-    Private Sub expSettings_Collapsed(sender As Object, e As RoutedEventArgs) Handles expSettings.Collapsed
-        ThisGrid.RowDefinitions.First.Height = New GridLength(22)
-    End Sub
+    'Private Sub expSettings_Collapsed(sender As Object, e As RoutedEventArgs) Handles expSettings.Collapsed
+    '    ThisGrid.RowDefinitions.First.Height = New GridLength(22)
+    'End Sub
 
-    Private Sub expSettings_Expanded(sender As Object, e As RoutedEventArgs) Handles expSettings.Expanded
-        ThisGrid.RowDefinitions.First.Height = New GridLength(122)
-    End Sub
+    'Private Sub expSettings_Expanded(sender As Object, e As RoutedEventArgs) Handles expSettings.Expanded
+    '    ThisGrid.RowDefinitions.First.Height = New GridLength(122)
+    'End Sub
 
-    Private Sub cmbModels_SelectionChanged(sender As Object, e As Controls.SelectionChangedEventArgs) Handles cmbModels.SelectionChanged
-        Dim unused = _agentHostClient.SendSetModelAsync(cmbModels.SelectedValue.ToString())
+    'Private Sub cmbModels_SelectionChanged(sender As Object, e As Controls.SelectionChangedEventArgs) Handles cmbModels.SelectionChanged
+    '    Dim unused = _agentHostClient.SendSetModelAsync(cmbModels.SelectedValue.ToString())
+    'End Sub
+
+    Private Sub Settings_Click(sender As Object, e As RoutedEventArgs)
+        Dim settingsWindow As New SettingsWindow(_availableModels)
+
+        If settingsWindow.ShowDialog() = True Then
+
+            Dim settings = settingsWindow.SavedSettings
+
+            Debug.WriteLine($"Model: {settings.Model}")
+            Debug.WriteLine($"Show thinking: {settings.ShowThinking}")
+            Debug.WriteLine($"Reasoning: {settings.ReasoningEffort}")
+            Debug.WriteLine($"Context: {settings.NumCtx}")
+            Debug.WriteLine($"Predict: {settings.NumPredict}")
+
+            Dim unused = _agentHostClient.SendSetSettingsAsync(settings)
+        End If
     End Sub
 End Class

@@ -2,6 +2,7 @@
 Imports Newtonsoft.Json
 Imports VSAgent.Protocol.Events
 Imports VSAgent.Protocol.Messages
+Imports VSAgent.Protocol.Settings
 
 Public Class AgentHostPipeServer
     Private ReadOnly _runner As AgentRunner
@@ -96,10 +97,10 @@ Public Class AgentHostPipeServer
                     _currentRunCancellation.Dispose()
                     _currentRunCancellation = Nothing
                 End Try
-            Case "setmodel"
+            Case "setsettings"
                 Try
-                    Dim modelName = request.Content
-                    _ollama.SetModel(modelName)
+                    Dim settings = JsonConvert.DeserializeObject(Of VSAgentSettings)(request.Content)
+                    _ollama.SetSettings(settings)
                     Return New AgentHostResponse With {
                         .RequestId = request.Id,
                         .Success = True
@@ -107,7 +108,7 @@ Public Class AgentHostPipeServer
                 Catch ex As Exception
                     Return New AgentHostResponse With {
                         .Success = False,
-                        .Content = "Model could not be set."
+                        .Content = "Settings could not be set."
                     }
                 End Try
             Case Else
