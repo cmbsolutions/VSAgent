@@ -7,13 +7,14 @@ Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 Imports VSAgent.Ollama
 Imports VSAgent.Protocol.Ollama
+Imports VSAgent.Protocol.Settings
 
 Public Class OllamaClient
     Implements IDisposable
 
     Private ReadOnly _http As HttpClient
-    Private _model As String
     Private disposedValue As Boolean
+    Private _context_length_retrieved As Boolean = False
 
     Private ReadOnly _thinkingBuffer As New StringBuilder()
     Private ReadOnly _contentBuffer As New StringBuilder()
@@ -27,11 +28,13 @@ Public Class OllamaClient
 
     Private _sessionStats As New OllamaSessionStatistics
 
-    Public Sub New(baseUrl As String, model As String)
-        _model = model
+    Private _settings As VSAgentSettings
+
+    Public Sub New(settings As VSAgentSettings)
+        _settings = settings
 
         _http = New HttpClient With {
-            .BaseAddress = New Uri(baseUrl),
+            .BaseAddress = New Uri(_settings.OllamaBaseURL),
             .Timeout = Timeout.InfiniteTimeSpan
         }
 
@@ -40,12 +43,17 @@ Public Class OllamaClient
 
     Public Async Function SendAsync(messages As JArray, tools As JArray, cancellationToken As CancellationToken) As Task(Of OllamaAssistantResponse)
         Dim body As New JObject From {
-            {"model", _model},
+            {"model", _settings.Model},
             {"messages", messages},
             {"tools", tools},
             {"tool_choice", "auto"},
-            {"think", True},
-            {"stream", True}
+            {"think", If(_settings?.ReasoningEffort Is Nothing, "medium", _settings.ReasoningEffort)},
+            {"reasoning_effort", If(_settings?.ReasoningEffort Is Nothing, "medium", _settings.ReasoningEffort)},
+            {"stream", True},
+            {"options", New JObject From {
+                {"num_ctx", If(_settings?.NumCtx > 0, _settings.NumCtx, 32768)},
+                {"num_predict", If(_settings?.NumPredict > 0, _settings.NumPredict, 8192)}
+            }}
         }
 
         Using request As New HttpRequestMessage(HttpMethod.Post, "api/chat")
@@ -157,12 +165,21 @@ Public Class OllamaClient
 
             ' When done is received
             If chunk.Value(Of Boolean?)("done").GetValueOrDefault(False) Then
-                _sessionStats.AddStatistic(chunk)
-                Debug.WriteLine(_sessionStats.ToString())
+                result.DoneReason = chunk.Value(Of String)("done_reason")
+                result.PromptEvalCount = chunk.Value(Of Integer?)("prompt_eval_count").GetValueOrDefault(0)
+                result.EvalCount = chunk.Value(Of Integer?)("eval_count").GetValueOrDefault(0)
 
+                _sessionStats.AddStatistic(chunk)
                 Exit While
             End If
         End While
+
+        ' Get the context_length if it hasn't been retrieved yet
+        If Not _context_length_retrieved Then
+            Dim ctxLength = Await GetContextLengthAsync(cancellationToken)
+            _sessionStats.ContextLength = ctxLength
+            _context_length_retrieved = True
+        End If
 
         If _thinkingBuffer.Length > 0 Then
             RaiseEvent ThinkingReceived(_thinkingBuffer.ToString())
@@ -181,6 +198,13 @@ Public Class OllamaClient
         result.Content = contentBuilder.ToString()
 
         result.Statistics = _sessionStats.ToString()
+
+        Debug.WriteLine(
+            $"Ollama finished: Reason={result.DoneReason}, " &
+            $"Prompt={result.PromptEvalCount}, " &
+            $"Generated={result.EvalCount}, " &
+            $"Tools={result.ToolCalls.Count}, " &
+            $"ContentLength={result.Content.Length}")
 
         Return result
     End Function
@@ -217,10 +241,23 @@ Public Class OllamaClient
         End Using
     End Function
 
-    Public Sub SetModel(model As String)
-        _model = model
+    Public Sub SetSettings(settings As VSAgentSettings)
+        _settings = settings
     End Sub
 
+    Public Async Function GetContextLengthAsync(cancellationToken As CancellationToken) As Task(Of Integer)
+        Using request As New HttpRequestMessage(HttpMethod.Get, "/api/ps")
+            Using response = Await _http.SendAsync(request, cancellationToken)
+                response.EnsureSuccessStatusCode()
+
+                Dim json = Await response.Content.ReadAsStringAsync()
+
+                Dim root = JObject.Parse(json)
+
+                Return root("models").Select(Function(m) m.Value(Of Integer)("context_length")).FirstOrDefault()
+            End Using
+        End Using
+    End Function
 
     Protected Overridable Sub Dispose(disposing As Boolean)
         If Not disposedValue Then

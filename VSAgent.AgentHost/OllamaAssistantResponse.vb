@@ -8,5 +8,8 @@
 
         Public Property Statistics As String
 
+        Public Property DoneReason As String
+        Public Property PromptEvalCount As Integer
+        Public Property EvalCount As Integer
     End Class
 End Namespace

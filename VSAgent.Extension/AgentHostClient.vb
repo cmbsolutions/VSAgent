@@ -1,6 +1,8 @@
-﻿Imports Newtonsoft.Json.Linq
+﻿Imports Newtonsoft.Json
+Imports Newtonsoft.Json.Linq
 Imports VSAgent.Protocol.Events
 Imports VSAgent.Protocol.Messages
+Imports VSAgent.Protocol.Settings
 
 Public Class AgentHostClient
     Implements IDisposable
@@ -79,6 +81,16 @@ Public Class AgentHostClient
             .Id = Guid.NewGuid().ToString(),
             .Type = "setmodel",
             .Content = model
+        }
+        Return _transport.SendAsync(request)
+    End Function
+
+    Public Function SendSetSettingsAsync(settings As VSAgentSettings) As Task(Of AgentHostResponse)
+
+        Dim request As New AgentHostRequest With {
+            .Id = Guid.NewGuid().ToString(),
+            .Type = "setsettings",
+            .Content = JsonConvert.SerializeObject(settings)
         }
         Return _transport.SendAsync(request)
     End Function

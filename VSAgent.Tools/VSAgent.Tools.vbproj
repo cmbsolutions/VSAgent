@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="GetProjecFilesTool.vb" />
     <Compile Include="GetProjectDocumentsTool.vb" />
+    <Compile Include="InspectTypeTool.vb" />
     <Compile Include="RemoveDocumentTool.vb" />
     <Compile Include="AddDocumentTool.vb" />
     <Compile Include="ApplyDocumentEditTool.vb" />

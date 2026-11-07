@@ -1,10 +1,11 @@
 Imports System.Threading
+Imports VSAgent.Protocol.Settings
 
 Module Program
     ' These could come from a config.json file
-    Private Const model = "qwen3.6:35b"
-    Private Const base_url = "http://localhost:11434/"
-    Private Const APIKey = "ollama"
+    Private _settings As New VSAgentSettings With {
+        .Model = "qwen3.6:35b"
+    }
 
     Private isThinking As Boolean = False
     Private isContent As Boolean = False
@@ -31,7 +32,8 @@ Module Program
 
             Console.WriteLine($"{descriptors.Count} Visual Studio tools available.")
 
-            Dim ollama As New OllamaClient(base_url, model)
+
+            Dim ollama As New OllamaClient(_settings)
 
             AddHandler ollama.ThinkingReceived, AddressOf OllamaThinkingReceivedEventHandler
             AddHandler ollama.ContentReceived, AddressOf OllamaContentReceivedEventHandler

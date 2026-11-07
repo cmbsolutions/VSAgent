@@ -20,7 +20,7 @@ Namespace Tools
 
         Public ReadOnly Property Description As String Implements ITool.Description
             Get
-                Return "Applies a source-code edit directly to a document in the currently loaded Visual Studio solution. The tool handles Roslyn and Visual Studio threading requirements internally. Use this tool when you need to modify source code; do not ask the user to make the edit manually."
+                Return "Applies a source-code edit directly to a document in the currently loaded Visual Studio solution. The tool handles Roslyn and Visual Studio threading requirements internally. Use this tool when you need to modify source code, smaller code changes work generaly better then large ones; do not ask the user to make the edit manually."
             End Get
         End Property
 

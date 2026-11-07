@@ -1,4 +1,5 @@
 ﻿Imports Microsoft.CodeAnalysis
+Imports Microsoft.VisualStudio.Package
 Imports Microsoft.VisualStudio.Shell
 Imports VSAgent.Protocol.DTO
 
@@ -126,4 +127,76 @@ Public Class VisualStudioRoslynWorkspaceService
             ' Handle exceptions (e.g., access denied) if necessary
         End Try
     End Sub
+
+    Public Async Function InspectTypeAsync(projectId As String, typeName As String, memberName As String) As Task(Of InspectTypeInfo) Implements IRoslynWorkspaceService.InspectTypeAsync
+        Dim workspace = Await RoslynWorkspaceProvider.GetWorkspaceAsync(_package)
+
+        Dim result As New InspectTypeInfo
+
+        Dim solution = workspace.CurrentSolution
+
+        Dim project = solution.Projects.FirstOrDefault(
+            Function(p)
+                Return String.Equals(p.Id.Id.ToString(), projectId, StringComparison.OrdinalIgnoreCase)
+            End Function)
+
+        If project Is Nothing Then
+            Throw New InvalidOperationException("The requested project could not be found.")
+        End If
+
+        Dim compilation = Await project.GetCompilationAsync()
+
+        Dim typeSymbol = compilation.GetTypeByMetadataName(typeName)
+
+        If typeSymbol Is Nothing Then
+            Throw New InvalidOperationException("The requested typeName could not be found.")
+        End If
+
+        Dim displayFormat As SymbolDisplayFormat = SymbolDisplayFormat.VisualBasicErrorMessageFormat
+
+        Select Case project.Language
+            Case LanguageNames.CSharp
+                displayFormat = SymbolDisplayFormat.CSharpErrorMessageFormat
+            Case LanguageNames.VisualBasic
+                displayFormat = SymbolDisplayFormat.VisualBasicErrorMessageFormat
+        End Select
+
+        result.TypeName = typeSymbol.ToDisplayString(displayFormat)
+        result.BaseType = If(typeSymbol.BaseType IsNot Nothing, typeSymbol.BaseType.ToDisplayString(displayFormat), String.Empty)
+        result.Assembly = typeSymbol.ContainingAssembly.ToDisplayString(displayFormat)
+
+        Dim currentType As INamedTypeSymbol = typeSymbol
+
+        While currentType IsNot Nothing
+            For Each memberSymbol In currentType.GetMembers()
+
+                If Not String.IsNullOrWhiteSpace(memberName) AndAlso Not String.Equals(memberSymbol.Name, memberName, StringComparison.OrdinalIgnoreCase) Then
+                    Continue For
+                End If
+
+                If memberSymbol.DeclaredAccessibility = Accessibility.Public OrElse
+                    memberSymbol.DeclaredAccessibility = Accessibility.Protected OrElse
+                    memberSymbol.DeclaredAccessibility = Accessibility.ProtectedOrInternal Then
+
+                    Dim methodSymbol = TryCast(memberSymbol, IMethodSymbol)
+
+                    result.Members.Add(New InspectTypeMemberInfo With {
+                            .Name = memberSymbol.Name,
+                            .Kind = memberSymbol.Kind.ToString(),
+                            .Signature = memberSymbol.ToDisplayString(displayFormat),
+                            .DeclaredIn = currentType.ToDisplayString(displayFormat),
+                            .IsOverridable = methodSymbol IsNot Nothing AndAlso (methodSymbol.IsVirtual OrElse methodSymbol.IsAbstract OrElse methodSymbol.IsOverride) AndAlso Not methodSymbol.IsSealed
+                        })
+
+                End If
+            Next
+            If memberName <> "" Then
+                currentType = currentType.BaseType
+            Else
+                currentType = Nothing
+            End If
+        End While
+
+        Return result
+    End Function
 End Class
