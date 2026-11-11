@@ -1,0 +1,38 @@
+﻿<Page x:Class="AgentSettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:VSAgent.Extension"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="AgentSettingsPage">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="SettingsStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+    <StackPanel>
+
+        <TextBlock Text="Agent"
+                   FontSize="20"
+                   FontWeight="SemiBold"
+                   Foreground="#F2F5FA"/>
+
+        <TextBlock Text="Configure autonomous coding behavior."
+                   Style="{StaticResource MutedText}"
+                   Margin="0,6,0,25"/>
+
+        <TextBlock Text="Agent execution"
+                   Style="{StaticResource SectionTitle}"
+                   Margin="0,0,0,9"/>
+
+        <TextBlock Text="Additional agent execution settings will be added here."
+                   Style="{StaticResource MutedText}"
+                   TextWrapping="Wrap"/>
+
+    </StackPanel>
+</Page>

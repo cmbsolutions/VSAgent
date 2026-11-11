@@ -1,10 +1,10 @@
-﻿Namespace Ollama
-    Public Class OllamaAssistantResponse
+﻿Namespace InferenceProvider
+    Public Class InferenceProviderAssistantResponse
 
         Public Property Thinking As String
         Public Property Content As String
 
-        Public Property ToolCalls As New List(Of OllamaToolCall)
+        Public Property ToolCalls As New List(Of InferenceProviderToolCall)
 
         Public Property Statistics As String
 

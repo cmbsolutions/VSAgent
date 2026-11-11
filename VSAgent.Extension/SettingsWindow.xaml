@@ -10,320 +10,14 @@
         Foreground="#E9EDF3"
         FontFamily="Segoe UI"
         FontSize="13"
-        ShowInTaskbar="False" Icon="/VSAgent.Extension;component/vsagent.ico" Topmost="True">
+        ShowInTaskbar="False" Icon="vsagent.ico" Topmost="True">
 
     <Window.Resources>
-
-        <SolidColorBrush x:Key="PanelBrush" Color="#1E242D"/>
-        <SolidColorBrush x:Key="InputBrush" Color="#252D38"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#394352"/>
-        <SolidColorBrush x:Key="MutedBrush" Color="#9BA7B6"/>
-        <SolidColorBrush x:Key="AccentBrush" Color="#638CF5"/>
-
-        <Style x:Key="SectionTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#F2F5FA"/>
-        </Style>
-
-        <Style x:Key="MutedText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
-            <Setter Property="FontSize" Value="11"/>
-        </Style>
-
-        <Style x:Key="DividerStyle" TargetType="Border">
-            <Setter Property="Height" Value="1"/>
-            <Setter Property="Background" Value="#35404D"/>
-            <Setter Property="Margin" Value="0,18,0,18"/>
-        </Style>
-
-        <Style x:Key="ActionButton" TargetType="Button">
-            <Setter Property="Height" Value="35"/>
-            <Setter Property="Padding" Value="16,0"/>
-            <Setter Property="Background" Value="{StaticResource InputBrush}"/>
-            <Setter Property="Foreground" Value="#E9EDF3"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="7">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder"
-                                        Property="Opacity" Value="0.82"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder"
-                                        Property="Opacity" Value="0.65"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="PrimaryButton" TargetType="Button"
-               BasedOn="{StaticResource ActionButton}">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-        </Style>
-
-        <Style x:Key="ReasoningButton" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="#ADB8C7"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="34"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Outer"
-                                Background="Transparent"
-                                CornerRadius="6"
-                                Margin="2">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Outer" Property="Background"
-                                        Value="#435A89"/>
-                                <Setter Property="Foreground" Value="White"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Outer" Property="Opacity"
-                                        Value="0.8"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="SettingsSlider" TargetType="Slider">
-            <Setter Property="Height" Value="25"/>
-            <Setter Property="IsSnapToTickEnabled" Value="True"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid VerticalAlignment="Center" Height="24">
-                            <Border Height="6" CornerRadius="3"
-                                    Background="#374353"
-                                    VerticalAlignment="Center"/>
-                            <Track x:Name="PART_Track">
-                                <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="Slider.DecreaseLarge"
-                                                  Focusable="False">
-                                        <RepeatButton.Template>
-                                            <ControlTemplate TargetType="RepeatButton">
-                                                <Border Height="6"
-                                                        Background="#638CF5"
-                                                        CornerRadius="3"/>
-                                            </ControlTemplate>
-                                        </RepeatButton.Template>
-                                    </RepeatButton>
-                                </Track.DecreaseRepeatButton>
-                                <Track.Thumb>
-                                    <Thumb Width="16" Height="16">
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Ellipse Fill="#DCE7FF"
-                                                         Stroke="#638CF5"
-                                                         StrokeThickness="2"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                                <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="Slider.IncreaseLarge"
-                                                  Focusable="False">
-                                        <RepeatButton.Template>
-                                            <ControlTemplate TargetType="RepeatButton">
-                                                <Border Background="Transparent"/>
-                                            </ControlTemplate>
-                                        </RepeatButton.Template>
-                                    </RepeatButton>
-                                </Track.IncreaseRepeatButton>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="ToggleSwitch" TargetType="CheckBox">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <Grid Width="43" Height="24">
-                            <Border x:Name="SwitchTrack"
-                                    Background="#4A5565"
-                                    CornerRadius="12"/>
-                            <Ellipse x:Name="SwitchThumb"
-                                     Width="18" Height="18"
-                                     Fill="White"
-                                     HorizontalAlignment="Left"
-                                     Margin="3,0,0,0"/>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="SwitchTrack"
-                                        Property="Background"
-                                        Value="#638CF5"/>
-                                <Setter TargetName="SwitchThumb"
-                                        Property="HorizontalAlignment"
-                                        Value="Right"/>
-                                <Setter TargetName="SwitchThumb"
-                                        Property="Margin" Value="0,0,3,0"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="ComboBox" TargetType="ComboBox">
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="Foreground" Value="#E9EDF3"/>
-            <Setter Property="Background" Value="#252D38"/>
-            <Setter Property="BorderBrush" Value="#465367"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,0"/>
-
-            <Setter Property="ItemContainerStyle">
-                <Setter.Value>
-                    <Style TargetType="ComboBoxItem">
-                        <Setter Property="Foreground" Value="#E9EDF3"/>
-                        <Setter Property="Background" Value="#252D38"/>
-                        <Setter Property="Padding" Value="10,7"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ComboBoxItem">
-                                    <Border x:Name="ItemBorder"
-                                    Background="{TemplateBinding Background}">
-                                        <ContentPresenter
-                                    Margin="{TemplateBinding Padding}"
-                                    VerticalAlignment="Center"/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsHighlighted" Value="True">
-                                            <Setter TargetName="ItemBorder"
-                                            Property="Background"
-                                            Value="#435A89"/>
-                                            <Setter Property="Foreground"
-                                            Value="White"/>
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="ItemBorder"
-                                            Property="Background"
-                                            Value="#344766"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Setter.Value>
-            </Setter>
-
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <Border x:Name="ComboBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="7"/>
-
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="35"/>
-                                </Grid.ColumnDefinitions>
-
-                                <ContentPresenter
-                            Grid.Column="0"
-                            Margin="{TemplateBinding Padding}"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Left"
-                            Content="{TemplateBinding SelectionBoxItem}"
-                            ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                            IsHitTestVisible="False"/>
-
-                                <Path Grid.Column="1"
-                              Data="M 0 0 L 4 4 L 8 0"
-                              Stroke="#AAB7C7"
-                              StrokeThickness="1.7"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"/>
-                            </Grid>
-
-                            <ToggleButton x:Name="DropDownToggle"
-                                  Focusable="False"
-                                  Background="Transparent"
-                                  BorderThickness="0"
-                                  ClickMode="Press"
-                                  IsChecked="{Binding IsDropDownOpen,
-                                      RelativeSource={RelativeSource TemplatedParent},
-                                      Mode=TwoWay}">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border Background="Transparent"/>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                            </ToggleButton>
-
-                            <Popup x:Name="PART_Popup"
-                           Placement="Bottom"
-                           AllowsTransparency="True"
-                           Focusable="False"
-                           IsOpen="{TemplateBinding IsDropDownOpen}"
-                           PopupAnimation="Slide">
-
-                                <Border Background="#252D38"
-                                BorderBrush="#465367"
-                                BorderThickness="1"
-                                MinWidth="{Binding ActualWidth,
-                                    RelativeSource={RelativeSource TemplatedParent}}"
-                                MaxHeight="300">
-
-                                    <ScrollViewer>
-                                        <ItemsPresenter/>
-                                    </ScrollViewer>
-
-                                </Border>
-                            </Popup>
-                        </Grid>
-
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ComboBorder"
-                                Property="BorderBrush"
-                                Value="#638CF5"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ComboBorder"
-                                Property="Opacity"
-                                Value="0.5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="SettingPages/SettingsStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Border Background="{StaticResource PanelBrush}"
@@ -352,130 +46,37 @@
             </StackPanel>
 
             <!-- Settings -->
-            <StackPanel Grid.Row="1">
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="155"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Model"
-                           Style="{StaticResource SectionTitle}"
-                           Margin="0,0,0,9"/>
+                <ListBox x:Name="lstSettingsPages"
+             Grid.Column="0"
+             Background="{StaticResource InputBrush}"
+             Foreground="#E9EDF3"
+             BorderThickness="0"
+             SelectionChanged="lstSettingsPages_SelectionChanged">
 
-                <ComboBox x:Name="cmbModel" Style="{StaticResource ComboBox}"/>
+                    <ListBoxItem Content="Models" Tag="Models"/>
+                    <ListBoxItem Content="Inference" Tag="Inference"/>
+                    <ListBoxItem Content="Agent" Tag="Agent"/>
+                    <ListBoxItem Content="Appearance" Tag="Appearance"/>
+                    <ListBoxItem Content="Connection" Tag="Connection"/>
 
-                <TextBlock Text="Select an installed Ollama model"
-                           Style="{StaticResource MutedText}"
-                           Margin="0,7,0,0"/>
+                </ListBox>
 
-                <Border Style="{StaticResource DividerStyle}"/>
+                <Border Grid.Column="1"
+            Padding="20,5,0,5">
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="Show thinking"
-                                   Style="{StaticResource SectionTitle}"/>
-                        <TextBlock Text="Display model reasoning in the conversation"
-                                   Style="{StaticResource MutedText}"
-                                   Margin="0,5,0,0"/>
-                    </StackPanel>
-                    <CheckBox x:Name="chkShowThinking"
-                              Grid.Column="1"
-                              Style="{StaticResource ToggleSwitch}"
-                              VerticalAlignment="Center"/>
-                </Grid>
+                    <Frame x:Name="settingsFrame"
+       NavigationUIVisibility="Hidden"
+       Background="Transparent"
+       JournalOwnership="OwnsJournal"/>
 
-                <Border Style="{StaticResource DividerStyle}"/>
-
-                <TextBlock Text="Reasoning effort"
-                           Style="{StaticResource SectionTitle}"
-                           Margin="0,0,0,10"/>
-
-                <Border Background="{StaticResource InputBrush}"
-                        CornerRadius="8"
-                        Padding="3">
-                    <UniformGrid Columns="3">
-                        <RadioButton x:Name="rbLow"
-                                     Content="Low"
-                                     GroupName="Reasoning"
-                                     Style="{StaticResource ReasoningButton}"/>
-                        <RadioButton x:Name="rbMedium"
-                                     Content="Medium"
-                                     GroupName="Reasoning"
-                                     Style="{StaticResource ReasoningButton}"/>
-                        <RadioButton x:Name="rbXHigh"
-                                     Content="XHigh"
-                                     GroupName="Reasoning"
-                                     Style="{StaticResource ReasoningButton}"/>
-                    </UniformGrid>
                 </Border>
-
-                <Border Style="{StaticResource DividerStyle}"/>
-
-                <!-- Context -->
-                <Grid Margin="0,0,0,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Context window"
-                               Style="{StaticResource SectionTitle}"/>
-                    <TextBlock x:Name="txtNumCtx"
-                               Grid.Column="1"
-                               FontWeight="SemiBold"
-                               Foreground="#E9EDF3"/>
-                </Grid>
-
-                <Slider x:Name="sldNumCtx"
-                        Minimum="4096"
-                        Maximum="131072"
-                        TickFrequency="4096"
-                        SmallChange="4096"
-                        LargeChange="4096"
-                        Style="{StaticResource SettingsSlider}"
-                        ValueChanged="Slider_ValueChanged"/>
-
-                <Grid Margin="0,3,0,0">
-                    <TextBlock Text="4K"
-                               Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="128K"
-                               HorizontalAlignment="Right"
-                               Style="{StaticResource MutedText}"/>
-                </Grid>
-
-                <Border Style="{StaticResource DividerStyle}"/>
-
-                <!-- Prediction -->
-                <Grid Margin="0,0,0,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Maximum generated tokens"
-                               Style="{StaticResource SectionTitle}"/>
-                    <TextBlock x:Name="txtNumPredict"
-                               Grid.Column="1"
-                               FontWeight="SemiBold"
-                               Foreground="#E9EDF3"/>
-                </Grid>
-
-                <Slider x:Name="sldNumPredict"
-                        Minimum="1024"
-                        Maximum="32768"
-                        TickFrequency="1024"
-                        SmallChange="1024"
-                        LargeChange="1024"
-                        Style="{StaticResource SettingsSlider}"
-                        ValueChanged="Slider_ValueChanged"/>
-
-                <Grid Margin="0,3,0,0">
-                    <TextBlock Text="1K"
-                               Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="32K"
-                               HorizontalAlignment="Right"
-                               Style="{StaticResource MutedText}"/>
-                </Grid>
-
-            </StackPanel>
+            </Grid>
 
             <!-- Footer -->
             <StackPanel Grid.Row="2">

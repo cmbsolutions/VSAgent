@@ -3,6 +3,7 @@ Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 Imports VSAgent.Ollama
 Imports VSAgent.Protocol.DTO
+Imports VSAgent.Protocol.InferenceProvider
 
 Public Class AgentRunner
 
@@ -117,7 +118,7 @@ Public Class AgentRunner
         Loop
     End Function
 
-    Private Async Function ExecuteToolCallAsync(toolCall As OllamaToolCall) As Task
+    Private Async Function ExecuteToolCallAsync(toolCall As InferenceProviderToolCall) As Task
 
         Dim toolResult As String
         Dim description As String = Nothing

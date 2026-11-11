@@ -2,8 +2,8 @@
 Imports System.Windows
 Imports Microsoft.VisualStudio.Shell
 Imports Newtonsoft.Json
+Imports VSAgent.Protocol.InferenceProvider
 Imports VSAgent.Protocol.Messages
-Imports VSAgent.Protocol.Ollama
 Imports VSAgent.Protocol.Settings
 
 '''<summary>
@@ -99,7 +99,7 @@ Partial Public Class VSAgentToolWindowControl
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
         Dim modelsJson = Await _agentHostClient.SendGetModelsAsync()
-        Dim availableModels = JsonConvert.DeserializeObject(Of List(Of OllamaModel))(modelsJson.Content)
+        Dim availableModels = JsonConvert.DeserializeObject(Of List(Of InferenceProviderModel))(modelsJson.Content)
 
         _availableModels.Clear()
         _availableModels.AddRange(availableModels.Select(Function(c) c.Name))

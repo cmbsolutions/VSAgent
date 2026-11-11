@@ -1,0 +1,3 @@
+﻿Class ConnectionSettingsPage
+
+End Class

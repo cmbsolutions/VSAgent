@@ -1,7 +1,7 @@
 ﻿Imports Newtonsoft.Json.Linq
 
-Namespace Ollama
-    Public Class OllamaToolCall
+Namespace InferenceProvider
+    Public Class InferenceProviderToolCall
 
         Public Property Id As String
         Public Property Name As String

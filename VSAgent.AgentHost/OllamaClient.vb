@@ -6,10 +6,11 @@ Imports System.Threading
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 Imports VSAgent.Ollama
-Imports VSAgent.Protocol.Ollama
+Imports VSAgent.Protocol.InferenceProvider
 Imports VSAgent.Protocol.Settings
 
 Public Class OllamaClient
+    Implements IInferenceProvider
     Implements IDisposable
 
     Private ReadOnly _http As HttpClient
@@ -34,14 +35,14 @@ Public Class OllamaClient
         _settings = settings
 
         _http = New HttpClient With {
-            .BaseAddress = New Uri(_settings.OllamaBaseURL),
+            .BaseAddress = New Uri(_settings.InferenceProviderBaseURL),
             .Timeout = Timeout.InfiniteTimeSpan
         }
 
         _http.DefaultRequestHeaders.Authorization = New AuthenticationHeaderValue("Bearer", "ollama")
     End Sub
 
-    Public Async Function SendAsync(messages As JArray, tools As JArray, cancellationToken As CancellationToken) As Task(Of OllamaAssistantResponse)
+    Public Async Function SendAsync(messages As JArray, tools As JArray, cancellationToken As CancellationToken) As Task(Of InferenceProviderAssistantResponse) Implements IInferenceProvider.SendAsync
         Dim body As New JObject From {
             {"model", _settings.Model},
             {"messages", messages},
@@ -78,8 +79,8 @@ Public Class OllamaClient
         End Using
     End Function
 
-    Private Async Function ReadStreamAsync(reader As StreamReader, cancellationToken As CancellationToken) As Task(Of OllamaAssistantResponse)
-        Dim result As New OllamaAssistantResponse()
+    Private Async Function ReadStreamAsync(reader As StreamReader, cancellationToken As CancellationToken) As Task(Of InferenceProviderAssistantResponse) Implements IInferenceProvider.ReadStreamAsync
+        Dim result As New InferenceProviderAssistantResponse()
         Dim thinkingBuilder As New StringBuilder
         Dim contentBuilder As New StringBuilder()
 
@@ -154,7 +155,7 @@ Public Class OllamaClient
                         Dim arguments = TryCast(functionObject("arguments"), JObject)
 
                         result.ToolCalls.Add(
-                            New OllamaToolCall With {
+                            New InferenceProviderToolCall With {
                                 .Id = toolCall.Value(Of String)("id"),
                                 .Name = functionObject.Value(Of String)("name"),
                                 .Arguments = If(arguments, New JObject())
@@ -223,7 +224,7 @@ Public Class OllamaClient
         Return lastChar = ControlChars.Lf OrElse lastChar = "."c OrElse lastChar = ":"c OrElse lastChar = ";"c
     End Function
 
-    Public Async Function GetModelsAsync(cancellationToken As CancellationToken) As Task(Of List(Of OllamaModel))
+    Public Async Function GetModelsAsync(cancellationToken As CancellationToken) As Task(Of List(Of InferenceProviderModel)) Implements IInferenceProvider.GetModelsAsync
         Using request As New HttpRequestMessage(HttpMethod.Get, "/api/tags")
             Using response = Await _http.SendAsync(request, cancellationToken)
                 response.EnsureSuccessStatusCode()
@@ -233,7 +234,7 @@ Public Class OllamaClient
                 Dim root = JObject.Parse(json)
 
                 Return root("models").Select(
-                    Function(m) New OllamaModel With {
+                    Function(m) New InferenceProviderModel With {
                         .Name = m.Value(Of String)("name"),
                         .Size = m.Value(Of Long)("size")
                     }).ToList()
@@ -241,11 +242,11 @@ Public Class OllamaClient
         End Using
     End Function
 
-    Public Sub SetSettings(settings As VSAgentSettings)
+    Public Sub SetSettings(settings As VSAgentSettings) Implements IInferenceProvider.SetSettings
         _settings = settings
     End Sub
 
-    Public Async Function GetContextLengthAsync(cancellationToken As CancellationToken) As Task(Of Integer)
+    Public Async Function GetContextLengthAsync(cancellationToken As CancellationToken) As Task(Of Integer) Implements IInferenceProvider.GetContextLengthAsync
         Using request As New HttpRequestMessage(HttpMethod.Get, "/api/ps")
             Using response = Await _http.SendAsync(request, cancellationToken)
                 response.EnsureSuccessStatusCode()
