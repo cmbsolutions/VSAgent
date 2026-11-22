@@ -14,32 +14,30 @@ Public Class InferenceSettingsPage
                 AddressOf InferenceSettingsPage_DataContextChanged
         End Sub
 
-        Private Sub InferenceSettingsPage_DataContextChanged(
-            sender As Object,
-            e As DependencyPropertyChangedEventArgs)
+    Private Sub InferenceSettingsPage_DataContextChanged(sender As Object, e As DependencyPropertyChangedEventArgs)
 
-            Dim config = TryCast(DataContext, VSAgentSettings)
+        Dim config = TryCast(DataContext, VSAgentSettings)
 
-            If config Is Nothing Then Return
+        If config Is Nothing Then Return
 
-            _loading = True
+        _loading = True
 
-            Select Case config.ReasoningEffort.ToLowerInvariant()
-                Case "medium"
-                    rbMedium.IsChecked = True
+        Select Case config.ReasoningEffort.ToLowerInvariant()
+            Case "medium"
+                rbMedium.IsChecked = True
 
-                Case "xhigh"
-                    rbXHigh.IsChecked = True
+            Case "xhigh"
+                rbXHigh.IsChecked = True
 
-                Case Else
-                    rbLow.IsChecked = True
-            End Select
+            Case Else
+                rbLow.IsChecked = True
+        End Select
 
-            _loading = False
+        _loading = False
 
-        End Sub
+    End Sub
 
-        Private Sub Reasoning_Checked(sender As Object, e As RoutedEventArgs)
+    Private Sub Reasoning_Checked(sender As Object, e As RoutedEventArgs)
 
             If _loading Then Return
 
