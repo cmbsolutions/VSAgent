@@ -4,6 +4,8 @@ Imports VSAgent.Protocol.Settings
 
 Partial Public Class SettingsWindow
 
+    Private _availableModels As IEnumerable(Of String)
+
     Private _savedSettings As VSAgentSettings
     Public ReadOnly Property SavedSettings As VSAgentSettings
         Get
@@ -13,13 +15,7 @@ Partial Public Class SettingsWindow
 
     Private _workingSettings As VSAgentSettings
 
-    Private ReadOnly _settingsPages As New Dictionary(Of String, Page) From {
-        {"Models", New ModelsSettingsPage()},
-        {"Inference", New InferenceSettingsPage()},
-        {"Agent", New AgentSettingsPage()},
-        {"Appearance", New AppearanceSettingsPage()},
-        {"Connection", New ConnectionSettingsPage()}
-    }
+    Private ReadOnly _settingsPages As Dictionary(Of String, Page)
 
     Private Sub InitializeSettingsPages(settings As VSAgentSettings)
 
@@ -48,9 +44,23 @@ Partial Public Class SettingsWindow
 
     Public Sub New(Optional availableModels As IEnumerable(Of String) = Nothing)
 
+
+        If availableModels IsNot Nothing Then
+            _availableModels = availableModels
+        End If
+
+        _settingsPages = New Dictionary(Of String, Page) From {
+            {"Models", New ModelsSettingsPage(availableModels)},
+            {"Inference", New InferenceSettingsPage()},
+            {"Agent", New AgentSettingsPage()},
+            {"Appearance", New AppearanceSettingsPage()},
+            {"Connection", New ConnectionSettingsPage()}
+        }
+
+
         InitializeComponent()
 
-        _savedSettings = Settings.SettingsManager.Load()
+        _savedSettings = Settings.VSAgentSettingsManager.Load()
 
         InitializeSettingsPages(_savedSettings)
 
@@ -71,7 +81,7 @@ Partial Public Class SettingsWindow
     Private Sub Save_Click(sender As Object, e As RoutedEventArgs)
 
         Try
-            Settings.SettingsManager.Save(_workingSettings)
+            Settings.VSAgentSettingsManager.Save(_workingSettings)
 
             DialogResult = True
 

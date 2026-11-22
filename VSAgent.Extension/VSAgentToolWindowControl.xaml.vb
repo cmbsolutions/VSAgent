@@ -213,18 +213,6 @@ Partial Public Class VSAgentToolWindowControl
         End If
     End Function
 
-    'Private Sub expSettings_Collapsed(sender As Object, e As RoutedEventArgs) Handles expSettings.Collapsed
-    '    ThisGrid.RowDefinitions.First.Height = New GridLength(22)
-    'End Sub
-
-    'Private Sub expSettings_Expanded(sender As Object, e As RoutedEventArgs) Handles expSettings.Expanded
-    '    ThisGrid.RowDefinitions.First.Height = New GridLength(122)
-    'End Sub
-
-    'Private Sub cmbModels_SelectionChanged(sender As Object, e As Controls.SelectionChangedEventArgs) Handles cmbModels.SelectionChanged
-    '    Dim unused = _agentHostClient.SendSetModelAsync(cmbModels.SelectedValue.ToString())
-    'End Sub
-
     Private Sub Settings_Click(sender As Object, e As RoutedEventArgs)
         Dim settingsWindow As New SettingsWindow(_availableModels)
 
