@@ -86,48 +86,41 @@ Public Class AddressCountryDetector
             }
         End If
 
-        ' Score each alias against the address
+        ' Score each alias against the address using a Max-Score Strategy to prevent fragmentation cheating.
         Dim scores As New Dictionary(Of String, AliasScore)()
 
         For Each entry In _aliases
-            Dim score As Double = 0.0
-            Dim matchedLines As Integer = 0
+            ' Find the single best matching line for this specific alias
+            Dim bestLineScore As Double = 0.0
             Dim matchedAliasText As String = Nothing
 
             For Each normLine In normalizedLines
                 Dim lineScore As Double = ScoreLine(entry, normLine)
-                If lineScore > 0 Then
-                    matchedLines += 1
-                    If matchedAliasText Is Nothing Then
-                        matchedAliasText = entry.AliasText
-                    End If
+                If lineScore > bestLineScore Then
+                    bestLineScore = lineScore
+                    matchedAliasText = entry.AliasText
                 End If
-                score += lineScore
             Next
 
-            ' Multi-line bonus: if the alias matches in multiple lines, it's more reliable
-            If matchedLines > 1 Then
-                score += (matchedLines - 1) * MultiLineBonus
-            End If
-
-            If score > 0 Then
+            ' Only update if we have a match and it beats any previous alias for this country
+            If bestLineScore > 0 Then
                 If scores.ContainsKey(entry.CountryId) Then
-                    scores(entry.CountryId).TotalScore += score
-                    If Not String.IsNullOrEmpty(matchedAliasText) Then
-                        scores(entry.CountryId).MatchedAliases.Add(matchedAliasText)
+                    If bestLineScore > scores(entry.CountryId).TotalScore Then
+                        scores(entry.CountryId) = New AliasScore With {
+                            .TotalScore = bestLineScore,
+                            .MatchedAliases = New List(Of String) From {matchedAliasText}
+                        }
                     End If
                 Else
-                    Dim matched As New List(Of String)()
-                    If Not String.IsNullOrEmpty(matchedAliasText) Then matched.Add(matchedAliasText)
                     scores(entry.CountryId) = New AliasScore With {
-                        .TotalScore = score,
-                        .MatchedAliases = matched
+                        .TotalScore = bestLineScore,
+                        .MatchedAliases = New List(Of String) From {matchedAliasText}
                     }
                 End If
             End If
         Next
 
-        ' Pick the best country
+        ' Pick the best country based on the highest single alias match
         Dim bestCountry As String = Nothing
         Dim bestScore As Double = 0.0
         Dim bestAliases As New List(Of String)()
@@ -189,35 +182,30 @@ Public Class AddressCountryDetector
         Dim scores As New Dictionary(Of String, AliasScore)()
 
         For Each entry In _aliases
-            Dim score As Double = 0.0
-            Dim matchedLines As Integer = 0
+            ' Find the single best matching line for this specific alias (Max-Score Strategy)
+            Dim bestLineScore As Double = 0.0
             Dim matchedAliasText As String = Nothing
 
             For Each normLine In normalizedLines
                 Dim lineScore As Double = ScoreLine(entry, normLine)
-                If lineScore > 0 Then
-                    matchedLines += 1
-                    If matchedAliasText Is Nothing Then matchedAliasText = entry.AliasText
+                If lineScore > bestLineScore Then
+                    bestLineScore = lineScore
+                    matchedAliasText = entry.AliasText
                 End If
-                score += lineScore
             Next
 
-            If matchedLines > 1 Then
-                score += (matchedLines - 1) * MultiLineBonus
-            End If
-
-            If score > 0 Then
+            If bestLineScore > 0 Then
                 If scores.ContainsKey(entry.CountryId) Then
-                    scores(entry.CountryId).TotalScore += score
-                    If Not String.IsNullOrEmpty(matchedAliasText) Then
-                        scores(entry.CountryId).MatchedAliases.Add(matchedAliasText)
+                    If bestLineScore > scores(entry.CountryId).TotalScore Then
+                        scores(entry.CountryId) = New AliasScore With {
+                            .TotalScore = bestLineScore,
+                            .MatchedAliases = New List(Of String) From {matchedAliasText}
+                        }
                     End If
                 Else
-                    Dim matched As New List(Of String)()
-                    If Not String.IsNullOrEmpty(matchedAliasText) Then matched.Add(matchedAliasText)
                     scores(entry.CountryId) = New AliasScore With {
-                        .TotalScore = score,
-                        .MatchedAliases = matched
+                        .TotalScore = bestLineScore,
+                        .MatchedAliases = New List(Of String) From {matchedAliasText}
                     }
                 End If
             End If
@@ -299,36 +287,43 @@ Public Class AddressCountryDetector
     End Sub
 
     ''' <summary>
-    ''' Scores how well a single alias entry matches a single normalized address line.
+    ''' Scores how well a single alias entry matches a single normalized address line using mutually exclusive tiers.
     ''' </summary>
     Private Function ScoreLine(entry As AliasEntry, normalizedLine As String) As Double
-        Dim score As Double = 0.0
-
         ' 1. Exact match (alias equals the entire line)
         If normalizedLine = entry.Normalized Then
-            Return WeightExactMatch + entry.Length * 0.5
+            Return WeightExactMatch + (entry.Length * 0.2)
         End If
 
-        ' 2. Alias is contained within the line (or line contains alias as substring)
+        ' 2. Contains match (Alias is a substring of line, or vice versa)
         If normalizedLine.Contains(entry.Normalized) Then
-            score += WeightContainsMatch + entry.Length * 0.3
+            Return WeightContainsMatch + (entry.Length * 0.1)
         ElseIf entry.Normalized.Contains(normalizedLine) AndAlso normalizedLine.Length >= 3 Then
             ' The address line is a subset of the alias (e.g. "NL" matching "Netherlands")
-            score += (WeightContainsMatch * 0.5) + entry.Length * 0.2
+            Return (WeightContainsMatch * 0.5) + (entry.Length * 0.1)
         End If
 
-        ' 3. Token-level matching (for aliases with multiple words)
+        ' 3. Token-level matching (Requires all tokens to be present in the line)
+        ' We check this only if it's not a substring match, as substring is usually stronger for names.
         If entry.Tokens.Count > 1 Then
             Dim lineTokens As List(Of String) = Tokenize(normalizedLine)
-            Dim tokenOverlap As Integer = 0
-            For Each tok In lineTokens
-                If entry.Tokens.Contains(tok) Then
-                    tokenOverlap += 1
+            ' Check if every token from the alias exists in the address line
+            Dim allPresent As Boolean = True
+            For Each tok In entry.Tokens
+                If Not lineTokens.Contains(tok) Then
+                    allPresent = False
+                    Exit For
                 End If
             Next
-            ' Require at least 1 token overlap AND at least 50% of alias tokens matched
-            If tokenOverlap > 0 AndAlso tokenOverlap >= Math.Ceiling(entry.Tokens.Count * 0.5) Then
-                score += WeightTokenMatch * tokenOverlap + entry.Length * 0.1
+
+            If allPresent Then
+                Return WeightTokenMatch * entry.Tokens.Count + (entry.Length * 0.15)
+            End If
+
+            ' Partial token match: at least half of the words are there
+            Dim tokensFound As Integer = entry.Tokens.Where(Function(t) lineTokens.Contains(t)).Count()
+            If tokensFound >= (entry.Tokens.Count / 2) Then
+                Return WeightTokenMatch * tokensFound + (entry.Length * 0.1)
             End If
         End If
 
@@ -336,11 +331,11 @@ Public Class AddressCountryDetector
         If entry.Tokens.Count = 1 Then
             Dim tok As String = entry.Tokens(0)
             If tok.Length >= 2 AndAlso Regex.IsMatch(normalizedLine, "(^|\s)" & Regex.Escape(tok) & "(\s|$)") Then
-                score += WeightTokenMatch + tok.Length * 0.3
+                Return WeightTokenMatch + (tok.Length * 0.2)
             End If
         End If
 
-        Return score
+        Return 0.0
     End Function
 
     ''' <summary>
