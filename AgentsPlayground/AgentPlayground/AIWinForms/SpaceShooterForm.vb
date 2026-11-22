@@ -70,13 +70,18 @@ Public Class SpaceShooterForm
 
     ' ===== Off-screen backbuffer for double-buffered rendering =====
     Private backBuffer As Bitmap = Nothing
+    ' Cached off-screen Graphics: creating a Graphics per frame costs a native
+    ' GDI+ context allocation and is pure waste at 60 fps.
+    Private offscreenGraphics As Graphics = Nothing
 
     ' ===== Simple gameOver flag to track transitions =====
     Private gameOverState As Boolean = False
+    ' Only touch the label when the text actually changes; assigning Label.Text
+    ' invalidates and repaints the control.
+    Private lastScoreText As String = ""
 
     Public Sub New()
         InitializeComponent()
-        Me.DoubleBuffered = False   ' we handle double-buffering manually via backbuffer
     End Sub
 
     Protected Overrides Sub OnShown(e As EventArgs)
