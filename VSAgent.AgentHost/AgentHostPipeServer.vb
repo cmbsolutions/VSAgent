@@ -1,30 +1,49 @@
 ﻿Imports System.Threading
 Imports Newtonsoft.Json
+Imports VSAgent.Protocol.DTO
 Imports VSAgent.Protocol.Events
 Imports VSAgent.Protocol.Messages
 Imports VSAgent.Protocol.Settings
 
 Public Class AgentHostPipeServer
-    Private ReadOnly _runner As AgentRunner
-    Private ReadOnly _ollama As OllamaClient
+    Private _runner As AgentRunner
+    Private _InferenceProvider As IInferenceProvider
+    Private ReadOnly _vsAgent As VSAgentPipeClient
+    Private ReadOnly _descriptors As IReadOnlyList(Of ToolDescriptor)
     Private ReadOnly _transport As Transport.TransportPipeServer(Of AgentHostRequest, AgentHostResponse)
     Private _currentRunCancellation As CancellationTokenSource
 
-    Public Sub New(PipeName As String, runner As AgentRunner, ollama As OllamaClient)
-        _runner = runner
-        _ollama = ollama
+    Public ReadOnly Property Completion As Task
+        Get
+            Return _transport.Completion
+        End Get
+    End Property
 
+    Public Sub New(PipeName As String, vsAgent As VSAgentPipeClient, descriptors As IReadOnlyList(Of ToolDescriptor))
+        _vsAgent = vsAgent
+        _descriptors = descriptors
         _transport = New Transport.TransportPipeServer(Of AgentHostRequest, AgentHostResponse)(PipeName, AddressOf HandleRequestAsync, "AgentHostPipeServer")
         _transport.Start()
+    End Sub
 
-        AddHandler _runner.Thinking, AddressOf Runner_Thinking
-        AddHandler _runner.Content, AddressOf Runner_Content
-        AddHandler _runner.ToolStarted, AddressOf Runner_ToolStarted
-        AddHandler _runner.ToolCompleted, AddressOf Runner_ToolCompleted
-        AddHandler _runner.ToolFailed, AddressOf Runner_ToolFailed
-        AddHandler _runner.Statistics, AddressOf Runner_Statistics
-        AddHandler _runner.TaskCancelled, AddressOf Runner_TaskCancelled
+    Private Sub AttachRunnerEvents(runner As AgentRunner)
+        AddHandler runner.Thinking, AddressOf Runner_Thinking
+        AddHandler runner.Content, AddressOf Runner_Content
+        AddHandler runner.ToolStarted, AddressOf Runner_ToolStarted
+        AddHandler runner.ToolCompleted, AddressOf Runner_ToolCompleted
+        AddHandler runner.ToolFailed, AddressOf Runner_ToolFailed
+        AddHandler runner.Statistics, AddressOf Runner_Statistics
+        AddHandler runner.TaskCancelled, AddressOf Runner_TaskCancelled
+    End Sub
 
+    Private Sub DetachRunnerEvents(runner As AgentRunner)
+        RemoveHandler runner.Thinking, AddressOf Runner_Thinking
+        RemoveHandler runner.Content, AddressOf Runner_Content
+        RemoveHandler runner.ToolStarted, AddressOf Runner_ToolStarted
+        RemoveHandler runner.ToolCompleted, AddressOf Runner_ToolCompleted
+        RemoveHandler runner.ToolFailed, AddressOf Runner_ToolFailed
+        RemoveHandler runner.Statistics, AddressOf Runner_Statistics
+        RemoveHandler runner.TaskCancelled, AddressOf Runner_TaskCancelled
     End Sub
 
     Private Sub Runner_TaskCancelled()
@@ -81,7 +100,7 @@ Public Class AgentHostPipeServer
                     _currentRunCancellation?.Dispose()
                     _currentRunCancellation = New CancellationTokenSource()
 
-                    Dim result = Await _ollama.GetModelsAsync(_currentRunCancellation.Token)
+                    Dim result = Await _InferenceProvider.GetModelsAsync(_currentRunCancellation.Token)
 
                     Return New AgentHostResponse With {
                         .RequestId = request.Id,
@@ -100,7 +119,9 @@ Public Class AgentHostPipeServer
             Case "setsettings"
                 Try
                     Dim settings = JsonConvert.DeserializeObject(Of VSAgentSettings)(request.Content)
-                    _ollama.SetSettings(settings)
+
+                    ConfigureAgent(settings)
+
                     Return New AgentHostResponse With {
                         .RequestId = request.Id,
                         .Success = True
@@ -119,6 +140,42 @@ Public Class AgentHostPipeServer
                 }
         End Select
     End Function
+
+    Private Sub ConfigureAgent(settings As VSAgentSettings)
+
+        If _currentRunCancellation IsNot Nothing Then
+            Throw New InvalidOperationException(
+            "Cannot change inference settings while the agent is running.")
+        End If
+
+        Dim newProvider As IInferenceProvider
+
+        Select Case settings.InferenceProvider
+
+            Case InferenceProviderType.Ollama
+                newProvider = New OllamaClient(settings)
+
+            Case InferenceProviderType.Strata
+                newProvider = New StrataClient(settings)
+
+            Case Else
+                Throw New NotSupportedException(
+                $"Unsupported inference provider: {settings.InferenceProvider}")
+
+        End Select
+
+        Dim newRunner As New AgentRunner(_vsAgent, newProvider, _descriptors)
+
+        If _runner IsNot Nothing Then
+            DetachRunnerEvents(_runner)
+        End If
+
+        _InferenceProvider = newProvider
+        _runner = newRunner
+
+        AttachRunnerEvents(_runner)
+
+    End Sub
 
     Private Sub Runner_Thinking(text As String)
 

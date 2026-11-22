@@ -23,7 +23,7 @@ Partial Class SpaceShooterForm
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
         components = New ComponentModel.Container()
-        gamePanel = New Panel()
+        gamePanel = New DoubleBufferedPanel()
         scoreLabel = New Label()
         statusText = New Label()
         restartButton = New Button()
@@ -103,7 +103,7 @@ Partial Class SpaceShooterForm
 
     End Sub
 
-    Friend WithEvents gamePanel As Panel
+    Friend WithEvents gamePanel As DoubleBufferedPanel
     Friend WithEvents scoreLabel As Label
     Friend WithEvents statusText As Label
     Friend WithEvents restartButton As Button

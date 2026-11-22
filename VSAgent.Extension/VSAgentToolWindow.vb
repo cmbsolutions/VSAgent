@@ -1,5 +1,8 @@
 ﻿Imports System.Runtime.InteropServices
+Imports Microsoft.VisualStudio.Settings
 Imports Microsoft.VisualStudio.Shell
+Imports VSAgent.Extension.Settings
+Imports VSAgent.Protocol.Settings
 
 ''' <summary>
 ''' This class implements the tool window exposed by this package and hosts a user control.
@@ -73,6 +76,9 @@ Public Class VSAgentToolWindow
 
         Await _agentHostClient.ConnectAsync()
 
+        Dim settings As VSAgentSettings = VSAgentSettingsManager.Load()
+
+        Await _agentHostClient.SendSetSettingsAsync(settings)
     End Function
 
     Protected Overrides Sub Dispose(disposing As Boolean)

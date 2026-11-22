@@ -53,6 +53,10 @@ Public Class GameEngine
     Private bulletCooldown As Double = 0
     Private Const BULLET_COOLDOWN As Double = 8 / 60.0 ' seconds
 
+    ' Sentinel Y coordinate used to mark an entity killed during collision detection.
+    ' Well outside any reachable gameplay position.
+    Private Const Sentinel As Integer = -1000000
+
     ' ===== Starfield =====
     Public ReadOnly Property Stars As New List(Of StarFieldStar)()
     Public Property ScrollSpeedY As Double = 60.0 ' pixels per second — very fast scroll for speed sensation!
@@ -277,32 +281,43 @@ Public Class GameEngine
         Next
 
         ' === Collision: bullets vs enemies ===
-        Dim bulletsToRemove As New List(Of Integer)()
-        Dim enemiesToRemove As New List(Of Integer)()
+        ' Dead entities are marked with a sentinel coordinate and compacted in a single
+        ' reverse pass. The previous version allocated two Lists per tick and used
+        ' List.Contains (O(n)) plus LINQ OrderByDescending, which made this O(n^2)
+        ' with garbage on every frame.
+        Dim anyDead As Boolean = False
 
-        For bi As Integer = Bullets.Count - 1 To 0 Step -1
+        For bi As Integer = 0 To Bullets.Count - 1
             Dim b = Bullets(bi)
-            For ei As Integer = Enemies.Count - 1 To 0 Step -1
-                If enemiesToRemove.Contains(ei) Then Continue For
+            If b.Y < Sentinel Then Continue For
+            For ei As Integer = 0 To Enemies.Count - 1
                 Dim e = Enemies(ei)
+                If e.Y < Sentinel Then Continue For
                 If AABB(b.X, b.Y, b.Width, b.Height, e.X, e.Y, e.Width, e.Height) Then
-                    bulletsToRemove.Add(bi)
-                    enemiesToRemove.Add(ei)
+                    ' Capture the kill position BEFORE marking, otherwise the particles
+                    ' would be spawned at the sentinel coordinate far off-screen.
+                    Dim boomX As Double = e.X + e.Width / 2.0
+                    Dim boomY As Double = e.Y + e.Height / 2.0
+                    b.Y = Sentinel                    ' kill bullet
+                    e.Y = Sentinel                    ' kill enemy
+                    anyDead = True
                     Score += CInt(10 * e.pointsMultiplier)
                     For pi As Integer = 0 To 14 - 1
-                        Explosions.Add(New ExplosionParticle(e.X + e.Width / 2.0, e.Y + e.Height / 2.0, rng))
+                        Explosions.Add(New ExplosionParticle(boomX, boomY, rng))
                     Next
                     Exit For
                 End If
             Next
         Next
 
-        For Each idx In enemiesToRemove.OrderByDescending(Function(x) x)
-            Enemies.RemoveAt(idx)
-        Next
-        For Each idx In bulletsToRemove.OrderByDescending(Function(x) x)
-            Bullets.RemoveAt(idx)
-        Next
+        If anyDead Then
+            For i As Integer = Bullets.Count - 1 To 0 Step -1
+                If Bullets(i).Y <= Sentinel Then Bullets.RemoveAt(i)
+            Next
+            For i As Integer = Enemies.Count - 1 To 0 Step -1
+                If Enemies(i).Y <= Sentinel Then Enemies.RemoveAt(i)
+            Next
+        End If
 
         ' === Collision: enemy vs player ===
         For ei As Integer = Enemies.Count - 1 To 0 Step -1

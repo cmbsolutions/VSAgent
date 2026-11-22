@@ -1,5 +1,5 @@
-﻿Namespace Ollama
-    Public Class OllamaModel
+﻿Namespace InferenceProvider
+    Public Class InferenceProviderModel
 
         Public Property Name As String
 

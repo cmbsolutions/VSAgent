@@ -1,0 +1,132 @@
+﻿<Page x:Class="InferenceSettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:VSAgent.Extension"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="InferenceSettingsPage">
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="SettingsStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <StackPanel>
+
+        <TextBlock Text="Inference"
+                   FontSize="20"
+                   FontWeight="SemiBold"
+                   Foreground="#F2F5FA"/>
+
+        <TextBlock Text="Configure how the model generates responses."
+                   Style="{StaticResource MutedText}"
+                   Margin="0,6,0,25"/>
+
+        <TextBlock Text="Reasoning effort"
+                   Style="{StaticResource SectionTitle}"
+                   Margin="0,0,0,10"/>
+
+        <Border Background="{StaticResource InputBrush}"
+                CornerRadius="8"
+                Padding="3">
+
+            <UniformGrid Columns="3">
+
+                <RadioButton x:Name="rbLow"
+                             Content="Low"
+                             GroupName="Reasoning"
+                             Style="{StaticResource ReasoningButton}"
+                             Checked="Reasoning_Checked"/>
+
+                <RadioButton x:Name="rbMedium"
+                             Content="Medium"
+                             GroupName="Reasoning"
+                             Style="{StaticResource ReasoningButton}"
+                             Checked="Reasoning_Checked"/>
+
+                <RadioButton x:Name="rbXHigh"
+                             Content="XHigh"
+                             GroupName="Reasoning"
+                             Style="{StaticResource ReasoningButton}"
+                             Checked="Reasoning_Checked"/>
+
+            </UniformGrid>
+
+        </Border>
+
+        <Border Style="{StaticResource DividerStyle}"/>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="Context window"
+                       Style="{StaticResource SectionTitle}"/>
+
+            <TextBlock Grid.Column="1"
+                       FontWeight="SemiBold"
+                       Foreground="#E9EDF3"
+                       Text="{Binding NumCtx, StringFormat={}{0:N0}}"/>
+        </Grid>
+
+        <Slider Minimum="4096"
+                Maximum="131072"
+                TickFrequency="4096"
+                SmallChange="4096"
+                LargeChange="4096"
+                Style="{StaticResource SettingsSlider}"
+                Value="{Binding NumCtx, Mode=TwoWay,
+                                UpdateSourceTrigger=PropertyChanged}"/>
+
+        <Grid Margin="0,3,0,0">
+            <TextBlock Text="4K"
+                       Style="{StaticResource MutedText}"/>
+
+            <TextBlock Text="128K"
+                       HorizontalAlignment="Right"
+                       Style="{StaticResource MutedText}"/>
+        </Grid>
+
+        <Border Style="{StaticResource DividerStyle}"/>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="Maximum generated tokens"
+                       Style="{StaticResource SectionTitle}"/>
+
+            <TextBlock Grid.Column="1"
+                       FontWeight="SemiBold"
+                       Foreground="#E9EDF3"
+                       Text="{Binding NumPredict, StringFormat={}{0:N0}}"/>
+        </Grid>
+
+        <Slider Minimum="1024"
+                Maximum="32768"
+                TickFrequency="1024"
+                SmallChange="1024"
+                LargeChange="1024"
+                Style="{StaticResource SettingsSlider}"
+                Value="{Binding NumPredict, Mode=TwoWay,
+                                UpdateSourceTrigger=PropertyChanged}"/>
+
+        <Grid Margin="0,3,0,0">
+            <TextBlock Text="1K"
+                       Style="{StaticResource MutedText}"/>
+
+            <TextBlock Text="32K"
+                       HorizontalAlignment="Right"
+                       Style="{StaticResource MutedText}"/>
+        </Grid>
+
+    </StackPanel>
+</Page>

@@ -1,0 +1,58 @@
+﻿<Page x:Class="ModelsSettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:VSAgent.Extension"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="ModelsSettingsPage">
+    
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="SettingsStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+    
+    <StackPanel>
+
+        <TextBlock Text="Models"
+                   FontSize="20"
+                   FontWeight="SemiBold"
+                   Foreground="#F2F5FA"/>
+
+        <TextBlock Text="Choose the inference provider and language model."
+                   Style="{StaticResource MutedText}"
+                   Margin="0,6,0,25"/>
+
+        <TextBlock Text="Inference provider"
+                   Style="{StaticResource SectionTitle}"
+                   Margin="0,0,0,9"/>
+
+        <ComboBox x:Name="cmbProvider"
+                  Style="{StaticResource ComboBox}"
+                  SelectionChanged="cmbProvider_SelectionChanged"/>
+
+        <TextBlock Text="Select the engine or API used to run the model."
+                   Style="{StaticResource MutedText}"
+                   Margin="0,7,0,0"/>
+
+        <Border Style="{StaticResource DividerStyle}"/>
+
+        <TextBlock Text="Model"
+                   Style="{StaticResource SectionTitle}"
+                   Margin="0,0,0,9"/>
+
+        <ComboBox x:Name="cmbModel"
+                  Style="{StaticResource ComboBox}"
+                  ItemsSource="{Binding InferenceProviderModels}"
+                  SelectedItem="{Binding Model, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <TextBlock Text="Select an available model for the chosen provider."
+                   Style="{StaticResource MutedText}"
+                   Margin="0,7,0,0"/>
+
+    </StackPanel>
+</Page>

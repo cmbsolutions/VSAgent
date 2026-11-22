@@ -13,6 +13,7 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="vsagent.ico" />
     <None Remove="VSAgentToolWindowControl.xaml" />
   </ItemGroup>
   <ItemGroup>
@@ -47,6 +48,9 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsFormsIntegration" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="vsagent.ico" />
   </ItemGroup>
   <ItemGroup>
     <VSCTCompile Include="VSAgentPackage.vsct">

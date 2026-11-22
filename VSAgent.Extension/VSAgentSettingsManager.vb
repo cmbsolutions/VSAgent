@@ -3,7 +3,7 @@ Imports Newtonsoft.Json
 Imports VSAgent.Protocol.Settings
 
 Namespace Settings
-    Public NotInheritable Class SettingsManager
+    Public NotInheritable Class VSAgentSettingsManager
 
         Private Sub New()
         End Sub
