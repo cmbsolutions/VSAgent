@@ -1,14 +1,13 @@
 ﻿Imports System.Threading
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
-Imports VSAgent.Ollama
 Imports VSAgent.Protocol.DTO
 Imports VSAgent.Protocol.InferenceProvider
 
 Public Class AgentRunner
 
     Private ReadOnly _vsAgent As VSAgentPipeClient
-    Private ReadOnly _ollama As OllamaClient
+    Private ReadOnly _InferenceProvider As IInferenceProvider
 
     Private ReadOnly _tools As JArray
     Private ReadOnly _messages As JArray
@@ -27,14 +26,14 @@ Public Class AgentRunner
 
     Public Event TaskCancelled()
 
-    Public Sub New(vsAgent As VSAgentPipeClient, ollama As OllamaClient, toolDescriptors As IReadOnlyList(Of ToolDescriptor))
+    Public Sub New(vsAgent As VSAgentPipeClient, inferenceProvider As IInferenceProvider, toolDescriptors As IReadOnlyList(Of ToolDescriptor))
 
         _vsAgent = vsAgent
-        _ollama = ollama
+        _InferenceProvider = inferenceProvider
 
-        AddHandler _ollama.ThinkingReceived, Sub(text) RaiseEvent Thinking(text)
-        AddHandler _ollama.ContentReceived, Sub(text) RaiseEvent Content(text)
-        AddHandler _ollama.StatisticsReceived, Sub(stats) RaiseEvent Statistics(stats)
+        AddHandler _InferenceProvider.ThinkingReceived, Sub(text) RaiseEvent Thinking(text)
+        AddHandler _InferenceProvider.ContentReceived, Sub(text) RaiseEvent Content(text)
+        AddHandler _InferenceProvider.StatisticsReceived, Sub(stats) RaiseEvent Statistics(stats)
 
         ' Fallback action descriptions, used when Model does not provide a description of what it is doing
         _toolActionDescriptions = toolDescriptors.ToDictionary(
@@ -70,7 +69,7 @@ Public Class AgentRunner
                 Return Nothing
             End If
 
-            Dim response = Await _ollama.SendAsync(_messages, _tools, cancellationToken)
+            Dim response = Await _InferenceProvider.SendAsync(_messages, _tools, cancellationToken)
             Dim content = response.Content
 
             Dim assistantMessage As New JObject From {
@@ -90,11 +89,12 @@ Public Class AgentRunner
                     calls.Add(
                         New JObject From {
                             {"id", toolCall.Id},
+                            {"type", "function"},
                             {
                                 "function",
                                 New JObject From {
                                     {"name", toolCall.Name},
-                                    {"arguments", toolCall.Arguments}
+                                    {"arguments", _InferenceProvider.SerializeToolArguments(toolCall.Arguments)}
                                 }
                             }
                         })

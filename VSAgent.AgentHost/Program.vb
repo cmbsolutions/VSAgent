@@ -32,62 +32,66 @@ Module Program
 
             Console.WriteLine($"{descriptors.Count} Visual Studio tools available.")
 
+            Dim hostServer As New AgentHostPipeServer("VSAgent.AgentHost", vsAgent, descriptors)
 
-            Dim ollama As New OllamaClient(_settings)
+            ' Keep the host running until a shutdown signal.
+            Await hostServer.Completion
 
-            AddHandler ollama.ThinkingReceived, AddressOf OllamaThinkingReceivedEventHandler
-            AddHandler ollama.ContentReceived, AddressOf OllamaContentReceivedEventHandler
+            'Dim inferenceProvider As New StrataClient(_settings)
 
-            Dim agent As New AgentRunner(vsAgent, ollama, descriptors)
+            'AddHandler inferenceProvider.ThinkingReceived, AddressOf OllamaThinkingReceivedEventHandler
+            'AddHandler inferenceProvider.ContentReceived, AddressOf OllamaContentReceivedEventHandler
 
-            AddHandler agent.ToolStarted, AddressOf AgentToolStartedEventHandler
-            AddHandler agent.ToolCompleted, AddressOf AgentToolCompletedEventHandler
-            AddHandler agent.ToolFailed, AddressOf AgentToolFailedEventHandler
+            'Dim agent As New AgentRunner(vsAgent, inferenceProvider, descriptors)
 
-            Dim hostServer As New AgentHostPipeServer("VSAgent.AgentHost", agent, ollama)
+            'AddHandler agent.ToolStarted, AddressOf AgentToolStartedEventHandler
+            'AddHandler agent.ToolCompleted, AddressOf AgentToolCompletedEventHandler
+            'AddHandler agent.ToolFailed, AddressOf AgentToolFailedEventHandler
 
-            Console.WriteLine()
-            Console.ForegroundColor = ConsoleColor.DarkGray
-            Console.WriteLine("Type /exit or /quit to stop.")
-            Console.ForegroundColor = ConsoleColor.White
 
-            Do
-                Console.Write("You > ")
 
-                Dim prompt = Console.ReadLine()
+            'Console.WriteLine()
+            'Console.ForegroundColor = ConsoleColor.DarkGray
+            'Console.WriteLine("Type /exit or /quit to stop.")
+            'Console.ForegroundColor = ConsoleColor.White
 
-                If String.IsNullOrWhiteSpace(prompt) Then
-                    Continue Do
-                End If
+            'Do
+            '    Console.Write("You > ")
 
-                If prompt.Equals("/exit", StringComparison.OrdinalIgnoreCase) OrElse
-                    prompt.Equals("/quit", StringComparison.OrdinalIgnoreCase) Then
-                    Exit Do
-                End If
+            '    Dim prompt = Console.ReadLine()
 
-                If prompt.Equals("/cancel", StringComparison.OrdinalIgnoreCase) Then
-                    _currentRunCancellation?.Cancel()
-                    Continue Do
-                End If
+            '    If String.IsNullOrWhiteSpace(prompt) Then
+            '        Continue Do
+            '    End If
 
-                Try
-                    _currentRunCancellation?.Dispose()
-                    _currentRunCancellation = New CancellationTokenSource()
+            '    If prompt.Equals("/exit", StringComparison.OrdinalIgnoreCase) OrElse
+            '        prompt.Equals("/quit", StringComparison.OrdinalIgnoreCase) Then
+            '        Exit Do
+            '    End If
 
-                    Await agent.RunAsync(prompt, _currentRunCancellation.Token)
+            '    If prompt.Equals("/cancel", StringComparison.OrdinalIgnoreCase) Then
+            '        _currentRunCancellation?.Cancel()
+            '        Continue Do
+            '    End If
 
-                    Console.ForegroundColor = ConsoleColor.DarkGray
-                    Console.WriteLine("Type /cancel to cancel the current task.")
-                    Console.ForegroundColor = ConsoleColor.White
-                Catch ex As Exception
-                    Console.WriteLine()
-                    Console.ForegroundColor = ConsoleColor.Red
-                    Console.WriteLine($"Agent error: {ex}")
-                    Console.ForegroundColor = ConsoleColor.White
-                End Try
+            '    Try
+            '        _currentRunCancellation?.Dispose()
+            '        _currentRunCancellation = New CancellationTokenSource()
 
-                Console.WriteLine()
-            Loop
+            '        Await agent.RunAsync(prompt, _currentRunCancellation.Token)
+
+            '        Console.ForegroundColor = ConsoleColor.DarkGray
+            '        Console.WriteLine("Type /cancel to cancel the current task.")
+            '        Console.ForegroundColor = ConsoleColor.White
+            '    Catch ex As Exception
+            '        Console.WriteLine()
+            '        Console.ForegroundColor = ConsoleColor.Red
+            '        Console.WriteLine($"Agent error: {ex}")
+            '        Console.ForegroundColor = ConsoleColor.White
+            '    End Try
+
+            '    Console.WriteLine()
+            'Loop
         End Using
     End Function
 

@@ -23,6 +23,12 @@ Public Class TransportPipeServer(Of TRequest, TResponse)
 
     Private disposedValue As Boolean
 
+    Public ReadOnly Property Completion As Task
+        Get
+            Return _serverTask
+        End Get
+    End Property
+
     Public Sub New(PipeName As String, Handler As Func(Of TRequest, Task(Of TResponse)), Servername As String)
         _pipeName = PipeName
         _handler = Handler
