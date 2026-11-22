@@ -1,4 +1,5 @@
 ﻿
+Imports System.ComponentModel
 Imports System.Windows
 Imports Microsoft.VisualStudio.Shell
 Imports Newtonsoft.Json
@@ -26,9 +27,10 @@ Partial Public Class VSAgentToolWindowControl
 
         InitializeComponent()
 
-        _settings = Settings.SettingsManager.Load()
+        _settings = Settings.VSAgentSettingsManager.Load()
         _agentHostClient = agentHostClient
 
+        AddHandler _settings.PropertyChanged, AddressOf Settings_PropertyChanged
         AddHandler _agentHostClient.Thinking, AddressOf AgentHostClient_Thinking
         AddHandler _agentHostClient.Content, AddressOf AgentHostClient_Content
         AddHandler _agentHostClient.ToolStarted, AddressOf AgentHostClient_ToolStarted
@@ -36,6 +38,15 @@ Partial Public Class VSAgentToolWindowControl
         AddHandler _agentHostClient.ToolFailed, AddressOf AgentHostClient_ToolFailed
         AddHandler _agentHostClient.Statistics, AddressOf AgentHostClient_Statistics
         AddHandler _agentHostClient.TaskCancelled, AddressOf AgentHostClient_TaskCancelled
+    End Sub
+
+    Private Sub Settings_PropertyChanged(sender As Object, e As PropertyChangedEventArgs)
+        If e.PropertyName = NameOf(VSAgentSettings.InferenceProvider) Then
+            Dim modelsJson = _agentHostClient.SendGetModelsAsync().Result
+            Dim availableModels = JsonConvert.DeserializeObject(Of List(Of InferenceProviderModel))(modelsJson.Content)
+
+            _settings.InferenceProviderModels = availableModels.Select(Function(c) c.Name).ToList()
+        End If
     End Sub
 
     Private Sub AgentHostClient_TaskCancelled()
@@ -98,11 +109,11 @@ Partial Public Class VSAgentToolWindowControl
     Public Async Function SetConnectedAsync() As Task
         Await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync()
 
-        Dim modelsJson = Await _agentHostClient.SendGetModelsAsync()
-        Dim availableModels = JsonConvert.DeserializeObject(Of List(Of InferenceProviderModel))(modelsJson.Content)
+        'Dim modelsJson = Await _agentHostClient.SendGetModelsAsync()
+        'Dim availableModels = JsonConvert.DeserializeObject(Of List(Of InferenceProviderModel))(modelsJson.Content)
 
-        _availableModels.Clear()
-        _availableModels.AddRange(availableModels.Select(Function(c) c.Name))
+        '_availableModels.Clear()
+        '_availableModels.AddRange(availableModels.Select(Function(c) c.Name))
 
         btnSend.IsEnabled = True
     End Function

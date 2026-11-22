@@ -73,6 +73,9 @@ Public Class VSAgentToolWindow
 
         Await _agentHostClient.ConnectAsync()
 
+        Dim settings As VSAgentSettings = VSAgentSettingsManager.Load()
+
+        Await _agentHostClient.SendSetSettingsAsync(settings)
     End Function
 
     Protected Overrides Sub Dispose(disposing As Boolean)
