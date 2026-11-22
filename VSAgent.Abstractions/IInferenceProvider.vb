@@ -9,5 +9,12 @@ Public Interface IInferenceProvider
     Function ReadStreamAsync(reader As StreamReader, cancellationToken As CancellationToken) As Task(Of InferenceProviderAssistantResponse)
     Function GetModelsAsync(cancellationToken As CancellationToken) As Task(Of List(Of InferenceProviderModel))
     Function GetContextLengthAsync(cancellationToken As CancellationToken) As Task(Of Integer)
+    Function SerializeToolArguments(arguments As JObject) As JToken
+
     Sub SetSettings(settings As VSAgentSettings)
+
+    Event ThinkingReceived(text As String)
+    Event ContentReceived(text As String)
+    Event StatisticsReceived(statistics As String)
+
 End Interface
