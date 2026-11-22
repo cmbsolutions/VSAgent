@@ -23,9 +23,9 @@ Public Class OllamaClient
     Private _lastThinkingFlush As DateTime = DateTime.UtcNow
     Private _lastContentFlush As DateTime = DateTime.UtcNow
 
-    Public Event ThinkingReceived(text As String)
-    Public Event ContentReceived(text As String)
-    Public Event StatisticsReceived(statistics As String)
+    Public Event ThinkingReceived(text As String) Implements IInferenceProvider.ThinkingReceived
+    Public Event ContentReceived(text As String) Implements IInferenceProvider.ContentReceived
+    Public Event StatisticsReceived(statistics As String) Implements IInferenceProvider.StatisticsReceived
 
     Private _sessionStats As New OllamaSessionStatistics
 
@@ -284,4 +284,8 @@ Public Class OllamaClient
         Dispose(disposing:=True)
         GC.SuppressFinalize(Me)
     End Sub
+
+    Public Function SerializeToolArguments(arguments As JObject) As JToken Implements IInferenceProvider.SerializeToolArguments
+        Return arguments.DeepClone()
+    End Function
 End Class
