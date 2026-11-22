@@ -1,5 +1,8 @@
 ﻿Imports System.Runtime.InteropServices
+Imports Microsoft.VisualStudio.Settings
 Imports Microsoft.VisualStudio.Shell
+Imports VSAgent.Extension.Settings
+Imports VSAgent.Protocol.Settings
 
 ''' <summary>
 ''' This class implements the tool window exposed by this package and hosts a user control.
